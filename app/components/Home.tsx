@@ -16,7 +16,7 @@ export default class Home extends React.Component<any, {number2?: number, sideba
 
     render() {
     return (
-      <div className={styles.box} data-tid="container">  
+      <div className={styles.box}>  
         <div className="navbar navbar-inverse navbar-fixed-left">
           <a className="navbar-brand" href="#"><img src={require("../../resources/Interface-Logo-btn.png")}/></a>
           <ul className="nav navbar-nav">
@@ -27,11 +27,14 @@ export default class Home extends React.Component<any, {number2?: number, sideba
             <li><a href="#"><i className="fa fa-envelope-o"></i><span>Support</span></a></li>
             <li><a href="#"><i className="fa fa-question-circle"></i><span>FAQ</span></a></li>
             <li><a href="#"><i className="fa fa-sign-out"></i><span>Log Out</span></a></li>
-
           </ul>
         </div>
-        <div className="container">
-          <div className="row">
+        <div className={styles.container}>
+          <div id={styles.top}>
+            <div><img src={require("../../resources/Interface-Logo-btn.png")}/></div>
+          </div>
+          <div id={styles.bottom}>
+            <div><img src={require("../../resources/Interface-Logo-btn.png")}/></div>
           </div>
         </div>       
         </div>
