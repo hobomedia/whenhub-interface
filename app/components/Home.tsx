@@ -31,10 +31,12 @@ export default class Home extends React.Component<any, {number2?: number, sideba
         </div>
         <div className={styles.container}>
           <div id={styles.top}>
-            <div><img src={require("../../resources/Interface-Logo-btn.png")}/></div>
+            <a href="#"><span></span></a>
+            "be an expert"
           </div>
           <div id={styles.bottom}>
-            <div><img src={require("../../resources/Interface-Logo-btn.png")}/></div>
+            <a href="#"><span></span></a>
+            "find an expert"
           </div>
         </div>       
         </div>
