@@ -1,22 +1,28 @@
 :local {
   .box {
-    background-color: lightgrey;
     border-radius: 5px;
     margin: 80px;
     margin-top: 30px;
     margin-left: 460px;
-    height: 730px;
-    width: 440px;
+    height: 830px;
+    width: 410px;
     overflow: hidden;
+    background-image: url("../../resources/iphoneOutline.jpeg");
+    background-size: contain;
+    padding-top: 120px;
+    padding-left: 35px;
+    padding-right: 42px;
+
   }
 
   .container {
-    width: 440px;
-    height: 100%;
-    padding-left: 50px;
+    width: 337px;
+    height: 560px;
+    // padding-left: 10px;
     padding-right: 0;
     overflow: auto;  
     display: inline-block;
+
   }  
 
   #top {
@@ -65,34 +71,59 @@
     margin-top: 10px;
   }
   
+  // #background {
+  //   width: 100%;
+  //   height: 100%;
+  //   background-image: url("../../resources/blue-background.jpeg")
+  // }
+
+  #bebackground {
+    width: 100%;
+    height: 100%;
+    background-image: url("../../resources/purple-background.jpeg")
+
+  }
   
 }
 
 :global {
-  
+  .menubtn {
+    
+    background-color: black;
+  }
   .navbar {
-    border-radius: 5px 0 0 5px;
+    border-radius: 0 0 0 0px;
     width: 50px;
     position: absolute;
-    height: 730px;
+    height: 560px;
     overflow: hidden;
+    background-color: #34517c
   }
 
-  .navbar-fixed-left:hover{
-    width: 150px;
-    overflow: visible;
+  .navbar-fixed-left {
+    display: none;
+    width: 145px;
     z-index: 1;
+    left: 0; 
+    padding-top: 10px;
+    margin-left: 495px
   }
 
-  .navbar-fixed-left:hover .navbar-nav li a span {
-    display: inline-block;
-  }
+  // .navbar-fixed-left:hover{
+  //   width: 145px;
+  //   overflow: visible;
+  //   z-index: 1;
+  // }
+
+  // .navbar-fixed-left:hover .navbar-nav li a span {
+  //   display: inline-block;
+  // }
   
   .navbar-fixed-left .navbar-nav > li {
     float: none;  /* Cancel default li float: left */
-    width: 139px;
-    padding-bottom: 44px;
+    padding-bottom: 20px;
     position:relative;
+    padding-top: 20px;
     display:block;
     width:250px;
 
@@ -113,12 +144,11 @@
   }
   .navbar-nav {
     overflow: hidden;
-    padding-top: 68px; 
   }
 
   .navbar-nav > li > a > span {
     padding-left: 5px;
-    padding-top: 9px;
+    padding-top: 2px;
     display: none;
     position:relative;
     display:table-cell;

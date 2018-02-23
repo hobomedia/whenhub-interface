@@ -1,4 +1,7 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
+import Nav from './Nav';
+
 let styles = require('./Home.scss');
 
 
@@ -16,30 +19,21 @@ export default class Home extends React.Component<any, {number2?: number, sideba
 
     render() {
     return (
-      <div className={styles.box}>  
-        <div className="navbar navbar-inverse navbar-fixed-left">
-          <a className="navbar-brand" href="#"><img src={require("../../resources/Interface-Logo-btn.png")}/></a>
-          <ul className="nav navbar-nav">
-            <li><a href="#"><i className="fa fa-usd"></i><span>WhenWallet</span></a></li>
-            <li><a href="#"><i className="fa fa-bars"></i><span>Settings</span></a></li>
-            <li><a href="#"><i className="fa fa-history"></i><span>History</span></a></li>
-            <li><a href="#"><i className="fa fa-info"></i><span>Tour</span></a></li>
-            <li><a href="#"><i className="fa fa-envelope-o"></i><span>Support</span></a></li>
-            <li><a href="#"><i className="fa fa-question-circle"></i><span>FAQ</span></a></li>
-            <li><a href="#"><i className="fa fa-sign-out"></i><span>Log Out</span></a></li>
-          </ul>
-        </div>
+      <div>
+        <Nav 
+          button={"menu"}
+        />
         <div className={styles.container}>
           <div id={styles.top}>
-            <a href="#"><span></span></a>
-            "be an expert"
+            <Link to="/FindExpert" replace={true}><span></span></Link>
+            "Find Expert"
           </div>
           <div id={styles.bottom}>
-            <a href="#"><span></span></a>
-            "find an expert"
+            <Link to="/BeExpert"><span></span></Link>
+            "Be An Expert"
           </div>
-        </div>       
-        </div>
+        </div>   
+      </div>    
     );
   }
 }
