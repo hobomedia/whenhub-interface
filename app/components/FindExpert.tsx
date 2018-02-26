@@ -29,19 +29,19 @@ export default class FindExpert extends React.Component<any>{
                     <div style={{fontSize: "30pt", color: "white", marginLeft: "110px"}}>
                       10283
                     </div>
-                    <div style={{color: "white", marginLeft: "116px"}}>
+                    <div style={{color: "white", marginLeft: "124px", fontWeight: 100}}>
                       Experts Enrolled
                     </div>
                   </div>
 
               <div id={FindExpertStyles.enrolled}>
                 <form className="form-horizontal">
-                    <div style={{color: "white", marginLeft: "10px"}}>
+                    <div style={{color: "white", marginLeft: "10px", fontWeight: 100}}>
                       Topic
                     </div>
                     <input style={{width: "320px", marginLeft: "10px"}} type="text" placeholder="All" className="form-control" name="title" />
                 </form>
-                <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px"}} type="button" onClick={this.onSubmit} className="btn">
+                <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit} className="btn">
                   View Experts
                 </button>
               </div>

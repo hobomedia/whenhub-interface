@@ -1,6 +1,4 @@
 import * as React from 'react';
-// import Side from '../components/Side';
-// import Top from '../components/Top';
 let styles = require('./Home.scss');
 
 export default class Nav extends React.Component<any, {menuClick: string}> {
@@ -51,7 +49,7 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
     render() {
         return (
             <div>
-                <div className={styles.bar} style={{ top: '0px', width: '337px', height: '40px', backgroundColor: '#37d3b4', color: 'white' }}>
+                <div className={styles.bar} style={{ top: '0px', width: '338px', height: '40px', backgroundColor: '#37d3b4', color: 'white' }}>
                     {this.buttonDisplay()}
                     Interface
                 </div>

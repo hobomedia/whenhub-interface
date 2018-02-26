@@ -9,7 +9,7 @@ let styles = require('./Home.scss');
 //   number: number
 // }
 
-export default class Home extends React.Component<any, {number2?: number, sidebarOpen: boolean}>{ 
+export default class Home extends React.Component<any, {sidebarOpen: boolean}>{ 
   constructor(props:any){
     super(props)
     this.state = {
@@ -25,12 +25,12 @@ export default class Home extends React.Component<any, {number2?: number, sideba
         />
         <div className={styles.container}>
           <div id={styles.top}>
-            <Link to="/FindExpert" replace={true}><span></span></Link>
-            "Find Expert"
+            <Link to="/FindExpert"><span></span></Link>
+            <div>Find an Expert</div>
           </div>
           <div id={styles.bottom}>
             <Link to="/BeExpert"><span></span></Link>
-            "Be An Expert"
+            <div>Be an Expert</div>
           </div>
         </div>   
       </div>    
