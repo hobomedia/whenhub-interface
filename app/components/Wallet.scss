@@ -1,0 +1,32 @@
+:local {
+    #amount {
+        position: relative; 
+        color: white; 
+        height: 100px;
+        text-align: center;
+        background-image: url("../../resources/walletHeader.jpg");
+    }
+
+    .buttons {
+        background-color: black; 
+        height: 55px;
+        display: inline-block;
+        width: 33.3%;
+        text-align: center;
+        color: white;
+        font-weight: 100;
+    }
+
+    .deposit {
+        background-color: #34517c;
+        height: 410px;
+        color: white; 
+    }
+    #buttonWell {
+        height: 55px;
+    }
+
+    .icon {
+        padding-top: 10px;
+    }
+}

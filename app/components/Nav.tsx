@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
+
 let styles = require('./Home.scss');
 
 export default class Nav extends React.Component<any, {menuClick: string}> {
@@ -12,6 +14,12 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
 
     handleClick() {
         history.back();
+    }
+
+    walletClick() {
+        console.log("click")
+        console.log(history)
+        console.log(this.props)
     }
 
     handleMenuClick() {
@@ -55,7 +63,7 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
                 </div>
                 <div className="navbar navbar-inverse navbar-fixed-left" style={this.display()}>
                     <ul className="nav navbar-nav">
-                        <li><a href="#"><i className="fa fa-usd"></i><span>WhenWallet</span></a></li>
+                        <li><Link to="/Wallet"><i className="fa fa-usd"></i><span>WhenWallet</span></Link></li>
                         <li><a href="#"><i className="fa fa-cog"></i><span>Settings</span></a></li>
                         <li><a href="#"><i className="fa fa-history"></i><span>History</span></a></li>
                         <li><a href="#"><i className="fa fa-info"></i><span>Tour</span></a></li>

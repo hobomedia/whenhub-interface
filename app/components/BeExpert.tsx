@@ -17,6 +17,7 @@ export default class BeExpert extends React.Component<any, ExpertState>{
     }
 
     onSubmit() {
+      console.log(this.state.rating)
       this.props.history.push('/GoOnline')
     }
 
@@ -73,7 +74,7 @@ export default class BeExpert extends React.Component<any, ExpertState>{
           <div className={styles.container}>
             <div id={styles.bebackground}>
               {/* <Link to="/">back</Link> */}
-              <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", bottom: "55px", paddingBottom: "13px", paddingTop: "13px", position: "absolute", width: '338px', height: "35%"}}>
+              <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", marginTop: "260px", paddingTop: "13px", position: "absolute", width: '338px', height: "31%"}}>
                 <div style={{ color: "white", marginLeft: "10px", fontSize: "25px", fontWeight: 200}}>
                   Name
                 </div>
@@ -90,7 +91,7 @@ export default class BeExpert extends React.Component<any, ExpertState>{
                           <div style={{ color: "white", marginLeft: "10px", fontWeight: 100 }}>
                             Hourly Rate($)
                           </div>
-                          <input style={{ width: "320px", marginLeft: "10px", fontWeight: 100 }} type="text" placeholder="00.00" className="form-control" name="title" />
+                          <input style={{ width: "320px", marginLeft: "10px"}} type="text" placeholder="00.00" className="form-control" name="title" />
                         </div>
                         {/* <div style={{ color: "white", marginLeft: "10px", fontWeight: 100 }}>
                           Hourly Rate($)
