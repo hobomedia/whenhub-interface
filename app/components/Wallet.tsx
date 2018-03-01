@@ -38,14 +38,19 @@ export default class Wallet extends React.Component<any, {sidebarOpen: boolean}>
             </div>
           </div>
           <div id={walletStyles.buttonWell}>
-              <div className={walletStyles.buttons} style={{paddingTop: '10px'}}>
-                <i className="fa fa-download icon"><div style={{paddingTop: '5px'}}>deposit</div></i>
+              <div className={walletStyles.buttons}>
+                <img src='../resources/white_inbox.png'/>
+                <div>Deposit</div>
               </div>
-              <div className={walletStyles.buttons} style={{paddingTop: '10px'}}>
-                <i className="fa fa-upload icon"><div style={{paddingTop: '5px'}}>transfer</div></i>
+              <div className={walletStyles.buttons}>
+                <img src='../resources/white_outbox.png'/>
+                <div>Transfer</div>
+
               </div>
-              <div className={walletStyles.buttons} style={{paddingTop: '10px'}}>
-                <i className="fa fa-list icon"><div style={{paddingTop: '5px'}}>transactions</div></i>
+              <div className={walletStyles.buttons}>
+              <img src='../resources/white_transaction.png'/>
+              <div>Transactions</div>
+
               </div>
           </div>
           <div>
