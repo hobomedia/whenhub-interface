@@ -25,14 +25,14 @@ export default class Home extends React.Component<any, {sidebarOpen: boolean}>{
         />
         <div className={styles.container}>
           <div id={styles.top}>
+            <Link to="/FindExpert"><span></span></Link>
             <div className={styles.overlay}>
-              <Link to="/FindExpert"><span></span></Link>
               <div id={styles.text}>Find an Expert</div>
             </div>
           </div>
           <div id={styles.bottom}>
+            <Link to="/BeExpert"><span></span></Link>
             <div className={styles.overlay}>
-              <Link to="/BeExpert"><span></span></Link>
               <div id={styles.text}>Be an Expert</div>
             </div>
           </div>
