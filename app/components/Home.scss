@@ -24,22 +24,30 @@
 
   }  
 
+  .overlay {
+    width: 337px; 
+    height: 280px;
+    background:rgba(52,81,124, .5); 
+    position: absolute;
+  }
+  .overlay > div {
+    position: absolute;
+    bottom: 0;
+    font-size: 30px;
+    font-weight: 200;
+    padding-left: 85px;
+    padding-bottom: 30px;
+  }
+
   #top {
     position: relative;
     color: white;
     text-align: center;
     height: 50%;
-    background-image: url("../../resources/blue-background.jpeg")
+    background-image: url("../../resources/expert.jpg");
+    background-size: 337px 285px;
   }
 
-  #top > div {
-    position: absolute;
-    bottom: 0;
-    left: 23%;
-    margin-bottom: 10px;
-    font-size: 30px;
-    font-weight: 200;
-  }
   #top > a > span {
     position: absolute;
     width: 100%;
@@ -53,16 +61,8 @@
     color: white;
     height: 50%;
     position: relative;
-    background-image: url("../../resources/purple-background.jpeg")
-  }
-
-  #bottom > div {
-    position: absolute;
-    bottom: 0;
-    left: 25%;
-    margin-bottom: 10px;
-    font-size: 30px;
-    font-weight: 200;
+    background-image: url("../../resources/expert_2.jpg");
+    background-size: 337px 285px;
 
   }
 
