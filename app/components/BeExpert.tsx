@@ -74,7 +74,7 @@ export default class BeExpert extends React.Component<any, ExpertState>{
           <div className={styles.container}>
             <div id={styles.bebackground}>
               {/* <Link to="/">back</Link> */}
-              <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", marginTop: "260px", paddingTop: "13px", position: "absolute", width: '338px', height: "38%"}}>
+              <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", marginTop: "260px", paddingTop: "13px", position: "absolute", width: '338px', height: "302px"}}>
                 <div style={{ color: "white", marginLeft: "10px", fontSize: "25px", fontWeight: 200}}>
                   Name
                 </div>

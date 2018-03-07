@@ -2,9 +2,22 @@
     #amount {
         position: relative; 
         color: white; 
-        height: 150px;
+        height: 100px;
         text-align: center;
         background-image: url("../../resources/walletHeader.jpg");
+    }
+
+    #amount > div > button {
+        background-color: "#776cf0";
+        color: "white";
+        padding-top: "0";
+        margin-left: "10px";
+        height: "20px";
+        width: "220px";
+        margin-top: "10px";
+        border-radius: "20px";
+        font-weight: 100;
+        font-size: ""
     }
 
     .buttons {
@@ -23,13 +36,29 @@
         margin-top: 0px;
     }
 
-    .deposit {
+    .section {
         background-color: #34517c;
         height: 410px;
         color: white; 
+        padding: 10pt;
     }
+
     #buttonWell {
         height: 60px;
+    }
+
+    #buttonWell:hover {
+        cursor: pointer;
+    }
+
+    .sectionHeader {
+        font-size: 15pt;
+    }
+
+    .sectionInfo {
+        font-size: 10pt;
+        font-weight: 100;
+
     }
 
 }
