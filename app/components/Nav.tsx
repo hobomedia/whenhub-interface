@@ -63,14 +63,14 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
                 </div>
                 <div className="navbar navbar-inverse navbar-fixed-left" style={this.display()}>
                     <ul className="nav navbar-nav">
-                        {/* <li><a href="#"><i className="fa fa-cog"></i><span>Settings</span></a></li> */}
                         <li><Link to="/Settings"><i className="fa fa-cog"></i><span>Settings</span></Link></li>
                         <li><Link to="/Wallet"><i className="fa fa-usd"></i><span>WhenWallet</span></Link></li>
-                        <li><a href="#"><i className="fa fa-history"></i><span>History</span></a></li>
-                        <li><a href="#"><i className="fa fa-info"></i><span>Tour</span></a></li>
-                        <li><a href="#"><i className="fa fa-envelope-o"></i><span>Support</span></a></li>
+                        <li><Link to="/History"><i className="fa fa-history"></i><span>History</span></Link></li>
+                        <li><a href="#"><i className="fa fa-share-alt"></i><span>Refer a Friend</span></a></li>
+                        <li><a href="#"><i className="fa fa-globe"></i><span>Tour</span></a></li>
+                        <li><a href="#"><i className="fa fa-users"></i><span>Support</span></a></li>
                         <li><a href="#"><i className="fa fa-question-circle"></i><span>FAQ</span></a></li>
-                        <li><a href="#"><i className="fa fa-sign-out"></i><span>Log Out</span></a></li>
+                        <li><a href="#"><i className="fa fa-lock"></i><span>Log Out</span></a></li>
                     </ul>
                 </div>
             </div>

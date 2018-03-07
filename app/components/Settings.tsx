@@ -13,7 +13,7 @@ export default class Settings extends React.Component<any, {}>{
     return (
       <div>
         <Nav 
-          button={"menu"}
+          button={"back"}
         />
         <div className={styles.container}>
             <div className={settingsStyles.settings}>
