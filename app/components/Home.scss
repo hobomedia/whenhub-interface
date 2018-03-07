@@ -122,7 +122,7 @@
 
   .navbar-fixed-left {
     display: none;
-    width: 145px;
+    width: 163px;
     z-index: 1000;
     left: 0; 
     padding-top: 10px;
@@ -141,7 +141,7 @@
   
   .navbar-fixed-left .navbar-nav > li {
     float: none;  /* Cancel default li float: left */
-    padding-bottom: 20px;
+    padding-bottom: 13px;
     position:relative;
     padding-top: 20px;
     display:block;
@@ -172,7 +172,8 @@
     display: none;
     position:relative;
     display:table-cell;
-    vertical-align:middle;
+    vertical-align: middle;
+    color: white;
   }
   
   .fa {

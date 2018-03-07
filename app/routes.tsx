@@ -7,6 +7,7 @@ import BeExpert from './components/BeExpert';
 import GoOnline from './components/GoOnline';
 import Wallet from './components/Wallet';
 import Settings from './components/Settings';
+import HistoryPage from './components/History';
 
 // import Nav from './components/Nav';
 // import AwayNav from './components/AwayNav';
@@ -20,7 +21,8 @@ export default () => (
       <Route path="/GoOnline" component={GoOnline} />
       <Route path="/Wallet" component={Wallet} />
       <Route path="/Settings" component={Settings} />
-  
+      <Route path="/History" component={HistoryPage} />
+    
     </Switch>
   </App>
 );
