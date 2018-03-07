@@ -6,6 +6,7 @@ import FindExpert from './components/FindExpert';
 import BeExpert from './components/BeExpert';
 import GoOnline from './components/GoOnline';
 import Wallet from './components/Wallet';
+import Settings from './components/Settings';
 
 // import Nav from './components/Nav';
 // import AwayNav from './components/AwayNav';
@@ -18,7 +19,8 @@ export default () => (
       <Route path="/BeExpert" component={BeExpert} />
       <Route path="/GoOnline" component={GoOnline} />
       <Route path="/Wallet" component={Wallet} />
-
+      <Route path="/Settings" component={Settings} />
+  
     </Switch>
   </App>
 );
