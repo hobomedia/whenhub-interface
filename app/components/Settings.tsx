@@ -14,6 +14,7 @@ export default class Settings extends React.Component<any, {}>{
       <div>
         <Nav 
           button={"back"}
+          page={"Settings"}
         />
         <div className={styles.container}>
             <div className={settingsStyles.settings}>

@@ -70,6 +70,7 @@ export default class BeExpert extends React.Component<any, ExpertState>{
         <div>
           <Nav 
             button={"back"}
+            page={"Interface Expert"}
           />
           <div className={styles.container}>
             <div id={styles.bebackground}>

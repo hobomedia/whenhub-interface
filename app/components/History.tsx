@@ -17,6 +17,7 @@ export default class History extends React.Component<any, {sidebarOpen: boolean}
       <div>
         <Nav 
           button={"back"}
+          page={"History"}
         />
         <div className={styles.container}>
             <div className={historyStyles.history}>

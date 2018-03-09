@@ -21,6 +21,8 @@ export default class FindExpert extends React.Component<any>{
         <div>
           <Nav 
             button={"back"}
+            page={"Find an Expert"}
+
           />
           <div className={styles.container}>
             <div id={FindExpertStyles.background}>

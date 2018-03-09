@@ -105,6 +105,7 @@ export default class Wallet extends React.Component<any, {sidebarOpen: boolean, 
             <div>
                 <Nav
                     button={"back"}
+                    page={"WHEN Wallet"}
                 />
                 <div className={styles.container}>
                     <div>
