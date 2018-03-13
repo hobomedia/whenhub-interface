@@ -78,7 +78,7 @@ export default class Wallet extends React.Component<any, {sidebarOpen: boolean, 
                 To transfer WHEN tokens from your Account, use a wallet such as MetaMask or My EtherWallet. Free signup tokens are included in your balance, but cannot be transferred. They can only be used for payig Experts for Interface transactions.
             </div>
             <div>
-                <button style={{ backgroundColor: "#776cf0", color: "white", marginLeft: "10px", width: "293px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit} className="btn">
+                <button style={{ backgroundColor: "#776cf0", color: "white", marginLeft: "10px", width: "293px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 , position: "absolute", bottom: "36px"}} type="button" onClick={this.onSubmit} className="btn">
                     WhenWallet Guide
                 </button>
             </div>
