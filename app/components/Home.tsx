@@ -5,16 +5,9 @@ import Nav from './Nav';
 let styles = require('./Home.scss');
 
 
-// interface HomeProps {
-//   number: number
-// }
-
-export default class Home extends React.Component<any, {sidebarOpen: boolean}>{ 
+export default class Home extends React.Component<any, {}>{ 
   constructor(props:any){
     super(props)
-    this.state = {
-      sidebarOpen: true
-    }
   }
 
     render() {

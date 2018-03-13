@@ -8,10 +8,11 @@ import GoOnline from './components/GoOnline';
 import Wallet from './components/Wallet';
 import Settings from './components/Settings';
 import HistoryPage from './components/History';
-import ReferPage from './components/Refer';
+import Refer from './components/Refer';
+import Tour from './components/Tour';
+import Tour2 from './components/Tour2';
+import Tour3 from './components/Tour3';
 
-// import Nav from './components/Nav';
-// import AwayNav from './components/AwayNav';
 
 export default () => (
   <App>
@@ -23,7 +24,11 @@ export default () => (
       <Route path="/Wallet" component={Wallet} />
       <Route path="/Settings" component={Settings} />
       <Route path="/History" component={HistoryPage} />
-      <Route path="/Refer" component={ReferPage} />
+      <Route path="/Refer" component={Refer} />
+      <Route path="/Tour" component={Tour} />
+      <Route path="/Tour2" component={Tour2} />
+      <Route path="/Tour3" component={Tour3} />
+
     </Switch>
   </App>
 );

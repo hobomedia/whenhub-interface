@@ -72,9 +72,9 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
                         <li><Link to="/Wallet"><i className="fa fa-usd"></i><span>WhenWallet</span></Link></li>
                         <li><Link to="/History"><i className="fa fa-history"></i><span>History</span></Link></li>
                         <li><Link to="/Refer"><i className="fa fa-share-alt"></i><span>Refer a Friend</span></Link></li>
-                        <li><a href="#"><i className="fa fa-globe"></i><span>Tour</span></a></li>
+                        <li><Link to="/Tour"><i className="fa fa-globe"></i><span>Tour</span></Link></li>
                         <li><a href="#"><i className="fa fa-users"></i><span>Support</span></a></li>
-                        <li><a href="#"><i className="fa fa-question-circle"></i><span>FAQ</span></a></li>
+                        <li><a href="https://interface.whenhub.com/pages/faq.html"><i className="fa fa-question-circle"></i><span>FAQ</span></a></li>
                         <li><a href="#"><i className="fa fa-lock"></i><span>Log Out</span></a></li>
                     </ul>
                 </div>
