@@ -19,7 +19,7 @@ export default class Tour3 extends React.Component<any, {}>{
     return (
         <div className={tour3Styles.newContainer}>
           <div className={tour3Styles.tour}>
-            <div style={{position: "absolute", right: "74pt", marginTop: "5pt"}}>
+            <div className={tour3Styles.exit}>
                 <Link to="/" style={{color: "#FFF"}}>X</Link>
             </div>
             <div>
