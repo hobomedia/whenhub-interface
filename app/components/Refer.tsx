@@ -5,12 +5,9 @@ import { Link } from 'react-router-dom';
 let styles = require('./Home.scss');
 let referStyles = require('./Refer.scss');
 
-export default class Refer extends React.Component<any, {sidebarOpen: boolean}>{ 
+export default class Refer extends React.Component<any, {}>{ 
   constructor(props:any){
     super(props)
-    this.state = {
-      sidebarOpen: true
-    }
   }
 
   onSubmit() {
@@ -26,7 +23,7 @@ export default class Refer extends React.Component<any, {sidebarOpen: boolean}>{
         />
         <div className={styles.container}>
             <div className={referStyles.refer}>
-                <div className={referStyles.image}>
+                <div>
                     <img src={'../resources/referral.png'} alt="referral" />
                 </div>
                 <div className={referStyles.buttons}>
