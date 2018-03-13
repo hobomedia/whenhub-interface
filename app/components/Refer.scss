@@ -1,0 +1,24 @@
+:local {
+    .refer {
+        background-color: #1d365c;
+        color: white;
+        height: 100%;
+        padding: 10pt;
+        text-align: center;
+        position: relative;
+    }
+
+    a {
+        color: #FFF;
+    }
+
+    .buttons {
+        position: absolute;
+        bottom: 0;
+        padding-bottom: 10pt;
+    }
+
+    img {
+        width: 100%;
+    }
+}
