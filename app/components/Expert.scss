@@ -7,15 +7,6 @@
         font-size: 1.5em;
         color: #ABABAB;
         transition: color .2s ease-out;
-
-        &.selected {
-            color: #FFD700;
-        }
-
-    }
-    .star.selected {
-        color: #FFD700;
-
     }
 
     .star:hover {
