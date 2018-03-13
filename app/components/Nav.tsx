@@ -41,7 +41,7 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
 
     buttonDisplay(){
         if(this.props.button == "menu"){
-            return <button style={{ backgroundColor: '#37d3b4', border: 'none', marginRight: "111px", padding: "0"  }} data-tclass="btn" onClick={this.handleMenuClick.bind(this)}><a href="#">
+            return <button style={{ backgroundColor: '#37d3b4', border: 'none', marginRight: "55px", padding: "0"  }} data-tclass="btn" onClick={this.handleMenuClick.bind(this)}><a href="#">
             <i className="fa fa-bars"></i></a>
         </button>
 
@@ -57,12 +57,12 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
     render() {
         return (
             <div>
-                <div className={styles.bar} style={{ top: '0px', width: '338px', height: '40px', backgroundColor: '#37d3b4', color: 'white' }}>
+                <div className={styles.bar} style={{position: 'relative', top: '0px', width: '338px', height: '40px', backgroundColor: '#37d3b4', color: 'white' }}>
                     {this.buttonDisplay()}
-                        <div style={{display: "inline"}}>
-                            Interface
+                        <div style={{display: "inline", fontWeight: 100}}>
+                            {this.props.back? this.props.back : "Interface"}
                         </div>
-                        <div style={{display: "inline", paddingLeft: "43pt"}}>
+                        <div style={{display: "inline", left: "42%", marginTop: "5pt", position: "absolute"}}>
                             {this.props.page}
                         </div>
                 </div>

@@ -15,6 +15,8 @@ export default class Home extends React.Component<any, {}>{
       <div>
         <Nav 
           button={"menu"}
+          page={"Interface"}
+          back={" "}
         />
         <div className={styles.container}>
           <div id={styles.top}>

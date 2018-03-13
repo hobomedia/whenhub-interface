@@ -12,7 +12,7 @@ import Refer from './components/Refer';
 import Tour from './components/Tour';
 import Tour2 from './components/Tour2';
 import Tour3 from './components/Tour3';
-
+import Expert from './components/Expert';
 
 export default () => (
   <App>
@@ -28,6 +28,7 @@ export default () => (
       <Route path="/Tour" component={Tour} />
       <Route path="/Tour2" component={Tour2} />
       <Route path="/Tour3" component={Tour3} />
+      <Route path="/Expert" component={Expert} />
 
     </Switch>
   </App>

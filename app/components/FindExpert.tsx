@@ -1,5 +1,4 @@
 import * as React from 'react';
-// import { Link } from 'react-router-dom';
 import Nav from './Nav';
 
 let styles = require('../components/Home.scss');
@@ -11,6 +10,7 @@ export default class FindExpert extends React.Component<any>{
     }
 
     onSubmit(){
+      this.props.history.push('/Expert')
     }
 
     click() {
@@ -26,7 +26,6 @@ export default class FindExpert extends React.Component<any>{
           />
           <div className={styles.container}>
             <div id={FindExpertStyles.background}>
-              {/* <Link onClick={this.click} to="/">back</Link> */}
                   <div id={FindExpertStyles.enrolled}>
                     <div style={{fontSize: "30pt", color: "white", marginLeft: "110px"}}>
                       10283
@@ -43,7 +42,7 @@ export default class FindExpert extends React.Component<any>{
                     </div>
                     <input style={{width: "320px", marginLeft: "10px"}} type="text" placeholder="All" className="form-control" name="title" />
                 </form>
-                <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit} className="btn">
+                <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">
                   View Experts
                 </button>
               </div>

@@ -82,13 +82,13 @@ export default class BeExpert extends React.Component<any, ExpertState>{
                     <div style={{ marginTop: "10px" }}>
                       <form className="form-horizontal">
                         <div style={{marginBottom: "10px"}}>
-                          <div style={{ color: "white", marginLeft: "10px", fontWeight: 100 }}>
+                          <div className={beExpertStyles.fields}>
                             Expertise Topic
                           </div>
                           <input style={{ width: "320px", marginLeft: "10px" }} type="text" placeholder="Topic" className="form-control" name="title" />
                         </div>
                         <div>
-                          <div style={{ color: "white", marginLeft: "10px", fontWeight: 100 }}>
+                          <div className={beExpertStyles.fields}>
                             Hourly Rate($)
                           </div>
                           <input style={{ width: "320px", marginLeft: "10px"}} type="text" placeholder="00.00" className="form-control" name="title" />
