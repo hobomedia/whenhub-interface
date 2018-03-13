@@ -44,11 +44,10 @@ export default class BeExpert extends React.Component<any, {}>{
                   Name
                 </div>
                   
-                    <div style={{ marginTop: "10px" }}>
-                      <form className="form-horizontal">
+                    <div style={{ marginTop: "10px"}}>
                         <div style={{marginBottom: "10px"}}>
                           <div className={expertStyles.fields}>
-                            Expertise Topic
+                            Expertise
                           </div>
                           <div className={expertStyles.fields}>
                               Topic
@@ -56,14 +55,11 @@ export default class BeExpert extends React.Component<any, {}>{
                         </div>
                         <div>
                           <div className={expertStyles.fields}>
-                            Hourly Rate($)
-                          </div>
-                          <div className={expertStyles.fields}>
-                              Rate
+                            W00.00($00.00) - Minimum 0 mins.
                           </div>
                         </div>
-                        <div style={{marginTop: "10px"}}>
-                          <div style={{fontWeight: 100, marginLeft: "10px", color: "white"}}>
+                        <div className={expertStyles.ratings}>
+                          <div style={{fontWeight: 100, marginLeft: "10px", color: "#FFF"}}>
                             Self-rating for Topic
 
                             <div className="star-rating">
@@ -72,11 +68,17 @@ export default class BeExpert extends React.Component<any, {}>{
 
                           </div>
                         </div>
-                      
-                      </form>
-                      <button style={{ backgroundColor: "#37d3b4", color: "white", width: "320px", marginLeft: "10px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">
-                        Connect With Interace
-                      </button>
+                        <div className={expertStyles.ratings} style={{position: "absolute", right: "10px", color: "#FFD700"}}>
+                            <div style={{color: "#FFF", fontWeight: 100, marginBottom: "7px"}}>
+                                Interface Rating
+                            </div>
+                            <div style={{color: "#FFD700", fontWeight: 100}}>
+                                Not Available
+                            </div>
+                        </div>
+                        <div style={{color: "#FFF", position: "absolute", left: "30%", fontWeight: 100}}>
+                            Connect With Interace
+                        </div>
                     </div>
 
 

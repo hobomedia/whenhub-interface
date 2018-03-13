@@ -29,7 +29,6 @@ export default class Tour extends React.Component<any, {}>{
                     Next
                 </button>
             </div>
-
           </div>
         </div>   
     );
