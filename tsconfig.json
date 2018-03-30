@@ -31,6 +31,8 @@
   ],
   "include": [
     "app/**/*.ts",
+    "app/**/*.d.ts",
+    "libraries/*.d.ts",
     "app/**/*.tsx",
     "test/**/*.ts",
     "test/**/*.tsx",

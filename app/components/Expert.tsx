@@ -1,8 +1,10 @@
 import * as React from 'react';
 import Nav from './Nav';
+// import { actionCreatorVoid } from '../../app/actions/helpers';
+/// <reference path="'../../libraries/fm.icelink.d.ts" />
 
-let styles = require('../components/Home.scss');
-let expertStyles = require('../components/Expert.scss')
+const styles = require('../components/Home.scss');
+const expertStyles = require('../components/Expert.scss')
 
 // interface ExpertState {rating: any, temp_rating: any}
 export default class BeExpert extends React.Component<any, {}>{ 
@@ -10,7 +12,30 @@ export default class BeExpert extends React.Component<any, {}>{
       super(props)
     }
 
+    componentWillMount() {
+
+    }
+
     onSubmit() {
+        console.log("connect");
+        // actionCreatorVoid("test").test({type: "test"})
+        
+        let audio = true;
+        let video = true;
+        
+        let localMedia = new (window as any).fm.icelink.LocalMedia(audio, video);
+        
+        localMedia.start().then(function(lm: any) {
+            console.log("media capture started");
+            
+        })
+        .then(function() {
+            const container: HTMLElement = document.getElementById("container")!; 
+            console.log(container)
+            let layoutManager = new fm.icelink.DomLayoutManager(container);
+
+            layoutManager.setLocalView(localMedia.getView());
+        })
     }
   
       render() {
@@ -39,6 +64,7 @@ export default class BeExpert extends React.Component<any, {}>{
           />
           <div className={styles.container}>
             <div id={styles.bebackground}>
+                {/* <div id="container" style={{width: "100%", height: "50%"}}></div> */}
                 <div className={expertStyles.swipe}>
                     <img src={'../resources/swipe.png'} alt="swipe" />
                 </div>
@@ -78,9 +104,11 @@ export default class BeExpert extends React.Component<any, {}>{
                                 Not Available
                             </div>
                         </div>
-                        <div style={{color: "#FFF", position: "absolute", left: "30%", fontWeight: 100}}>
-                            Connect With Interace
-                        </div>
+
+                        <button style={{ backgroundColor: "#e64b4b", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit} className="btn">
+                            Connect With Interface
+                        </button>
+
                     </div>
               </div>
             </div>

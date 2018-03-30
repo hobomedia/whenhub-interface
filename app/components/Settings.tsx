@@ -1,5 +1,7 @@
 import * as React from 'react';
 import Nav from './Nav';
+// import ReactDOM from 'react-dom';
+// import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
 let styles = require('./Home.scss');
 let settingsStyles = require('./Settings.scss');
@@ -17,6 +19,8 @@ export default class Settings extends React.Component<any, {}>{
           page={"Settings"}
         />
         <div className={styles.container}>
+            {/* <MuiThemeProvider> */}
+
             <div className={settingsStyles.settings}>
                 <div className={settingsStyles.font}>Minimum Interface duration when you are the expert</div>
                 <div>slider</div>
@@ -27,7 +31,9 @@ export default class Settings extends React.Component<any, {}>{
                 <div className={settingsStyles.lang}>Spanish</div>
 
             </div>
+            {/* </ MuiThemeProvider> */}
         </div>   
+
       </div>    
     );
   }
