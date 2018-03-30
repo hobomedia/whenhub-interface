@@ -1,15 +1,22 @@
 import * as React from 'react';
 import Nav from './Nav';
 // import { actionCreatorVoid } from '../../app/actions/helpers';
-/// <reference path="'../../libraries/fm.icelink.d.ts" />
+// / <reference path="'../../libraries/fm.icelink.d.ts" />
 
 const styles = require('../components/Home.scss');
 const expertStyles = require('../components/Expert.scss')
 
 // interface ExpertState {rating: any, temp_rating: any}
-export default class BeExpert extends React.Component<any, {}>{ 
+export default class BeExpert extends React.Component<any, {connect: Boolean, localMedia: any, layoutManager: any, remoteMedia: any}>{ 
     constructor(props:any){
       super(props)
+
+      this.state = {
+          connect: false,
+          localMedia: null,
+          layoutManager: null,
+          remoteMedia: null
+      }
     }
 
     componentWillMount() {
@@ -19,40 +26,86 @@ export default class BeExpert extends React.Component<any, {}>{
     onSubmit() {
         console.log("connect");
         // actionCreatorVoid("test").test({type: "test"})
-        
-        let audio = true;
-        let video = true;
-        
-        let localMedia = new (window as any).fm.icelink.LocalMedia(audio, video);
+        this.setState({connect: true}); 
+
+        const audio = true;
+        const video = true;
+        const that = this; 
+
+
+        const localMedia = new (window as any).fm.icelink.LocalMedia(audio, video);
         
         localMedia.start().then(function(lm: any) {
-            console.log("media capture started");
-            
+            console.log("media capture started");    
+            that.setState({localMedia: localMedia})        
         })
         .then(function() {
             const container: HTMLElement = document.getElementById("container")!; 
-            console.log(container)
-            let layoutManager = new fm.icelink.DomLayoutManager(container);
-
+            const layoutManager = new fm.icelink.DomLayoutManager(container);
+            const remoteMedia = new fm.icelink.RemoteMedia();
             layoutManager.setLocalView(localMedia.getView());
+
+
+            layoutManager.addRemoteView(remoteMedia.getId(), remoteMedia.getView());
+
+
+            const audioStream = new (window as any).fm.icelink.AudioStream(that.state.localMedia, remoteMedia);
+            const videoStream = new(window as any).fm.icelink.VideoStream(that.state.localMedia, remoteMedia);
+            const connection = new fm.icelink.Connection([audioStream, videoStream]);
+            connection.setIceServers([
+                new fm.icelink.IceServer("stun:stun.server.com:3478"),
+                new fm.icelink.IceServer("turn:turn.server.com:3478", "username", "password")
+            ]);
+            // const client = new fm.websync.client("https://v4.websync.fm/websync.ashx");
+            // client.connect({
+            //     onSuccess: function(e: any) {
+            //         console.log("connected to websync");
+            //     },
+            //     onFailure: function(e: any) {
+            //         console.log("failed to connect to websync");
+            //     }
+            // });
+            that.setState({layoutManager: layoutManager, remoteMedia: remoteMedia})
         })
+    }
+
+    onStopSubmit() {
+        const that = this; 
+        this.state.localMedia.stop().then(function(lm: any) {
+            console.log("media capture stopped");
+            that.setState({connect: false})
+        })
+
+        // this.state.layoutManager.removeRemoteView(this.state.remoteMedia.getId())
+
+
+    }
+
+    createId() {
+
+        function S4() {  
+            return (((1+Math.random())*0x10000)|0).toString(16).substring(1);  
+         }  
+         return (S4() + S4() + "-" + S4() + "-4" + S4().substr(0,3) + "-" + S4() + "-" + S4() + S4() + S4()).toLowerCase();
+
     }
   
       render() {
+        if(this.state.connect == false){
         let stars = [];
         
-        for(let i = 0; i < 5; i++) {
-        let klass = `${expertStyles.star}`;
-        `${styles.appTab} ${styles.active}`
-            stars.push(
-            <label
-            key={i}
-            className={klass}
-            >
-            ★
+          for (let i = 0; i < 5; i++) {
+              let klass = `${expertStyles.star}`;
+              `${styles.appTab} ${styles.active}`
+              stars.push(
+                  <label
+                      key={i}
+                      className={klass}
+                  >
+                      ★
             </label>
-        );
-      }
+              );
+          }
 
 
       return (
@@ -105,7 +158,7 @@ export default class BeExpert extends React.Component<any, {}>{
                             </div>
                         </div>
 
-                        <button style={{ backgroundColor: "#e64b4b", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit} className="btn">
+                        <button style={{ backgroundColor: "#e64b4b", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">
                             Connect With Interface
                         </button>
 
@@ -114,7 +167,18 @@ export default class BeExpert extends React.Component<any, {}>{
             </div>
           </div>
         </div>
-      );
+      )}else {
+          return (
+             <div className={styles.container}>
+                <div className={expertStyles.video} id="container">
+                    <button style={{ backgroundColor: "#e64b4b", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onStopSubmit.bind(this)} className="btn">
+                        End Interface
+                    </button>
+
+                </div>
+             </div> 
+          )
+      }
     }
   }
   
