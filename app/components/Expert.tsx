@@ -7,7 +7,7 @@ const styles = require('../components/Home.scss');
 const expertStyles = require('../components/Expert.scss')
 
 // interface ExpertState {rating: any, temp_rating: any}
-export default class BeExpert extends React.Component<any, {connect: Boolean, localMedia: any, layoutManager: any, remoteMedia: any}>{ 
+export default class BeExpert extends React.Component<any, {connect: Boolean, localMedia: any, layoutManager: any, remoteMedia: any, client: any}>{ 
     constructor(props:any){
       super(props)
 
@@ -15,7 +15,8 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
           connect: false,
           localMedia: null,
           layoutManager: null,
-          remoteMedia: null
+          remoteMedia: null, 
+          client: null
       }
     }
 
@@ -53,19 +54,42 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
             const videoStream = new(window as any).fm.icelink.VideoStream(that.state.localMedia, remoteMedia);
             const connection = new fm.icelink.Connection([audioStream, videoStream]);
             connection.setIceServers([
-                new fm.icelink.IceServer("stun:stun.server.com:3478"),
-                new fm.icelink.IceServer("turn:turn.server.com:3478", "username", "password")
+                new fm.icelink.IceServer("stun:turn.icelink.fm:3478"),
+                new fm.icelink.IceServer("turn:turn.icelink.fm:443", "test", "pa55w0rd!")
             ]);
-            // const client = new fm.websync.client("https://v4.websync.fm/websync.ashx");
-            // client.connect({
-            //     onSuccess: function(e: any) {
-            //         console.log("connected to websync");
-            //     },
-            //     onFailure: function(e: any) {
-            //         console.log("failed to connect to websync");
-            //     }
-            // });
-            that.setState({layoutManager: layoutManager, remoteMedia: remoteMedia})
+            const client = new (window as any).fm.websync.client("https://v4.websync.fm/websync.ashx");
+            client.connect({
+                onSuccess: function(e: any) {
+                    console.log("connected to websync");
+                },
+                onFailure: function(e: any) {
+                    console.log("failed to connect to websync");
+                }
+            });
+            client.joinConference({
+                conferenceChannel: "/123456",
+             
+                onSuccess: function(e: any) {
+                    console.log("joined the conference");
+                },
+                onFailure: function(e: any) {
+                    console.log("failed to join the conference");
+                },
+             
+                onRemoteClient: function(remoteClient: any) {
+                    let streams = [audioStream, videoStream]
+                    const connection = new fm.icelink.Connection(streams);
+             
+                    connection.setIceServers([
+                        new fm.icelink.IceServer("stun:turn.icelink.fm:3478"),
+                        new fm.icelink.IceServer("turn:turn.icelink.fm:443", "test", "pa55w0rd!")
+                    ]);
+             
+                    return connection;
+                }
+            });
+
+            that.setState({layoutManager: layoutManager, remoteMedia: remoteMedia, client: client})
         })
     }
 
@@ -73,8 +97,14 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
         const that = this; 
         this.state.localMedia.stop().then(function(lm: any) {
             console.log("media capture stopped");
-            that.setState({connect: false})
         })
+        
+        this.state.client.disconnect({
+            onComplete: function(e: any) {
+                console.log("disconnected");
+                that.setState({connect: false})
+            }
+        });
 
         // this.state.layoutManager.removeRemoteView(this.state.remoteMedia.getId())
 
