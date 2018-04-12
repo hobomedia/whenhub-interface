@@ -5,9 +5,13 @@ import Nav from './Nav';
 let styles = require('./Home.scss');
 
 
-export default class Home extends React.Component<any, {}>{ 
+export default class Home extends React.Component<any, {experts: any}>{ 
   constructor(props:any){
     super(props)
+
+    this.state = {
+      experts: []
+    }
   }
 
     render() {
@@ -20,7 +24,7 @@ export default class Home extends React.Component<any, {}>{
         />
         <div className={styles.container}>
           <div id={styles.top}>
-            <Link to="/FindExpert"><span></span></Link>
+            <Link to={`/FindExpert`}><span></span></Link>
             <div className={styles.overlay}>
               <div id={styles.text}>Find an Expert</div>
             </div>

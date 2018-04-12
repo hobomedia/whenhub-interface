@@ -45,24 +45,24 @@ export default class BeExpert extends React.Component<any, ExpertState>{
       render() {
         let stars = [];
         
-        for(let i = 0; i < 5; i++) {
-        let klass = `${beExpertStyles.star}`;
-        `${styles.appTab} ${styles.active}`
-        if (this.state.rating >= i && this.state.rating != null) {
+        for (let i = 0; i < 5; i++) {
+          let klass = `${beExpertStyles.star}`;
+          `${styles.appTab} ${styles.active}`
+          if (this.state.rating >= i && this.state.rating != null) {
             klass += ` ${beExpertStyles.selected}`;
-        }
+          }
 
-        stars.push(
-          <label
-          key={i}
-          className={klass}
-          onClick={this.rate.bind(this, i)}
-          onMouseOver={this.star_over.bind(this, i)}
-          onMouseOut={this.star_out.bind(this)}>
-          ★
-          </label>
-      );
-      }
+          stars.push(
+            <label
+              key={i}
+              className={klass}
+              onClick={this.rate.bind(this, i)}
+              onMouseOver={this.star_over.bind(this, i)}
+              onMouseOut={this.star_out.bind(this)}>
+              ★
+            </label>
+          );
+        }
 
 
       return (
