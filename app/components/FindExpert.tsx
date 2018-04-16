@@ -39,7 +39,7 @@ export default class FindExpert extends React.Component<any, {experts: any, clic
         }
       }).then(function (response: any) {
         console.log(response.data)
-        that.setState({experts: response.data, click: true, loading: false})
+        that.setState({experts: response.data, click: true, loading: false,  value: ""})
       }).catch(function (error: any) {
         console.log(error)
   
@@ -75,7 +75,7 @@ export default class FindExpert extends React.Component<any, {experts: any, clic
                 <div id={FindExpertStyles.background}>
                   <div id={FindExpertStyles.enrolled}>
                     <div style={{ fontSize: "30pt", color: "white", marginLeft: "110px" }}>
-                      1026
+                      10264
                     </div>
                     <div style={{ color: "white", marginLeft: "124px", fontWeight: 100 }}>
                       Experts Enrolled
