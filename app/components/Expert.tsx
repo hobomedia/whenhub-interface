@@ -154,7 +154,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
 
     showBack() {
         if(this.props.experts.length > 0 && this.state.num > 0){
-            return <button style={{display: "inline", border: "none", backgroundColor: "transparent"}} onClick={this.back.bind(this)}>
+            return <button style={{display: "inline", float: "left", marginTop: "15px", border: "none", backgroundColor: "transparent"}} onClick={this.back.bind(this)}>
                 <i className="fa fa-chevron-circle-left"></i>
         </button>
         }
@@ -163,7 +163,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
     
     showNext() {
         if(this.props.experts.length > 0 && this.props.experts.length >= this.state.num + 2){
-            return <button style={{display: "inline", marginTop: "15px", border: "none", backgroundColor: "transparent", marginLeft: "247px"}} onClick={this.next.bind(this)}>
+            return <button style={{display: "inline", float: "right", marginTop: "15px", border: "none", backgroundColor: "transparent", marginLeft: "247px"}} onClick={this.next.bind(this)}>
                 <i className="fa fa-chevron-circle-right"></i>
         </button>
         }
@@ -278,7 +278,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
                         {this.showBack()}
                         {this.showNext()}
                     </div>
-                <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", marginTop: "217px", paddingTop: "13px", width: '338px', height: "302px"}}>
+                <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", marginTop: "217px", position: "absolute", paddingTop: "13px", width: '338px', height: "302px"}}>
                         <div style={{ color: "white", marginLeft: "10px", fontSize: "25px", fontWeight: 200}}>
                             {this.props.experts[this.state.num].name}
                         </div>
