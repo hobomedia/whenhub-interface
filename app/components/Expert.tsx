@@ -268,7 +268,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
             expertLength={this.props.experts.length}
             expertNum={this.state.num}
           />
-          <div className={styles.container}>
+          <div className={styles.container} style={{position: "relative"}}>
             <div id={styles.bebackground} style={{backgroundImage: 'url(' + this.props.experts[this.state.num].picture + ')', backgroundRepeat: 'no-repeat', backgroundSize: '337px 560px'}}>
                 {/* <div id="container" style={{width: "100%", height: "50%"}}></div> */}
                 {/* <div className={expertStyles.swipe}>
@@ -278,7 +278,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
                         {this.showBack()}
                         {this.showNext()}
                     </div>
-                <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", marginTop: "217px", position: "absolute", paddingTop: "13px", width: '338px', height: "302px"}}>
+                <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", bottom: "0", position: "absolute", paddingTop: "13px", width: '338px', height: "255px"}}>
                         <div style={{ color: "white", marginLeft: "10px", fontSize: "25px", fontWeight: 200}}>
                             {this.props.experts[this.state.num].name}
                         </div>
