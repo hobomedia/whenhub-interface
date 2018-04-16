@@ -74,7 +74,7 @@ export default class FindExpert extends React.Component<any, {experts: any, clic
               <div className={styles.container}>
                 <div id={FindExpertStyles.background}>
                   <div id={FindExpertStyles.enrolled}>
-                    <div style={{ fontSize: "30pt", color: "white", marginLeft: "110px" }}>
+                    <div style={{ fontSize: "30pt", color: "white", margin: "0 Auto", textAlign: "center", width:"50%" }}>
                       10264
                     </div>
                     <div style={{ color: "white", marginLeft: "124px", fontWeight: 100 }}>
