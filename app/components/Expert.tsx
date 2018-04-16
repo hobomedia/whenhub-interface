@@ -9,7 +9,7 @@ const beExpertStyles = require('../components/BeExpert.scss')
 
 
 // interface ExpertState {rating: any, temp_rating: any}
-export default class BeExpert extends React.Component<any, {connect: Boolean, localMedia: any, layoutManager: any, remoteMedia: any, client: any}>{ 
+export default class BeExpert extends React.Component<any, {connect: Boolean, localMedia: any, layoutManager: any, remoteMedia: any, client: any, num: number}>{ 
     constructor(props:any){
       super(props)
       this.state = {
@@ -17,7 +17,8 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
           localMedia: null,
           layoutManager: null,
           remoteMedia: null, 
-          client: null
+          client: null,
+          num: 0
       }
     }
 
@@ -151,8 +152,33 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
         })
     }
 
+    showBack() {
+        if(this.props.experts.length > 0 && this.state.num > 0){
+            return <button style={{display: "inline", border: "none", backgroundColor: "transparent"}} onClick={this.next.bind(this)}>
+                <i className="fa fa-chevron-circle-left"></i>
+        </button>
+        }
+        return
+    }
+    
+    showNext() {
+        if(this.props.experts.length > 0 && this.props.experts.length >= this.state.num + 2){
+            return <button style={{display: "inline", marginTop: "15px", border: "none", backgroundColor: "transparent", marginLeft: "247px"}} onClick={this.next.bind(this)}>
+                <i className="fa fa-chevron-circle-right"></i>
+        </button>
+        }
+        return 
+    }
 
 
+    next() {
+        this.setState({num: this.state.num + 1})
+    }
+
+    back() {
+        this.setState({num: this.state.num - 1})
+
+    }
     onStopSubmit() {
         const that = this; 
         this.state.localMedia.stop().then(function(lm: any) {
@@ -181,13 +207,12 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
     }
   
       render() {
-        console.log(this.props.experts)
         if(this.state.connect == false){
             let stars = [];
             if(this.props.experts.length > 0){
                 for (let i = 0; i < 5; i++) {
-                    if (this.props.experts[0].expertise.selfRating > 0 ) {
-                        if(i + 1 <= this.props.experts[0].expertise.selfRating){
+                    if (this.props.experts[this.state.num].expertise.selfRating > 0 ) {
+                        if(i + 1 <= this.props.experts[this.state.num].expertise.selfRating){
                             let klass = `${beExpertStyles.star}` + ` ${beExpertStyles.selected}`;
                             `${styles.appTab} ${styles.active}`
                             stars.push(
@@ -198,7 +223,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
                                     ★
                                 </label>
                             );
-                        }else if(i + 1> this.props.experts[0].expertise.selfRating){
+                        }else if(i + 1> this.props.experts[this.state.num].expertise.selfRating){
                             let klass = `${expertStyles.star}`;
                             `${styles.appTab} ${styles.active}`
         
@@ -239,17 +264,24 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
             back={"Find an Expert"}
             current={"Expert"}
             handler={this.props.handler}
+            next={this.next.bind(this)}
+            expertLength={this.props.experts.length}
+            expertNum={this.state.num}
           />
           <div className={styles.container}>
-            <div id={styles.bebackground} style={{backgroundImage: 'url(' + this.props.experts[0].picture + ')', backgroundRepeat: 'no-repeat', backgroundSize: '337px 560px'}}>
+            <div id={styles.bebackground} style={{backgroundImage: 'url(' + this.props.experts[this.state.num].picture + ')', backgroundRepeat: 'no-repeat', backgroundSize: '337px 560px'}}>
                 {/* <div id="container" style={{width: "100%", height: "50%"}}></div> */}
                 {/* <div className={expertStyles.swipe}>
                     <img src={'../resources/swipe.png'} alt="swipe" />
                 </div> */}
-                <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", marginTop: "260px", paddingTop: "13px", position: "absolute", width: '338px', height: "302px"}}>
-                    <div style={{ color: "white", marginLeft: "10px", fontSize: "25px", fontWeight: 200}}>
-                    {this.props.experts[0].name}
+                    <div>
+                        {this.showBack()}
+                        {this.showNext()}
                     </div>
+                <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", marginTop: "217px", paddingTop: "13px", position: "absolute", width: '338px', height: "302px"}}>
+                        <div style={{ color: "white", marginLeft: "10px", fontSize: "25px", fontWeight: 200}}>
+                            {this.props.experts[this.state.num].name}
+                        </div>
                     <div style={{ marginTop: "10px"}}>
                         <div>
                             <div className={expertStyles.fields}>
@@ -259,12 +291,12 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
 
                         <div style={{marginBottom: "10px"}}>
                             <div className={expertStyles.fields}>
-                            {this.props.experts[0].expertise.expertise}
+                            {this.props.experts[this.state.num].expertise.expertise}
                             </div>
                         </div>
                         <div>
                             <div className={expertStyles.fields}>
-                            W{this.props.experts[0].expertise.hourlyRate +'.00 '}({'$' + this.props.experts[0].expertise.hourlyRate * .25 + '.00'}) per hour - Minimum {this.props.experts[0].expertise.minimumDuration} mins.
+                            W{this.props.experts[this.state.num].expertise.hourlyRate +'.00 '}({'$' + this.props.experts[this.state.num].expertise.hourlyRate * .25 + '.00'}) per hour - Minimum {this.props.experts[this.state.num].expertise.minimumDuration} mins.
                             </div>
                         </div>
                         <div className={expertStyles.ratings}>

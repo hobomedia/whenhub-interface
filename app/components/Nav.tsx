@@ -54,6 +54,21 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
         }
         return
     }
+
+    next() {
+        if(this.props.current == "Expert" && this.props.expertLength >= this.props.expertNum + 2){
+            return  <div style={{display: "inline", right: "0%", position: "absolute"}}>
+            <div style={{display: "inline", fontWeight: 100}}>
+                Next Expert
+            </div>
+            <button style={{ backgroundColor: '#37d3b4', border: 'none', padding: "0" }} data-tclass="btn" onClick={this.props.next}><a href="#">
+                <i className="fa fa-angle-right"></i></a>
+            </button>
+        </div>
+
+        }
+        return
+    }
     
 
     render() {
@@ -67,6 +82,7 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
                         <div style={{display: "inline", left: "42%", marginTop: "8pt", position: "absolute"}}>
                             {this.props.page}
                         </div>
+                        {/* {this.next()} */}
                 </div>
                 <div className="navbar navbar-inverse navbar-fixed-left" style={this.display()}>
                     <ul className="nav navbar-nav">
