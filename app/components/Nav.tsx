@@ -6,18 +6,20 @@ let styles = require('./Home.scss');
 export default class Nav extends React.Component<any, {menuClick: string}> {
     constructor(props:any){
         super(props)
-
         this.state = {
             menuClick: "hidden"
         }
     }
 
-    handleClick() {
-        history.back();
+    handleClick(e: any) {
+        if(this.props.current == "Expert"){
+            this.props.handler(e)
+        }else {
+            history.back();
+        }
     }
 
     walletClick() {
-        console.log("click")
         console.log(history)
         console.log(this.props)
     }

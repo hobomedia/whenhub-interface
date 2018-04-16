@@ -12,7 +12,6 @@ const beExpertStyles = require('../components/BeExpert.scss')
 export default class BeExpert extends React.Component<any, {connect: Boolean, localMedia: any, layoutManager: any, remoteMedia: any, client: any}>{ 
     constructor(props:any){
       super(props)
-        console.log(props)
       this.state = {
           connect: false,
           localMedia: null,
@@ -182,28 +181,42 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
     }
   
       render() {
-        console.log(this.state)
+        console.log(this.props.experts)
         if(this.state.connect == false){
-        let stars = [];
+            let stars = [];
+            if(this.props.experts.length > 0){
+                for (let i = 0; i < 5; i++) {
+                    if (this.props.experts[0].expertise.selfRating > 0 ) {
+                        if(i + 1 <= this.props.experts[0].expertise.selfRating){
+                            let klass = `${beExpertStyles.star}` + ` ${beExpertStyles.selected}`;
+                            `${styles.appTab} ${styles.active}`
+                            stars.push(
+                                <label
+                                    key={i}
+                                    className={klass}
+                                >
+                                    ★
+                                </label>
+                            );
+                        }else if(i + 1> this.props.experts[0].expertise.selfRating){
+                            let klass = `${expertStyles.star}`;
+                            `${styles.appTab} ${styles.active}`
         
-            for (let i = 0; i < 5; i++) {
-                console.log(i)
-                if (this.props.experts[0].expertise.selfRating > 0 ) {
-                    if(i + 1 <= this.props.experts[0].expertise.selfRating){
-                        let klass = `${beExpertStyles.star}` + ` ${beExpertStyles.selected}`;
-                        `${styles.appTab} ${styles.active}`
-                        stars.push(
-                            <label
-                                key={i}
-                                className={klass}
-                            >
-                                ★
-                            </label>
-                        );
-                    }else if(i + 1> this.props.experts[0].expertise.selfRating){
+                            stars.push(
+                                <label
+                                    key={i}
+                                    className={klass}
+                                >
+                                    ★
+                                </label>
+                            );
+        
+                        }
+
+                    }else {
                         let klass = `${expertStyles.star}`;
                         `${styles.appTab} ${styles.active}`
-    
+
                         stars.push(
                             <label
                                 key={i}
@@ -212,25 +225,9 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
                                 ★
                             </label>
                         );
-    
+
                     }
-
-                }else {
-                    let klass = `${expertStyles.star}`;
-                    `${styles.appTab} ${styles.active}`
-
-                    stars.push(
-                        <label
-                            key={i}
-                            className={klass}
-                        >
-                            ★
-                        </label>
-                    );
-
                 }
-
-
             }
 
 
@@ -240,6 +237,8 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
             button={"back"}
             page={"Interface"}
             back={"Find an Expert"}
+            current={"Expert"}
+            handler={this.props.handler}
           />
           <div className={styles.container}>
             <div id={styles.bebackground} style={{backgroundImage: 'url(' + this.props.experts[0].picture + ')', backgroundRepeat: 'no-repeat', backgroundSize: '337px 560px'}}>
