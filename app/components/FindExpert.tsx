@@ -120,18 +120,18 @@ export default class FindExpert extends React.Component<any, {experts: any, clic
 
                   <div className={styles.container}>
                     <div id={FindExpertStyles.background}>
-                        <div style={{color: "white"}}>
+                        <div style={{color: "white", width: "50%", margin: "0 Auto", paddingTop: "50px", paddingBottom: "50px", fontWeight: 100}}>
                           No Experts Currently Available
                         </div>
-                        <div style={{color: "white"}}>
+                        <div style={{color: "white", width: "90%", margin: "0 Auto", paddingBottom: "100px"}}>
                           Would you like to be notified when an expert on {this.state.value} comes online?
                         </div>
 
-                        <div>
-                          <button style={{ backgroundColor: "#736cff", color: "white", marginLeft: "10px", width: "110px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                        <div style={{paddingLeft: "25px"}}>
+                          <button style={{ backgroundColor: "#736cff", color: "white", marginLeft: "10px", width: "130px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)} className="btn">
                             No
                           </button>
-                          <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "110px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                          <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "130px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)} className="btn">
                             Yes
                           </button>
 
