@@ -99,12 +99,49 @@ export default class FindExpert extends React.Component<any, {experts: any, clic
             </div>
           );
         }else {
-          return (
-            <Expert 
-              experts={this.state.experts}
-              handler={this.handler.bind(this)}
-            />
-          )
+            if(this.state.experts.length > 0){
+              return (
+                <Expert 
+                  experts={this.state.experts}
+                  handler={this.handler.bind(this)}
+                />
+              )
+
+            }else {
+              return (
+                <div>
+                  <Nav
+                    button={"back"}
+                    page={"No Experts Available"}
+                    back={"Find An Expert"}
+                    handler={this.handler.bind(this)}
+                    current={"Expert"}
+                  />
+
+                  <div className={styles.container}>
+                    <div id={FindExpertStyles.background}>
+                        <div style={{color: "white"}}>
+                          No Experts Currently Available
+                        </div>
+                        <div style={{color: "white"}}>
+                          Would you like to be notified when an expert on {this.state.value} comes online?
+                        </div>
+
+                        <div>
+                          <button style={{ backgroundColor: "#736cff", color: "white", marginLeft: "10px", width: "110px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                            No
+                          </button>
+                          <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "110px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                            Yes
+                          </button>
+
+                        </div>
+                    </div>
+
+                  </div>
+                </div>
+              )
+            }
         }
     }
   }
