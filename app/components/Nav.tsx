@@ -79,7 +79,7 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
                         <div style={{display: "inline", fontWeight: 100}}>
                             {this.props.back? this.props.back : "Interface"}
                         </div>
-                        <div style={{display: "inline", left: "42%", marginTop: "8pt", position: "absolute"}}>
+                        <div style={{display: "inline", width: "50%", margin: " 8pt 0 Auto", textAlign: "center", position: "absolute"}}>
                             {this.props.page}
                         </div>
                         {/* {this.next()} */}
