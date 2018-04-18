@@ -91,7 +91,7 @@ export default class FindExpert extends React.Component<any, {experts: any, clic
                     </form>
                     <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)} className="btn">
                       
-                      {this.state.loading? <i className="fa fa-spinner fa-spin" style={{height: "auto"}}/>: "View Experts"}
+                      {this.state.loading? <i className="fa fa-spinner fa-spin" style={{height: "auto", display: "inline-block"}}/>: "View Experts"}
                     </button>
                   </div>
                 </div>
