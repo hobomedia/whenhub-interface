@@ -291,7 +291,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
 
                         <div style={{marginBottom: "10px"}}>
                             <div className={expertStyles.fields}>
-                            {this.props.experts[this.state.num].expertise.expertise}
+                            {this.props.experts[this.state.num].expertise.expertise.length > 50? this.props.experts[this.state.num].expertise.expertise.substring(0, 50) + "...": this.props.experts[this.state.num].expertise.expertise}
                             </div>
                         </div>
                         <div>
