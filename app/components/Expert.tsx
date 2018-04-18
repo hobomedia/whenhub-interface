@@ -155,7 +155,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
     showBack() {
         if(this.props.experts.length > 0 && this.state.num > 0){
             return <button style={{display: "inline", float: "left", marginTop: "15px", border: "none", backgroundColor: "transparent"}} onClick={this.back.bind(this)}>
-                <i className="fa fa-chevron-circle-left" style={{color: 'black'}}></i>
+                <i className="fa fa-chevron-circle-left" style={{color: "#37d3b4"}}></i>
         </button>
         }
         return
@@ -164,7 +164,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
     showNext() {
         if(this.props.experts.length > 0 && this.props.experts.length >= this.state.num + 2){
             return <button style={{display: "inline", float: "right", marginTop: "15px", border: "none", backgroundColor: "transparent", marginLeft: "247px"}} onClick={this.next.bind(this)}>
-                <i className="fa fa-chevron-circle-right" style={{color: 'black'}}></i>
+                <i className="fa fa-chevron-circle-right" style={{color: "#37d3b4"}}></i>
         </button>
         }
         return 
