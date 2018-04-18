@@ -44,12 +44,12 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
     buttonDisplay(){
         if(this.props.button == "menu"){
             return <button style={{ backgroundColor: '#37d3b4', border: 'none', marginRight: "55px", padding: "0"  }} data-tclass="btn" onClick={this.handleMenuClick.bind(this)}><a href="#">
-            <i className="fa fa-bars"></i></a>
+            <i className="fa fa-bars" style={{paddingTop: "10px"}}></i></a>
         </button>
 
         }else if (this.props.button == "back"){
             return <button style={{ backgroundColor: '#37d3b4', border: 'none', padding: "0" }} data-tclass="btn" onClick={this.handleClick.bind(this)}><a href="#">
-            <i className="fa fa-angle-left"></i></a>
+            <i className="fa fa-angle-left" style={{paddingTop: "10px"}}></i></a>
         </button>
         }
         return
