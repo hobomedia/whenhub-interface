@@ -269,7 +269,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
             expertNum={this.state.num}
           />
           <div className={styles.container} style={{position: "relative"}}>
-            <div id={styles.bebackground} style={{backgroundImage: 'url(' + this.props.experts[this.state.num].picture + ')', backgroundRepeat: 'no-repeat', backgroundSize: '337px 560px'}}>
+            <div id={styles.bebackground} style={{backgroundImage: 'url(' + this.props.experts[this.state.num].picture + ')', backgroundRepeat: 'no-repeat', backgroundSize: 'auto 560px', backgroundPosition: 'center'}}>
                 {/* <div id="container" style={{width: "100%", height: "50%"}}></div> */}
                 {/* <div className={expertStyles.swipe}>
                     <img src={'../resources/swipe.png'} alt="swipe" />
