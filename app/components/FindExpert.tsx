@@ -74,24 +74,24 @@ export default class FindExpert extends React.Component<any, {experts: any, clic
               <div className={styles.container}>
                 <div id={FindExpertStyles.background}>
                   <div id={FindExpertStyles.enrolled}>
-                    <div style={{ fontSize: "30pt", color: "white", margin: "0 Auto", textAlign: "center", width:"50%" }}>
+                    <div id={FindExpertStyles.number}>
                       10264
                     </div>
-                    <div style={{ color: "white", marginLeft: "124px", fontWeight: 100 }}>
+                    <div id={FindExpertStyles.enrolledText}>
                       Experts Enrolled
-                        </div>
+                    </div>
                   </div>
     
                   <div id={FindExpertStyles.enrolled}>
                     <form className="form-horizontal">
-                      <div style={{ color: "white", marginLeft: "10px", fontWeight: 100 }}>
+                      <div id={FindExpertStyles.topic}>
                         Topic
                         </div>
-                      <input style={{ width: "320px", marginLeft: "10px" }} value={this.state.value} onChange={this.handleChange.bind(this)} type="text" placeholder="All" className="form-control" name="title" />
+                      <input id={FindExpertStyles.input} value={this.state.value} onChange={this.handleChange.bind(this)} type="text" placeholder="All" className="form-control" name="title" />
                     </form>
-                    <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                    <button className={FindExpertStyles.search + ` btn`} type="button" onClick={this.onSubmit.bind(this)}>
                       
-                      {this.state.loading? <i className="fa fa-spinner fa-spin" style={{height: "auto", display: "inline-block"}}/>: "View Experts"}
+                      {this.state.loading? <i className="fa fa-spinner fa-spin" id={FindExpertStyles.spinner}/>: "View Experts"}
                     </button>
                   </div>
                 </div>
@@ -120,18 +120,18 @@ export default class FindExpert extends React.Component<any, {experts: any, clic
 
                   <div className={styles.container}>
                     <div id={FindExpertStyles.background}>
-                        <div style={{color: "white", width: "50%", margin: "0 Auto", paddingTop: "50px", paddingBottom: "50px", fontWeight: 100}}>
+                        <div id={FindExpertStyles.toptext}>
                           No Experts Currently Available
                         </div>
-                        <div style={{color: "white", width: "90%", margin: "0 Auto", paddingBottom: "100px"}}>
+                        <div id={FindExpertStyles.bottomtext}>
                           Would you like to be notified when an expert on {this.state.value} comes online?
                         </div>
 
                         <div style={{paddingLeft: "25px"}}>
-                          <button style={{ backgroundColor: "#736cff", color: "white", marginLeft: "10px", width: "130px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                          <button id={FindExpertStyles.no} type="button" onClick={this.onSubmit.bind(this)} className="btn">
                             No
                           </button>
-                          <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "130px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                          <button id={FindExpertStyles.yes} type="button" onClick={this.onSubmit.bind(this)} className="btn">
                             Yes
                           </button>
 

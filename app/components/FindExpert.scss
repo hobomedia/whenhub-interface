@@ -12,4 +12,77 @@
         padding-top: 100px
     }
 
+    #number {
+        font-size: 30pt;
+        color: white;
+        margin: 0 Auto;
+        text-align: center;
+        width: 50%;
+    }
+
+    #enrolledText {
+        color: white;
+        margin-left: 124px;
+        font-weight: 100;
+    }
+
+    #topic {
+        color: white;
+        margin-left: 10px;
+        font-weight: 100
+    }
+
+    #input {
+        width: 320px;
+        margin-left: 10px;
+    }
+
+    .search {
+        background-color: #37d3b4;
+        color: white;
+        margin-left: 10px;
+        width: 320px;
+        margin-top: 10px;
+        border-radius: 20px;
+        font-weight: 100;
+    }
+
+    #spinner {
+        height: auto;
+        display: inline-block;
+    }
+
+    #no {
+        background-color: #736cff;
+        color: white;
+        margin-left: 10px;
+        width: 130px;
+        margin-top: 10px;
+        border-radius: 20px;
+        font-weight: 100 
+    }
+
+    #yes {
+        background-color: #37d3b4;
+        color: white;
+        margin-left: 10px;
+        width: 130px;
+        margin-top: 10px;
+        border-radius: 20px;
+        font-weight: 100;
+    }
+    #toptext {
+        color: white;
+        width: 50%;
+        margin: 0 Auto;
+        padding-top: 50px;
+        padding-bottom: 50px;
+        font-weight: 100;
+    }
+    #bottomtext {
+        color: white;
+        width: 90%;
+        margin: 0 Auto;
+        padding-bottom: 100px;
+    }
 }

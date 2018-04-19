@@ -4,8 +4,8 @@ import Nav from './Nav';
 // / <reference path="'../../libraries/fm.icelink.d.ts" />
 
 const styles = require('../components/Home.scss');
-const expertStyles = require('../components/Expert.scss')
 const beExpertStyles = require('../components/BeExpert.scss')
+const expertStyles = require('../components/Expert.scss')
 
 
 // interface ExpertState {rating: any, temp_rating: any}
@@ -154,8 +154,8 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
 
     showBack() {
         if(this.props.experts.length > 0 && this.state.num > 0){
-            return <button style={{display: "inline", float: "left", marginTop: "15px", border: "none", backgroundColor: "transparent"}} onClick={this.back.bind(this)}>
-                <i className="fa fa-chevron-circle-left" style={{color: "#37d3b4"}}></i>
+            return <button className={expertStyles.back} onClick={this.back.bind(this)}>
+                <i className="fa fa-chevron-circle-left"></i>
         </button>
         }
         return
@@ -163,8 +163,8 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
     
     showNext() {
         if(this.props.experts.length > 0 && this.props.experts.length >= this.state.num + 2){
-            return <button style={{display: "inline", float: "right", marginTop: "15px", border: "none", backgroundColor: "transparent", marginLeft: "247px"}} onClick={this.next.bind(this)}>
-                <i className="fa fa-chevron-circle-right" style={{color: "#37d3b4"}}></i>
+            return <button className={expertStyles.next} onClick={this.next.bind(this)}>
+                <i className="fa fa-chevron-circle-right"></i>
         </button>
         }
         return 
@@ -278,8 +278,8 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
                         {this.showBack()}
                         {this.showNext()}
                     </div>
-                <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", bottom: "0", position: "absolute", paddingTop: "13px", width: '338px', height: "255px"}}>
-                        <div style={{ color: "white", marginLeft: "10px", fontSize: "25px", fontWeight: 200}}>
+                <div className={expertStyles.info}>
+                        <div id={expertStyles.name}>
                             {this.props.experts[this.state.num].name}
                         </div>
                     <div style={{ marginTop: "10px"}}>
@@ -309,7 +309,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
 
                             </div>
                         </div>
-                        <button style={{ backgroundColor: "#e64b4b", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                        <button className={expertStyles.button + ` btn`} type="button" onClick={this.onSubmit.bind(this)}>
                             Connect With Interface
                         </button>
 
@@ -322,7 +322,7 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
           return (
              <div className={styles.container}>
                 <div className={expertStyles.video} id="container">
-                    <button style={{ backgroundColor: "#e64b4b", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onStopSubmit.bind(this)} className="btn">
+                    <button className={expertStyles.button + ` btn`} type="button" onClick={this.onStopSubmit.bind(this)}>
                         End Interface
                     </button>
 

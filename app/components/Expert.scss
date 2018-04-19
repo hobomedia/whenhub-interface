@@ -1,4 +1,12 @@
 :local {
+    .info {
+        background-color: rgba(0, 0, 0, 0.5);
+        bottom: 0;
+        position: absolute;
+        padding-top: 13px;
+        width: 338px;
+        height: 255px
+    }
     .star {
         display: inline-block;
         padding: 3px;
@@ -32,6 +40,13 @@
         margin-top: 10px;
     }
 
+    #name {
+        color: white;
+        margin-left: 10px;
+        font-size: 25px;
+        font-weight: 200;
+    }
+
     img {
         width: 10%;
     }
@@ -41,4 +56,38 @@
         height: 100%;
     }
 
+    .button {
+        background-color: #e64b4b;
+        color: white;
+        margin-left: 10px;
+        width: 320px;
+        margin-top: 10px;
+        border-radius: 20px;
+        font-weight: 100;
+    }
+
+    .back {
+        display: inline;
+        float: left;
+        margin-top: 15px;
+        border: none;
+        background-color: transparent;
+    }
+    .back i {
+        color: #37d3b4;
+        font-size: 20pt;
+    }
+
+    .next {
+        display: inline;
+        float: right;
+        margin-top: 15px;
+        border: none;
+        background-color: transparent;
+        margin-left: 247px;
+    }
+    .next i {
+        color: #37d3b4;
+        font-size: 20pt;
+    }
 }
