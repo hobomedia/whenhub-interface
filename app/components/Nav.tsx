@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 
-let styles = require('./Home.scss');
+// const styles = require('./Home.scss');
+const navStyles = require('./Nav.scss');
 
 export default class Nav extends React.Component<any, {menuClick: string}> {
     constructor(props:any){
@@ -43,13 +44,13 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
 
     buttonDisplay(){
         if(this.props.button == "menu"){
-            return <button style={{ backgroundColor: '#37d3b4', border: 'none', marginRight: "55px", padding: "0"  }} data-tclass="btn" onClick={this.handleMenuClick.bind(this)}><a href="#">
-            <i className="fa fa-bars" style={{paddingTop: "4px"}}></i></a>
+            return <button id={navStyles.menuBtn} data-tclass="btn" onClick={this.handleMenuClick.bind(this)}><a href="#">
+            <i className="fa fa-bars"></i></a>
         </button>
 
         }else if (this.props.button == "back"){
-            return <button style={{ backgroundColor: '#37d3b4', border: 'none', padding: "0" }} data-tclass="btn" onClick={this.handleClick.bind(this)}><a href="#">
-            <i className="fa fa-angle-left" style={{paddingTop: "4px"}}></i></a>
+            return <button id={navStyles.backBtn} data-tclass="btn" onClick={this.handleClick.bind(this)}><a href="#">
+            <i className="fa fa-angle-left"></i></a>
         </button>
         }
         return
@@ -74,7 +75,7 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
     render() {
         return (
             <div>
-                <div className={styles.bar} style={{position: 'relative', top: '0px', width: '338px', height: '40px', backgroundColor: '#37d3b4', color: 'white' }}>
+                <div id={navStyles.topBar}>
                     {this.buttonDisplay()}
                         <div style={{display: "inline", fontWeight: 100}}>
                             {this.props.back? this.props.back : "Interface"}
