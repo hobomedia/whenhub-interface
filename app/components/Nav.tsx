@@ -8,8 +8,41 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
     constructor(props:any){
         super(props)
         this.state = {
-            menuClick: "hidden"
+            menuClick: "hidden",
         }
+        this.lock.on("authenticated", (authResult: any) => {
+            console.log(authResult);
+        });
+        
+    }
+    lock = new (window as any).Auth0Lock('uG6dg5zIBd45mpt3KAk05S6qq5pPPRmu', 'whenhub.auth0.com', {
+        auth: {
+            responseType: 'id_token token',
+            params: {
+                scope: 'openid roles email profile https://interface.whenhub.com/winid',
+                audience: 'https://whenhub.auth0.com/userinfo'
+            }
+        },
+        rememberLastLogin: false,
+        languageDictionary: {
+            title: 'WhenHub Interface'
+        },
+        popup: true,
+        allowLogin: true,
+        theme: {
+            logo: 'https://interface.whenhub.com/img/favicon/Interface-Logo-Mark-150.png',
+            primaryColor: '#0096A9'
+        },
+        redirect: false,
+        sso: false
+    });
+
+    showLogin(e: any) {
+        console.log("login click");
+        console.log(window.location.href)
+        e.preventDefault();
+
+        this.lock.show();
     }
 
     handleClick(e: any) {
@@ -78,7 +111,7 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
                         <li><Link to="/Tour"><i className="fa fa-globe"></i><span>Tour</span></Link></li>
                         <li><a href="#"><i className="fa fa-users"></i><span>Support</span></a></li>
                         <li><a href="https://interface.whenhub.com/pages/faq.html"><i className="fa fa-question-circle"></i><span>FAQ</span></a></li>
-                        <li><a href="#"><i className="fa fa-lock"></i><span>Log Out</span></a></li>
+                        <li><a href="#" onClick={this.showLogin.bind(this)}><i className="fa fa-lock" id="btn-login"></i><span>Log In</span></a></li>
                     </ul>
                 </div>
             </div>

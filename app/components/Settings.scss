@@ -9,9 +9,16 @@
     .lang {
         font-size: 15pt;
         font-weight: 100;
+        display: inline-block;
+        height: 48px;
+        padding-top: 7pt;
     }
 
     .font {
         font-weight: 100;
+    }
+
+    .row {
+        height: 48px;
     }
 }
