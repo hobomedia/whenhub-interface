@@ -1,23 +1,53 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-
+import {connect} from 'react-redux';
+import { saveLogin } from '../actions/login';
+// import Store from '../store/configureStore.development';
 // const styles = require('./Home.scss');
 const navStyles = require('./Nav.scss');
 
-export default class Nav extends React.Component<any, {menuClick: string}> {
+export class Nav extends React.Component<any, {menuClick: string, profile: any, accesstoken: any}> {
     constructor(props:any){
         super(props)
         this.state = {
             menuClick: "hidden",
+            profile: null,
+            accesstoken: null
         }
         this.lock.on("authenticated", (authResult: any) => {
-            console.log(authResult);
+            this.lock.getUserInfo(authResult.accessToken, (error: any, profile: any) => {
+                if(error) {
+                    console.log(error)
+                }
+                if(!error){
+
+                    localStorage.setItem('accessToken', authResult.accessToken);
+                    localStorage.setItem('profile', JSON.stringify(profile));
+                    //save profile to redux
+                    // console.log(that.props);
+                    let args = {
+                        profile: JSON.stringify(profile), 
+                        token: authResult.accessToken
+                    }
+                    // this.props.saveLogin(args)
+
+                    this.props.dispatch(saveLogin(args))
+                    // this.props.saveLogin()
+
+                    //save to local state
+                    this.setState({
+                        profile: profile,
+                        accesstoken: authResult.accessToken
+                    });
+
+                }
+            });
         });
-        
     }
     lock = new (window as any).Auth0Lock('uG6dg5zIBd45mpt3KAk05S6qq5pPPRmu', 'whenhub.auth0.com', {
         auth: {
             responseType: 'id_token token',
+            redirect: false,
             params: {
                 scope: 'openid roles email profile https://interface.whenhub.com/winid',
                 audience: 'https://whenhub.auth0.com/userinfo'
@@ -33,16 +63,22 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
             logo: 'https://interface.whenhub.com/img/favicon/Interface-Logo-Mark-150.png',
             primaryColor: '#0096A9'
         },
-        redirect: false,
         sso: false
     });
 
     showLogin(e: any) {
-        console.log("login click");
-        console.log(window.location.href)
         e.preventDefault();
 
         this.lock.show();
+    }
+
+    showLogout(){
+        localStorage.removeItem('profile');
+        localStorage.removeItem('accessToken');
+        this.setState({
+            profile: null,
+            accesstoken: null
+        })
     }
 
     handleClick(e: any) {
@@ -88,9 +124,21 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
         }
         return
     }
+
+    loginDisplay() {
+        if (this.state.profile == null){
+            return <li><a href="#" onClick={this.showLogin.bind(this)}><i className="fa fa-lock" id="btn-login"></i><span>Log In</span></a></li>
+
+        }else if(this.state.profile != null){
+            return <li><a href="#" onClick={this.showLogout.bind(this)}><i className="fa fa-lock" id="btn-login"></i><span>Log Out</span></a></li>
+
+        };
+        return
+    }
     
 
     render() {
+        console.log(this.props)
         return (
             <div>
                 <div id={navStyles.topBar}>
@@ -111,11 +159,18 @@ export default class Nav extends React.Component<any, {menuClick: string}> {
                         <li><Link to="/Tour"><i className="fa fa-globe"></i><span>Tour</span></Link></li>
                         <li><a href="#"><i className="fa fa-users"></i><span>Support</span></a></li>
                         <li><a href="https://interface.whenhub.com/pages/faq.html"><i className="fa fa-question-circle"></i><span>FAQ</span></a></li>
-                        <li><a href="#" onClick={this.showLogin.bind(this)}><i className="fa fa-lock" id="btn-login"></i><span>Log In</span></a></li>
+                        {this.loginDisplay()}
                     </ul>
                 </div>
             </div>
         );
     }
 }
-  
+    const mapStateToProps = function (props: any, state: any) {
+        return {
+            profile: props.login.profile,
+            token: props.login.token
+        }
+
+    }
+    export default connect(mapStateToProps)(Nav);

@@ -1,22 +1,24 @@
 import * as React from 'react';
 import Nav from './Nav';
+import {connect} from 'react-redux';
 
 let styles = require('../components/Home.scss');
 let beExpertStyles = require('../components/BeExpert.scss')
 // let FindExpertStyles = require('../components/FindExpert.scss');
 
 interface ExpertState {rating: any, temp_rating: any}
-export default class BeExpert extends React.Component<any, ExpertState>{ 
+export class BeExpert extends React.Component<any, ExpertState>{ 
     constructor(props:any){
       super(props)
       this.state = {
         rating: 0,
         temp_rating: null
       }
+      console.log(this.props)
+
     }
 
     onSubmit() {
-      console.log(this.state.rating)
       this.props.history.push('/GoOnline')
     }
 
@@ -119,4 +121,14 @@ export default class BeExpert extends React.Component<any, ExpertState>{
       );
     }
   }
+
+const mapStateToProps = function (props: any, state: any) {
+    return {
+        profile: state.profile,
+        token: state.accessToken
+    }
+
+}
+export default connect(mapStateToProps)(Nav);
+
   

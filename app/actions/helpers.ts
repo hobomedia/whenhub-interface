@@ -1,5 +1,4 @@
 import { Action } from 'redux';
-// const fm = require('../../libraries/fm.icelink');
 
 export interface IAction extends Action {}
 export interface IActionWithPayload<T> extends IAction {
@@ -32,21 +31,6 @@ export const actionCreatorVoid = (type: string): IActionCreatorVoid =>
   Object.assign((): any => ({ type }), {
     type,
     test(action: IAction): action is IAction {
-      let audio = true;
-      let video = true;
-      let localMedia = new fm.icelink.LocalMedia(audio, video);
-
-      localMedia.start().then(function(lm: any) {
-          console.log("media capture started");
-          return action.type === type;
-
-      })
-      // .fail(err) {
-      //     console.log(err.message);
-      //     return action.type === type;
-
-      // });
-
       return action.type === type;
     }
   });
