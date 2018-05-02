@@ -18,7 +18,7 @@ export default () => (
   <App>
     <Switch>
       <Route exact path="/" component={HomePage} />
-      <Route path="/FindExpert" component={FindExpert}/>
+      <Route path="/FindExpert" component={FindExpert} />
       <Route path="/BeExpert" component={BeExpert} />
       <Route path="/GoOnline" component={GoOnline} />
       <Route path="/Wallet" component={Wallet} />

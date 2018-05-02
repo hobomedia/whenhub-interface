@@ -135,8 +135,8 @@ export class Nav extends React.Component<any, {menuClick: string}> {
                             {this.props.page}
                         </div>
                 </div>
-                <div className="navbar navbar-inverse navbar-fixed-left" style={this.display()}>
-                    <ul className="nav navbar-nav">
+                <div className="navbar navbar-inverse navbar-fixed-left" id={navStyles.menu}style={this.display()}>
+                    <ul className="nav navbar-nav" id={navStyles.navigation}>
                         <li><Link to="/Settings"><i className="fa fa-cog"></i><span>Settings</span></Link></li>
                         <li><Link to="/Wallet"><i className="fa fa-usd"></i><span>WhenWallet</span></Link></li>
                         <li><Link to="/History"><i className="fa fa-history"></i><span>History</span></Link></li>

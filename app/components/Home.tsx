@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Nav from './Nav';
 
-let styles = require('./Home.scss');
+const styles = require('./Home.scss');
 
 
 export default class Home extends React.Component<any, {experts: any}>{ 
