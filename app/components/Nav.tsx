@@ -72,12 +72,12 @@ export class Nav extends React.Component<any, {menuClick: string}> {
             this.props.handler(e)
         }else {
             history.back();
-        }
+        };
     }
 
     walletClick() {
-        console.log(history)
-        console.log(this.props)
+        console.log(history);
+        console.log(this.props);
     }
 
     handleMenuClick() {
@@ -85,7 +85,7 @@ export class Nav extends React.Component<any, {menuClick: string}> {
             this.setState({menuClick: "shown"})
         }else if (this.state.menuClick == "shown") {
             this.setState({menuClick: "hidden"})
-        }
+        };
     }
 
     display() {
@@ -93,7 +93,7 @@ export class Nav extends React.Component<any, {menuClick: string}> {
             return {display: "none"}
         }else if (this.state.menuClick == "shown") {
             return {display: "inline"}
-        }
+        };
         return 
     }
 
@@ -107,12 +107,11 @@ export class Nav extends React.Component<any, {menuClick: string}> {
             return <button id={navStyles.backBtn} data-tclass="btn" onClick={this.handleClick.bind(this)}><a href="#">
             <i className="fa fa-angle-left"></i></a>
         </button>
-        }
+        };
         return
     }
 
     loginDisplay() {
-        console.log(this.props)
         if (this.props.profile == null){
             return <li><a href="#" onClick={this.showLogin.bind(this)}><i className="fa fa-lock" id="btn-login"></i><span>Log In</span></a></li>
 
@@ -125,7 +124,6 @@ export class Nav extends React.Component<any, {menuClick: string}> {
     
 
     render() {
-        console.log(this.props)
         return (
             <div>
                 <div id={navStyles.topBar}>
@@ -154,8 +152,6 @@ export class Nav extends React.Component<any, {menuClick: string}> {
     }
 }
     const mapStateToProps = function (props: any, state: any) {
-        console.log(state)
-        console.log(props)
         return {
             profile: props.login.profile,
             token: props.login.token

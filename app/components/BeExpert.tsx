@@ -91,7 +91,7 @@ export class BeExpert extends React.Component<any, ExpertState>{
                         </div>
                         <div>
                           <div className={beExpertStyles.fields}>
-                            Hourly Rate($)
+                            Hourly Rate(W)
                           </div>
                           <input style={{ width: "320px", marginLeft: "10px"}} type="text" placeholder="00.00" className="form-control" name="title" />
                         </div>
