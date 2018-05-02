@@ -1,18 +1,16 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import {connect} from 'react-redux';
-import { saveLogin } from '../actions/login';
+import { saveLogin, saveLogout } from '../actions/login';
 // import Store from '../store/configureStore.development';
 // const styles = require('./Home.scss');
 const navStyles = require('./Nav.scss');
 
-export class Nav extends React.Component<any, {menuClick: string, profile: any, accesstoken: any}> {
+export class Nav extends React.Component<any, {menuClick: string}> {
     constructor(props:any){
         super(props)
         this.state = {
-            menuClick: "hidden",
-            profile: null,
-            accesstoken: null
+            menuClick: "hidden"
         }
         this.lock.on("authenticated", (authResult: any) => {
             this.lock.getUserInfo(authResult.accessToken, (error: any, profile: any) => {
@@ -24,21 +22,12 @@ export class Nav extends React.Component<any, {menuClick: string, profile: any, 
                     localStorage.setItem('accessToken', authResult.accessToken);
                     localStorage.setItem('profile', JSON.stringify(profile));
                     //save profile to redux
-                    // console.log(that.props);
                     let args = {
-                        profile: JSON.stringify(profile), 
+                        profile: profile, 
                         token: authResult.accessToken
                     }
-                    // this.props.saveLogin(args)
 
                     this.props.dispatch(saveLogin(args))
-                    // this.props.saveLogin()
-
-                    //save to local state
-                    this.setState({
-                        profile: profile,
-                        accesstoken: authResult.accessToken
-                    });
 
                 }
             });
@@ -68,17 +57,14 @@ export class Nav extends React.Component<any, {menuClick: string, profile: any, 
 
     showLogin(e: any) {
         e.preventDefault();
-
         this.lock.show();
     }
 
     showLogout(){
+        console.log("logout")
         localStorage.removeItem('profile');
         localStorage.removeItem('accessToken');
-        this.setState({
-            profile: null,
-            accesstoken: null
-        })
+        this.props.dispatch(saveLogout());
     }
 
     handleClick(e: any) {
@@ -126,10 +112,11 @@ export class Nav extends React.Component<any, {menuClick: string, profile: any, 
     }
 
     loginDisplay() {
-        if (this.state.profile == null){
+        console.log(this.props)
+        if (this.props.profile == null){
             return <li><a href="#" onClick={this.showLogin.bind(this)}><i className="fa fa-lock" id="btn-login"></i><span>Log In</span></a></li>
 
-        }else if(this.state.profile != null){
+        }else if(this.props.profile != null){
             return <li><a href="#" onClick={this.showLogout.bind(this)}><i className="fa fa-lock" id="btn-login"></i><span>Log Out</span></a></li>
 
         };
@@ -167,6 +154,8 @@ export class Nav extends React.Component<any, {menuClick: string, profile: any, 
     }
 }
     const mapStateToProps = function (props: any, state: any) {
+        console.log(state)
+        console.log(props)
         return {
             profile: props.login.profile,
             token: props.login.token

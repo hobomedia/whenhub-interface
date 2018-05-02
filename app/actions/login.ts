@@ -1,16 +1,17 @@
 import { actionCreator } from './helpers';
+import { actionCreatorVoid } from './helpers'; 
 
 export const login = actionCreator('SAVE_LOGIN');
+export const logout = actionCreatorVoid('SAVE_LOGOUT');
 
 export function saveLogin(args: any = null) {
-    console.log(args)
     return (dispatch: Function, getState: Function ) => {
-        const state = getState()
-    
-        console.log(state)
         dispatch(login(args));
-        
-
     };
 }
 
+export function saveLogout() {
+    return (dispatch: Function, getState: Function ) => {
+        dispatch(logout());
+    }
+}

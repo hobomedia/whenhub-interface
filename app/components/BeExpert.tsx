@@ -74,11 +74,11 @@ export class BeExpert extends React.Component<any, ExpertState>{
             page={"Interface Expert"}
           />
           <div className={styles.container}>
-            <div id={styles.bebackground}>
+            <div id={styles.bebackground} style={{backgroundImage: 'url(' + this.props.profile.picture + ')', backgroundRepeat: 'no-repeat', backgroundSize: 'auto 560px', backgroundPosition: 'center'}}>
               {/* <Link to="/">back</Link> */}
               <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", marginTop: "260px", paddingTop: "13px", position: "absolute", width: '338px', height: "302px"}}>
                 <div style={{ color: "white", marginLeft: "10px", fontSize: "25px", fontWeight: 200}}>
-                  Name
+                  {this.props.profile.name}
                 </div>
                   
                     <div style={{ marginTop: "10px" }}>
@@ -112,8 +112,6 @@ export class BeExpert extends React.Component<any, ExpertState>{
                       </form>
                       <button style={{ backgroundColor: "#37d3b4", color: "white", width: "320px", marginLeft: "10px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">Go Online</button>
                     </div>
-
-
               </div>
             </div>
           </div>
@@ -124,11 +122,11 @@ export class BeExpert extends React.Component<any, ExpertState>{
 
 const mapStateToProps = function (props: any, state: any) {
     return {
-        profile: state.profile,
-        token: state.accessToken
+        profile: props.login.profile,
+        token: props.login.token
     }
 
 }
-export default connect(mapStateToProps)(Nav);
+export default connect(mapStateToProps)(BeExpert);
 
   
