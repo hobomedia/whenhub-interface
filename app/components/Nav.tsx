@@ -58,6 +58,12 @@ export class Nav extends React.Component<any, {menuClick: string}> {
     showLogin(e: any) {
         e.preventDefault();
         this.lock.show();
+        if(this.state.menuClick == "hidden"){
+            this.setState({menuClick: "shown"})
+        }else if (this.state.menuClick == "shown") {
+            this.setState({menuClick: "hidden"})
+        };
+
     }
 
     showLogout(){
