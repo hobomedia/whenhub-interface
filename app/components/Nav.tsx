@@ -67,7 +67,6 @@ export class Nav extends React.Component<any, {menuClick: string}> {
     }
 
     showLogout(){
-        console.log("logout")
         localStorage.removeItem('profile');
         localStorage.removeItem('accessToken');
         this.props.dispatch(saveLogout());
