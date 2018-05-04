@@ -22,13 +22,6 @@ export class Home extends React.Component<any, {experts: any}>{
     return 
   }
 
-  click(e:any) {
-    if(this.props.profile == null){
-      e.preventDefault();
-    }
-
-  }
-
   render() {
     return (
       <div>
@@ -44,8 +37,11 @@ export class Home extends React.Component<any, {experts: any}>{
               <div>Find an Expert</div>
             </div>
           </div>
-          <div id={styles.bottom}>
-            <Link to="/BeExpert" onClick={this.click.bind(this)}><span></span></Link>
+          <div id={styles.bottom} >
+            {this.props.profile == null?
+            <Link to="/BeExpert" onClick={ (e) => e.preventDefault() } style={{cursor: "default"}}><span></span></Link>:
+            <Link to="/BeExpert"><span></span></Link>
+            }
             <div className={styles.overlay}>
               <div>Be an Expert</div>
               {this.showLoginMessage()}
