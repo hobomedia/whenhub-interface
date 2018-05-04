@@ -26,13 +26,24 @@ export class Settings extends React.Component<any, {}>{
         <div className={styles.container}>
 
             <div className={settingsStyles.settings}>
-                <div className={settingsStyles.font}>Minimum Interface duration when you are the expert</div>
+                <div className={settingsStyles.font}><i className="fa fa-hourglass"></i> Minimum Interface duration when you are the expert</div>
+                  <div className={settingsStyles.slider}>
                   <Slider
-                    dots step={20} 
+                    dots step={15} 
+                    min={15}
+                    max={75}
+                    marks={
+                      {
+                        15: "15",
+                        30: "30",
+                        45: "45",
+                        60: "60",
+                        75: "75"
+                      }
+                    }
                     defaultValue={0} 
                     onChange={this.slider}
-                    maximumTrackStyle={{backgroundColor: '#37d3b4'}}
-                    minimumTrackStyle={{backgroundColor: '#37d3b4'}}
+                    TrackStyle={{backgroundColor: '#37d3b4'}}
                     dotStyle={{
                       borderColor: '#37d3b4',
                       backgroundColor: '#37d3b4'
@@ -42,11 +53,14 @@ export class Settings extends React.Component<any, {}>{
                       backgroundColor: '#37d3b4'
                     }}
                   />
-                <div className={settingsStyles.font}>Languages Fluently Spoken</div>
+                  </div>
+                <div className={settingsStyles.font} style={{marginTop: '20px'}}><i className="fa fa-comment"></i> Languages Fluently Spoken</div>
                 <div className={settingsStyles.row}> 
                   <div className={settingsStyles.lang}>English</div>
                     <div style={{float: "right"}}>
-                    <Switch/>
+                    <Switch
+                      color={'default'}
+                    />
                     </div>
                 </div>
 
@@ -71,8 +85,10 @@ export class Settings extends React.Component<any, {}>{
                     </div>
                 </div>
 
+                <div className={settingsStyles.font} style={{marginTop: '20px'}}><i className="fa fa-comment"></i> Subscriptions</div>
+
+
             </div>
-            {/* </ MuiThemeProvider> */}
         </div>   
 
       </div>    

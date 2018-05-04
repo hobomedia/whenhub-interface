@@ -22,6 +22,12 @@
         height: 48px;
     }
 
+    .slider {
+        width: 84%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
     
 }
 :global {
@@ -96,16 +102,16 @@
         vertical-align: middle;
         text-align: center;
         cursor: pointer;
-        color: #999;
+        color: white;
       }
       .rc-slider-mark-text-active {
-        color: #666;
+        color: white;
       }
       .rc-slider-step {
         position: absolute;
         width: 100%;
         height: 4px;
-        background: transparent;
+        background: #37d3b4;
       }
       .rc-slider-dot {
         position: absolute;
