@@ -14,6 +14,10 @@
         padding: 0;
     }
 
+    #menuBtn > a:hover {
+        text-decoration: none;
+    }
+
     #menuBtn > a > i {
         color: white; 
         font-size: 2em;
