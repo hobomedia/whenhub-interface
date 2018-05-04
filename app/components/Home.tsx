@@ -16,11 +16,17 @@ export class Home extends React.Component<any, {experts: any}>{
   }
 
   showLoginMessage() {
-    console.log(this.props)
     if(this.props.profile == null){
       return <div id={styles.message}>You must sign with LinkedIn to be an Expert</div>
     }
     return 
+  }
+
+  click(e:any) {
+    if(this.props.profile == null){
+      e.preventDefault();
+    }
+
   }
 
   render() {
@@ -39,7 +45,7 @@ export class Home extends React.Component<any, {experts: any}>{
             </div>
           </div>
           <div id={styles.bottom}>
-            <Link to="/BeExpert"><span></span></Link>
+            <Link to="/BeExpert" onClick={this.click.bind(this)}><span></span></Link>
             <div className={styles.overlay}>
               <div>Be an Expert</div>
               {this.showLoginMessage()}
