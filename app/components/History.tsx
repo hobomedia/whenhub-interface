@@ -59,6 +59,7 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
   }
 
   render() {
+      const none = <div>There are no interfaces to show</div>  
       const interfaces = this.state.interfaces.map((call: any, index: any) => {
         if(this.state.interfaces.length > 1) {
           return (
@@ -66,11 +67,9 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
               <div className={historyStyles.line}></div>
               <img className={historyStyles.picture} src={call.caller.picture} alt="Avatar"/>
               <div className={historyStyles.info}>
-                <div>{call.caller.name}</div>
-                <div>{this.time(call.interface.durationInSeconds)}</div>
-
+                <div >{call.caller.name}</div>
+                <div >{this.time(call.interface.durationInSeconds)}</div>
               </div>
-
             </div>
           )
         }else {
@@ -88,10 +87,10 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
           page={"History"}
         />
         <div className={styles.container}>
-            <div className={historyStyles.history}>
+            <div className={historyStyles.history} style={this.state.interfaces.length > 1? {height: 'auto'}: {height: '100%'}}>
               {this.showLoading()}
               <div className={historyStyles.interfaceContainer}>
-                {interfaces}
+                {interfaces.length > 1? interfaces: none}
               </div>
             </div>
         </div>   
