@@ -26,7 +26,7 @@ export class Nav extends React.Component<any, {menuClick: string}> {
                         profile: profile, 
                         token: authResult.accessToken
                     }
-
+                    console.log(args)
                     this.props.dispatch(saveLogin(args))
 
                 }

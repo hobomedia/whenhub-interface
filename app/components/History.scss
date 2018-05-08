@@ -2,7 +2,48 @@
     .history {
         background-color: #1d365c;
         color: white;
-        height: 100%;
         padding: 10pt;
     }
+
+    #spinner {
+        height: auto;
+        display: inline-block;
+    }
+
+    .interfaceContainer {
+        width: 100%;
+        height: 100%;
+    }
+
+    .picture {
+        margin-top: 16px;
+        margin-left: 5px;
+        margin-right: 5px;
+        width: 20%;
+        height: auto; 
+        border-radius: 50%;
+        display: inline;
+        position: relative;
+    }
+
+    .cell {
+        height: 95px;
+        position: relative;
+    }
+
+    .info {
+        display: inline; 
+    }
+
+    .line {
+        margin-left: 33px;
+        border-left: 4px solid #37d3b4;
+        height: 100%;
+        float: left; 
+        position: absolute;
+    }
+
+    hr {
+        transform: rotate(90deg);
+     }
 }
