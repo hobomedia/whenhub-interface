@@ -39,23 +39,28 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
     };
   }
 
-  time(duration: any) {
-    var h = Math.floor(duration / 3600);
-    var m = Math.floor(duration % 3600 / 60);
-    var s = Math.floor(duration % 3600 % 60);
-
-    var hDisplay = h > 0 ? h + (h == 1 ? " hr, " : " hrs, ") : "";
-    var mDisplay = m > 0 ? m + (m == 1 ? " min, " : " mins, ") : "";
-    var sDisplay = s > 0 ? s + (s == 1 ? " sec" : " sec") : "";
-    return hDisplay + mDisplay + sDisplay;   
-  }
-
   showLoading() {
     if(this.state.loading == true && this.props.profile != null){
       return <i className="fa fa-spinner fa-spin" id={historyStyles.spinner}/>
     }else {
       return 
     }
+  }
+
+  convertDate(ISODate: any) {
+    let date = new Date(ISODate);
+    let year = date.getFullYear();
+    let month = date.getMonth()+1;
+    let dt = date.getDate();
+    let hours = date.getHours();
+    let minutes = date.getMinutes().toString();
+    let ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    minutes = parseInt(minutes) < 10 ? '0'+minutes : minutes;
+    let strTime = hours + ':' + minutes + ' ' + ampm;
+
+    return month + '-'+dt + '-'+ year + '   ' + strTime;
   }
 
   render() {
@@ -67,8 +72,10 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
               <div className={historyStyles.line}></div>
               <img className={historyStyles.picture} src={call.caller.picture} alt="Avatar"/>
               <div className={historyStyles.info}>
-                <div >{call.caller.name}</div>
-                <div >{this.time(call.interface.durationInSeconds)}</div>
+                <div className={historyStyles.name}>{call.caller.name}</div>
+                <div >{call.interface.expertise.expertise}</div>
+                <div className={historyStyles.total}>W{call.interface.contractTotal}</div>
+                <div className={historyStyles.time}>{this.convertDate(call.interface.created)}</div>
               </div>
             </div>
           )

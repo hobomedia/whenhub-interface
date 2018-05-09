@@ -24,6 +24,9 @@
         border-radius: 50%;
         display: inline;
         position: relative;
+        border-width: 2px;
+        border: solid;
+        border-color: #37d3b4;
     }
 
     .cell {
@@ -33,12 +36,25 @@
 
     .info {
         position: absolute; 
-        padding-top: 20px;
+        padding-top: 17px;
         width: 76%;
         height: 80%;
         display: inline-block; 
     }
 
+    .name {
+        color: #37d3b4;
+    }
+    
+    .time {
+        float: right;
+        color: #776cf0;
+        display: inline;
+    }
+
+    .total {
+        display: inline;
+    }
     .line {
         margin-left: 35px;
         border-left: 2px solid #37d3b4;

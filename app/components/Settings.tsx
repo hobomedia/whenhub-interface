@@ -54,7 +54,7 @@ export class Settings extends React.Component<any, {}>{
                     }}
                   />
                   </div>
-                <div className={settingsStyles.font} style={{marginTop: '20px'}}><i className="fa fa-comment"></i> Languages Fluently Spoken</div>
+                <div className={settingsStyles.font} style={{marginTop: '33px'}}><i className="fa fa-comment"></i> Languages Fluently Spoken</div>
                 <div className={settingsStyles.row}> 
                   <div className={settingsStyles.lang}>English</div>
                     <div style={{float: "right"}}>
