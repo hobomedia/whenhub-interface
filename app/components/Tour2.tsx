@@ -10,7 +10,6 @@ export default class Tour2 extends React.Component<any, {}>{
   }
 
   onSubmit() {
-      console.log("submit")
       this.props.history.push('/Tour3')
   }
 

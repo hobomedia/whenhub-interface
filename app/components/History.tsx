@@ -60,7 +60,7 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
     minutes = parseInt(minutes) < 10 ? '0'+minutes : minutes;
     let strTime = hours + ':' + minutes + ' ' + ampm;
 
-    return month + '-'+dt + '-'+ year + '   ' + strTime;
+    return month + '/'+dt + '/'+ year + '   ' + strTime;
   }
 
   render() {
