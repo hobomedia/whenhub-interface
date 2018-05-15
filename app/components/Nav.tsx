@@ -18,15 +18,14 @@ export class Nav extends React.Component<any, {menuClick: string}> {
                     console.log(error)
                 }
                 if(!error){
-
                     localStorage.setItem('accessToken', authResult.accessToken);
                     localStorage.setItem('profile', JSON.stringify(profile));
                     //save profile to redux
                     let args = {
                         profile: profile, 
-                        token: authResult.accessToken
+                        token: authResult.accessToken,
+                        bearer: authResult.idToken
                     }
-                    console.log(args)
                     this.props.dispatch(saveLogin(args))
 
                 }

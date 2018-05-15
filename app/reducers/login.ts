@@ -4,7 +4,7 @@ import { logout } from '../actions/login';
 
 export type TState = Object;
 
-export default function saveLogin(state: Object = {token: null, profile: null}, action: IAction) {
+export default function saveLogin(state: Object = {token: null, profile: null, bearer: null}, action: IAction) {
     if(login.test(action)){
         return {
             ...state,
@@ -14,7 +14,8 @@ export default function saveLogin(state: Object = {token: null, profile: null}, 
         return {
             ...state, 
             token: null,
-            profile: null
+            profile: null,
+            bearer: null
         }
     }
     return state;

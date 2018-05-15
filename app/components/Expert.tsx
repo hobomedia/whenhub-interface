@@ -192,6 +192,8 @@ export default class BeExpert extends React.Component<any, {connect: Boolean, lo
             }
         });
 
+        // this.props.history.push('/RateCall')
+
         // this.state.layoutManager.removeRemoteView(this.state.remoteMedia.getId())
 
 

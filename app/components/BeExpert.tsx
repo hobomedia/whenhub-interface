@@ -14,7 +14,6 @@ export class BeExpert extends React.Component<any, ExpertState>{
         rating: 0,
         temp_rating: null
       }
-      console.log(this.props)
 
     }
 

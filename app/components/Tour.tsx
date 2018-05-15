@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 
-let tourStyles = require('./Tour.scss');
+const tourStyles = require('./Tour.scss');
 
 
 export default class Tour extends React.Component<any, {}>{ 
