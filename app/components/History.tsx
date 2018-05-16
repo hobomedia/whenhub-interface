@@ -1,8 +1,8 @@
 import * as React from 'react';
 import Nav from './Nav';
 import {connect} from 'react-redux';
-
-const Axios = require('axios');
+import { getHistory } from '../actions/account';
+// const Axios = require('axios');
 let styles = require('./Home.scss');
 let historyStyles = require('./History.scss');
 
@@ -18,32 +18,12 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
 
   componentWillMount() {
     if(this.props.profile != null){
-      const that = this;
-      Axios({
-        method: 'GET',
-        baseURL: 'https://interface-api.whenhub.com/api/Accounts/',
-        url:  this.props.profile['https://interface.whenhub.com/winid'] + '/interfaceHistory',
-        headers: {
-          'Authorization': 'Bearer ' + `${this.props.bearer}`
-        }
-      }).then(function (response: any) {
-        console.log(response.data);
-        that.setState({interfaces: response.data, loading: false});
-
-      }).catch(function (error: any) {
-        console.log(error);
-        that.setState({loading: false});
-  
-      })
+      let args = {
+        bearer: this.props.bearer,
+        profile: this.props.profile
+      }
+      this.props.dispatch(getHistory(args))
     };
-  }
-
-  showLoading() {
-    if(this.state.loading == true && this.props.profile != null){
-      return <i className="fa fa-spinner fa-spin" id={historyStyles.spinner}/>
-    }else {
-      return 
-    }
   }
 
   convertDate(ISODate: any) {
@@ -64,8 +44,8 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
 
   render() {
       const none = <div>There are no interfaces to show</div>  
-      const interfaces = this.state.interfaces.map((call: any, index: any) => {
-        if(this.state.interfaces.length > 1) {
+      const interfaces = this.props.history.map((call: any, index: any) => {
+        if(this.props.history.length > 1) {
           return (
             <div key={index} className={historyStyles.cell}>
               <div className={historyStyles.line}></div>
@@ -93,8 +73,7 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
           page={"History"}
         />
         <div className={styles.container}>
-            <div className={historyStyles.history} style={this.state.interfaces.length > 1? {height: 'auto'}: {height: '100%'}}>
-              {this.showLoading()}
+            <div className={historyStyles.history} style={this.props.history.length > 1? {height: 'auto'}: {height: '100%'}}>
               <div className={historyStyles.interfaceContainer}>
                 {interfaces.length > 1? interfaces: none}
               </div>
@@ -109,7 +88,8 @@ const mapStateToProps = function (props: any, state: any) {
   return {
       profile: props.login.profile,
       token: props.login.token,
-      bearer: props.login.bearer
+      bearer: props.login.bearer,
+      history: props.getHistory.history
   }
 
 }
