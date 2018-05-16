@@ -1,22 +1,18 @@
 import * as React from 'react';
 import Nav from './Nav';
 import {connect} from 'react-redux';
-
-// import { Link } from 'react-router-dom';
+import { getExperts } from '../actions/experts';
 import Expert from './Expert';
-// import { actionCreatorVoid } from '../../app/actions/helpers';
-const Axios = require('axios');
 
 
 let styles = require('../components/Home.scss');
 let FindExpertStyles = require('../components/FindExpert.scss');
 
-export class FindExpert extends React.Component<any, {experts: any, click: Boolean, value: string, loading: Boolean}>{ 
+export class FindExpert extends React.Component<any, {click: Boolean, value: string, loading: Boolean}>{ 
     constructor(props:any){
       super(props)
       this.state = {
         click: false,
-        experts: [],
         value: "",
         loading: false
       }
@@ -28,29 +24,14 @@ export class FindExpert extends React.Component<any, {experts: any, click: Boole
     }
 
     onSubmit(){
-      // actionCreatorVoid("expert").expert({type: "expert"});
-      // this.props.history.push('/Expert')
       this.setState({loading: true})
-      const that = this; 
+      let args = {
+        bearer: this.props.bearer,
+        search: this.state.value
+      }
+      this.props.dispatch(getExperts(args))
 
-      Axios({
-        method: 'GET',
-        url: `https://interface-api.whenhub.com/api/Experts/online?query.expertise=` + `${this.state.value}`,
-        headers: {
-          'Authorization': 'Bearer ' + `${this.props.bearer}`
-        }
-      }).then(function (response: any) {
-        console.log(response.data)
-        that.setState({experts: response.data, click: true, loading: false,  value: ""})
-      }).catch(function (error: any) {
-        console.log(error)
-  
-      })
-  
-    }
-
-    click() {
-
+      this.setState({click: true, value: ""})
     }
 
     handler(e: any){
@@ -58,14 +39,15 @@ export class FindExpert extends React.Component<any, {experts: any, click: Boole
       console.log(this.state)
       if(this.state.click == true){
         this.setState({
-          click: false
+          click: false,
+          loading: false
         })
-
       }
     }
   
       render() {
-        if(this.state.click == false){
+        console.log(this.props)
+        if(this.state.click == false || this.props.experts == null){
           return (
             <div>
               
@@ -100,10 +82,10 @@ export class FindExpert extends React.Component<any, {experts: any, click: Boole
             </div>
           );
         }else {
-            if(this.state.experts.length > 0){
+            if(this.props.experts.length > 0){
               return (
                 <Expert 
-                  experts={this.state.experts}
+                  experts={this.props.experts}
                   handler={this.handler.bind(this)}
                 />
               )
@@ -149,7 +131,9 @@ export class FindExpert extends React.Component<any, {experts: any, click: Boole
 
   const mapStateToProps = function (props: any, state: any) {
     return {
-        bearer: props.login.bearer
+        bearer: props.login.bearer,
+        experts: props.getExperts.experts,
+        finished: props.getExperts.finished
     }
   
   }

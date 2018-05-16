@@ -74,7 +74,6 @@ export class BeExpert extends React.Component<any, ExpertState>{
           />
           <div className={styles.container}>
             <div id={styles.bebackground} style={{backgroundImage: 'url(' + (this.props.profile!= null? this.props.profile.picture : '') + ')', backgroundRepeat: 'no-repeat', backgroundSize: 'auto 560px', backgroundPosition: 'center'}}>
-              {/* <Link to="/">back</Link> */}
               <div style={{backgroundColor: "rgba(0, 0, 0, 0.5)", marginTop: "260px", paddingTop: "13px", position: "absolute", width: '338px', height: "302px"}}>
                 <div style={{ color: "white", marginLeft: "10px", fontSize: "25px", fontWeight: 200}}>
                   {this.props.profile != null? this.props.profile.name: "Name"}
