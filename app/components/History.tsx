@@ -42,30 +42,54 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
     return month + '/'+dt + '/'+ year + '   ' + strTime;
   }
 
-  render() {
-      const none = <div>There are no interfaces to show</div>  
-      const interfaces = this.props.history.map((call: any, index: any) => {
-        if(this.props.history.length > 1) {
-          return (
-            <div key={index} className={historyStyles.cell}>
-              <div className={historyStyles.line}></div>
-              <img className={historyStyles.picture} src={call.caller.picture} alt="Avatar"/>
-              <div className={historyStyles.info}>
-                <div className={historyStyles.name}>{call.caller.name}</div>
-                <div >{call.interface.expertise.expertise}</div>
-                <div className={historyStyles.total}>W{call.interface.contractTotal}</div>
-                <div className={historyStyles.time}>{this.convertDate(call.interface.created)}</div>
-              </div>
-            </div>
-          )
-        }else {
-          return (
-            <div>
-              There are no interfaces to show
-            </div>
-          )
-        }
+  show(history: any) {
+    console.log(history)
+    if(history == null || history.length < 1){
+      return <div></div>
+    }else if (history != null) {
+      return history.map((call: any, index: any) => {
+        return(
+          <div key={index} className={historyStyles.cell}>
+          <div className={historyStyles.line}></div>
+          <img className={historyStyles.picture} src={call.caller.picture} alt="Avatar"/>
+          <div className={historyStyles.info}>
+            <div className={historyStyles.name}>{call.caller.name}</div>
+            <div >{call.interface.expertise.expertise}</div>
+            <div className={historyStyles.total}>W{call.interface.contractTotal}</div>
+            <div className={historyStyles.time}>{this.convertDate(call.interface.created)}</div>
+          </div>
+        </div>
+
+        )
       })
+    }
+  }
+
+  render() {
+      // console.log(this.props.history)
+      // const none = <div>There are no interfaces to show</div>  
+      // const interfaces = this.props.history.map((call: any, index: any) => {
+      //   if(this.props.history.length > 1) {
+      //     return (
+            // <div key={index} className={historyStyles.cell}>
+            //   <div className={historyStyles.line}></div>
+            //   <img className={historyStyles.picture} src={call.caller.picture} alt="Avatar"/>
+            //   <div className={historyStyles.info}>
+            //     <div className={historyStyles.name}>{call.caller.name}</div>
+            //     <div >{call.interface.expertise.expertise}</div>
+            //     <div className={historyStyles.total}>W{call.interface.contractTotal}</div>
+            //     <div className={historyStyles.time}>{this.convertDate(call.interface.created)}</div>
+            //   </div>
+            // </div>
+      //     )
+      //   }else {
+      //     return (
+      //       <div>
+      //         There are no interfaces to show
+      //       </div>
+      //     )
+      //   }
+      // })
     return (
       <div>
         <Nav 
@@ -73,9 +97,10 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
           page={"History"}
         />
         <div className={styles.container}>
-            <div className={historyStyles.history} style={this.props.history.length > 1? {height: 'auto'}: {height: '100%'}}>
+            <div className={historyStyles.history} style={this.props.history != null? {height: 'auto'}: {height: '100%'}}>
               <div className={historyStyles.interfaceContainer}>
-                {interfaces.length > 1? interfaces: none}
+                {/* {interfaces.length > 1? interfaces: none} */}
+                {this.show(this.props.history)}
               </div>
             </div>
         </div>   
