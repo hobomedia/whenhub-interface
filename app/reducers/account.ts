@@ -1,10 +1,10 @@
 import { IAction } from '../actions/helpers';
-import { account } from '../actions/account';
+import { history } from '../actions/account';
 
 export type TState = Object;
 
 export default function getHistory(state: Object = {history: null}, action: IAction) {
-    if(account.test(action)){
+    if(history.test(action)){
         return {
             ...state,
             history: action.payload
@@ -13,3 +13,4 @@ export default function getHistory(state: Object = {history: null}, action: IAct
     return state;
 
 }
+

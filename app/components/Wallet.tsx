@@ -1,8 +1,9 @@
 import * as React from 'react';
 import Nav from './Nav';
 import {connect} from 'react-redux';
+import { getWalletAmount } from '../actions/wallet';
 
-const Axios = require('axios');
+// const Axios = require('axios');
 let styles = require('./Home.scss');
 let walletStyles = require('./Wallet.scss');
 
@@ -17,24 +18,14 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
   }
 
   componentWillMount() {
+    console.log("hit")
     if(this.props.profile != null){
-        const that = this;
-        Axios({
-          method: 'GET',
-          baseURL: 'https://interface-api.whenhub.com/api/Accounts/',
-          url:  this.props.profile['https://interface.whenhub.com/winid'] + '/balance',
-          headers: {
-            'Authorization': 'Bearer ' + `${this.props.bearer}`
-          }
-        }).then(function (response: any) {
-          console.log(response.data);
-          that.setState({balance: response.data});
-  
-        }).catch(function (error: any) {
-          console.log(error);    
-        })
-      };
-  
+        let args = {
+            bearer: this.props.bearer,
+            profile: this.props.profile
+        }
+      this.props.dispatch(getWalletAmount(args))
+    }
   }
 
   onSubmit() {
@@ -57,6 +48,15 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
   transactionClick(){
       this.setState({section: "transaction"})
 
+  }
+
+  showAmount(wallet: any) {
+    console.log(wallet)
+    if(wallet == null) {
+        return
+    }else if (wallet != null){
+        return wallet.amount
+    }
   }
 
   border() {
@@ -126,6 +126,7 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
   }
 
     render() {
+        console.log(this.props)
         return (
             <div>
                 <Nav
@@ -135,7 +136,7 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
                 <div className={styles.container}>
                     <div>
                         <div id={walletStyles.amount}>
-                            <div style={{ fontSize: "25pt", fontWeight: 100 }}>(W){this.state.balance.amount}</div>
+                            <div style={{ fontSize: "25pt", fontWeight: 100 }}>(W){this.showAmount(this.props.walletAmount)}</div>
                             <div>Wallet Amount</div>
                         </div>
                     </div>
@@ -161,10 +162,12 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
     }
 }
 const mapStateToProps = function (props: any, state: any) {
+    console.log(props)
     return {
         profile: props.login.profile,
         token: props.login.token,
-        bearer: props.login.bearer
+        bearer: props.login.bearer,
+        walletAmount: props.getWalletAmount.walletAmount
     }
   
   }

@@ -43,7 +43,6 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
   }
 
   show(history: any) {
-    console.log(history)
     if(history == null || history.length < 1){
       return <div></div>
     }else if (history != null) {
