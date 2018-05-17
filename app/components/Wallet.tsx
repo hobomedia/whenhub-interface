@@ -7,18 +7,16 @@ import { getWalletAmount } from '../actions/wallet';
 let styles = require('./Home.scss');
 let walletStyles = require('./Wallet.scss');
 
-export class Wallet extends React.Component<any, {sidebarOpen: boolean, section: string, balance: any}>{ 
+export class Wallet extends React.Component<any, {sidebarOpen: boolean, section: string}>{ 
   constructor(props:any){
     super(props)
     this.state = {
       sidebarOpen: true,
       section: "deposit",
-      balance: {}
     }
   }
 
   componentWillMount() {
-    console.log("hit")
     if(this.props.profile != null){
         let args = {
             bearer: this.props.bearer,
@@ -51,12 +49,20 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
   }
 
   showAmount(wallet: any) {
-    console.log(wallet)
     if(wallet == null) {
         return
     }else if (wallet != null){
         return wallet.amount
     }
+  }
+
+  showAddress(wallet: any) {
+    if(wallet == null) {
+        return
+    }else if (wallet != null){
+        return wallet.address
+    }
+
   }
 
   border() {
@@ -74,7 +80,7 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
       return 
   }
 
-  selectSection(section: any) {
+  selectSection(section: any, wallet: any) {
     if (section == "deposit") {
         return <div className={walletStyles.section}>
             <div className={walletStyles.sectionHeader}>
@@ -90,7 +96,7 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
                 <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "293px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit} className="btn">
                     Copy Wallet Address to clipboard
                 </button>
-                <div id={walletStyles.walletAddress}>{this.state.balance.address}</div>
+                <div id={walletStyles.walletAddress}>{this.showAddress(wallet)}</div>
             </div>
         </div>
 
@@ -126,7 +132,6 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
   }
 
     render() {
-        console.log(this.props)
         return (
             <div>
                 <Nav
@@ -136,7 +141,7 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
                 <div className={styles.container}>
                     <div>
                         <div id={walletStyles.amount}>
-                            <div style={{ fontSize: "25pt", fontWeight: 100 }}>(W){this.showAmount(this.props.walletAmount)}</div>
+                            <div style={{ fontSize: "25pt", fontWeight: 100 }}>(W){this.showAmount(this.props.wallet)}</div>
                             <div>Wallet Amount</div>
                         </div>
                     </div>
@@ -155,19 +160,18 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
 
                         </div>
                     </div>
-                    {this.selectSection(this.state.section)}
+                    {this.selectSection(this.state.section, this.props.wallet)}
                 </div>
             </div>
         );
     }
 }
 const mapStateToProps = function (props: any, state: any) {
-    console.log(props)
     return {
         profile: props.login.profile,
         token: props.login.token,
         bearer: props.login.bearer,
-        walletAmount: props.getWalletAmount.walletAmount
+        wallet: props.getWalletAmount.walletAmount
     }
   
   }
