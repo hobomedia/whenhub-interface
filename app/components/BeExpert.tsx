@@ -2,28 +2,63 @@ import * as React from 'react';
 import Nav from './Nav';
 import {connect} from 'react-redux';
 
-let styles = require('../components/Home.scss');
-let beExpertStyles = require('../components/BeExpert.scss')
+const Axios = require('axios');
+const styles = require('../components/Home.scss');
+const beExpertStyles = require('../components/BeExpert.scss')
 // let FindExpertStyles = require('../components/FindExpert.scss');
 
-interface ExpertState {rating: any, temp_rating: any}
+interface ExpertState {rating: any, temp_rating: any, topicValue: any, rateValue: any, loading: Boolean}
 export class BeExpert extends React.Component<any, ExpertState>{ 
     constructor(props:any){
       super(props)
       this.state = {
         rating: 0,
-        temp_rating: null
+        temp_rating: null,
+        topicValue: '',
+        rateValue: 0,
+        loading: false
       }
 
     }
 
-    onSubmit() {
-      this.props.history.push('/GoOnline')
-    }
+  onSubmit() {
+    const that = this; 
+    this.setState({loading: true})
+    Axios({
+      method: 'PUT',
+      url: `https://interface-api.whenhub.com/api/Experts/`+ `${this.props.profile['https://interface.whenhub.com/winid']}` + `/online`,
+      headers: {
+        'Authorization': 'Bearer ' + `${this.props.bearer}`
+      },
+      data: {
+        'expertise': this.state.topicValue,
+        'selfRating': this.state.rating,
+        'hourlyRate': this.state.rateValue,
+        'minimumDuration': 15
+      }
+    }).then(function (response: any) {
+      console.log(response.data)
+      that.props.history.push('/GoOnline')
+    }).catch(function (error: any) {
+      console.log(error)
+    })
 
+  }
+
+  updateTopicValue(event: any) {
+    this.setState({
+      topicValue: event.target.value
+    })
+  }
+
+  updateRateValue(event: any) {
+    this.setState({
+      rateValue: event.target.value
+    })
+  }
     rate(rating: any) : void {
       this.setState({
-      rating: rating,
+      rating: rating + 1,
       temp_rating: rating
       });
     }
@@ -49,7 +84,7 @@ export class BeExpert extends React.Component<any, ExpertState>{
         for (let i = 0; i < 5; i++) {
           let klass = `${beExpertStyles.star}`;
           `${styles.appTab} ${styles.active}`
-          if (this.state.rating >= i && this.state.rating != null) {
+          if (this.state.rating >= i+ 1 && this.state.rating != null) {
             klass += ` ${beExpertStyles.selected}`;
           }
 
@@ -85,13 +120,13 @@ export class BeExpert extends React.Component<any, ExpertState>{
                           <div className={beExpertStyles.fields}>
                             Expertise Topic
                           </div>
-                          <input style={{ width: "320px", marginLeft: "10px" }} type="text" placeholder="Topic" className="form-control" name="title" />
+                          <input value={this.state.topicValue} onChange={this.updateTopicValue.bind(this)} style={{ width: "320px", marginLeft: "10px" }} type="text" placeholder="Topic" className="form-control" name="title" />
                         </div>
                         <div>
                           <div className={beExpertStyles.fields}>
                             Hourly Rate(W)
                           </div>
-                          <input style={{ width: "320px", marginLeft: "10px"}} type="text" placeholder="00.00" className="form-control" name="title" />
+                          <input value={this.state.rateValue} onChange={this.updateRateValue.bind(this)} style={{ width: "320px", marginLeft: "10px"}} type="text" placeholder="00.00" className="form-control" name="title" />
                         </div>
                         {/* <div style={{ color: "white", marginLeft: "10px", fontWeight: 100 }}>
                           Hourly Rate($)
@@ -108,7 +143,9 @@ export class BeExpert extends React.Component<any, ExpertState>{
                         </div>
                       
                       </form>
-                      <button style={{ backgroundColor: "#37d3b4", color: "white", width: "320px", marginLeft: "10px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">Go Online</button>
+                      <button style={{ backgroundColor: "#37d3b4", color: "white", width: "320px", marginLeft: "10px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                        {this.state.loading? <i className="fa fa-spinner fa-spin" id={beExpertStyles.spinner}/>: "Go Online"}
+                      </button>
                     </div>
               </div>
             </div>
@@ -121,7 +158,8 @@ export class BeExpert extends React.Component<any, ExpertState>{
 const mapStateToProps = function (props: any, state: any) {
     return {
         profile: props.login.profile,
-        token: props.login.token
+        token: props.login.token,
+        bearer: props.login.bearer
     }
 
 }

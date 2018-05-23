@@ -5,7 +5,6 @@ export const walletAmount = actionCreator('GET_WALLET_AMOUNT');
 
 export function getWalletAmount(args: any = null) {
     return (dispatch: Function, getState: Function) => {
-        console.log("hit")
         Axios({
             method: 'GET',
             baseURL: 'https://interface-api.whenhub.com/api/Accounts/',
@@ -14,7 +13,6 @@ export function getWalletAmount(args: any = null) {
                 'Authorization': 'Bearer ' + `${args.bearer}`
             }
         }).then(function (response: any) {
-            console.log(response.data);
             dispatch(walletAmount(response.data))
         }).catch(function (error: any) {
             console.log(error);

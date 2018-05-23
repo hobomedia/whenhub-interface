@@ -1,21 +1,36 @@
 import * as React from 'react';
-let styles = require('./Home.scss');
+import {connect} from 'react-redux';
 
+const Axios = require('axios');
+const styles = require('./Home.scss');
+const goOnlineStyles = require('./GoOnline.scss');
 
-export default class GoOnline extends React.Component<any>{ 
+export class GoOnline extends React.Component<any>{ 
   constructor(props:any){
     super(props)
   }
 
   onSubmit() {
-    history.back();
+    Axios({
+        method: 'PUT',
+        url: `https://interface-api.whenhub.com/api/Experts/`+ `${this.props.profile['https://interface.whenhub.com/winid']}` + `/offline`,
+        headers: {
+          'Authorization': 'Bearer ' + `${this.props.bearer}`
+        }
+      }).then(function (response: any) {
+        console.log(response.data)
+        history.back();
+      }).catch(function (error: any) {
+        console.log(error)
+      })
+  
   }
 
     render() {
         return (
         <div className={styles.container} style={{height: "600px"}}>
-            <div id={styles.bebackground}>
-                <button style={{ backgroundColor: "#e64b4b", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit} className="btn">
+            <div id={goOnlineStyles.background}>
+                <button style={{ backgroundColor: "#e64b4b", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">
                     Go Offline
                 </button>
 
@@ -33,3 +48,13 @@ export default class GoOnline extends React.Component<any>{
         );
     }
 }
+
+const mapStateToProps = function (props: any, state: any) {
+    return {
+        profile: props.login.profile,
+        token: props.login.token,
+        bearer: props.login.bearer
+    }
+
+}
+export default connect(mapStateToProps)(GoOnline);
