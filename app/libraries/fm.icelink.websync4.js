@@ -1,6 +1,6 @@
 //
 // Title: IceLink for JavaScript
-// Version: 3.2.1.456
+// Version: 3.2.3.684
 // Copyright Frozen Mountain Software 2011+
 //
 (function (name, dependencies, definition) {
@@ -435,6 +435,7 @@ var __extends = (this && this.__extends) || (function () {
                     }
                     if (__arguments.length == 0) {
                         //super();
+                        this.fmicelinkwebsync4StateInit();
                     }
                     else {
                         throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -442,6 +443,11 @@ var __extends = (this && this.__extends) || (function () {
                 }
                 State.prototype.getTypeString = function () {
                     return '[fm.icelink.websync4.State]';
+                };
+                State.prototype.fmicelinkwebsync4StateInit = function () {
+                    this._unlinkAllOnLeaveSuccess = false;
+                    this._unlinkExistingOnUserJoin = false;
+                    this._unlinkOnUserLeave = false;
                 };
                 State.prototype.getConnections = function () {
                     if (arguments.length == 0) {
@@ -535,6 +541,7 @@ var __extends = (this && this.__extends) || (function () {
                     }
                     if (__arguments.length == 0) {
                         _this = _super.call(this) || this;
+                        _this.fmicelinkwebsync4JoinConferenceArgsInit();
                         _this.setUnlinkExistingOnUserJoin(true);
                         _this.setUnlinkOnUserLeave(true);
                     }
@@ -544,6 +551,7 @@ var __extends = (this && this.__extends) || (function () {
                         __arguments = new Array(0);
                         {
                             _this = _super.call(this) || this;
+                            _this.fmicelinkwebsync4JoinConferenceArgsInit();
                             _this.setUnlinkExistingOnUserJoin(true);
                             _this.setUnlinkOnUserLeave(true);
                         }
@@ -557,6 +565,12 @@ var __extends = (this && this.__extends) || (function () {
                 JoinConferenceArgs.prototype.getTypeString = function () {
                     return '[fm.icelink.websync4.JoinConferenceArgs]' + ',' + _super.prototype.getTypeString.call(this);
                 };
+                JoinConferenceArgs.prototype.fmicelinkwebsync4JoinConferenceArgsInit = function () {
+                    this._joinSuccessTimestamp = 0;
+                    this._joinTimestamp = 0;
+                    this._unlinkExistingOnUserJoin = false;
+                    this._unlinkOnUserLeave = false;
+                };
                 /**<span id='method-fm.icelink.websync4.JoinConferenceArgs-getConferenceChannel'>&nbsp;</span>**/
                 /**
                  <div>
@@ -569,6 +583,30 @@ var __extends = (this && this.__extends) || (function () {
                 JoinConferenceArgs.prototype.getConferenceChannel = function () {
                     if (arguments.length == 0) {
                         return this._conferenceChannel;
+                    }
+                    else {
+                        throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                    }
+                };
+                /**
+                @internal
+        
+                */
+                JoinConferenceArgs.prototype.getJoinSuccessTimestamp = function () {
+                    if (arguments.length == 0) {
+                        return this._joinSuccessTimestamp;
+                    }
+                    else {
+                        throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                    }
+                };
+                /**
+                @internal
+        
+                */
+                JoinConferenceArgs.prototype.getJoinTimestamp = function () {
+                    if (arguments.length == 0) {
+                        return this._joinTimestamp;
                     }
                     else {
                         throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -697,6 +735,30 @@ var __extends = (this && this.__extends) || (function () {
                 JoinConferenceArgs.prototype.setConferenceChannel = function (value) {
                     if (arguments.length == 1) {
                         this._conferenceChannel = value;
+                    }
+                    else {
+                        throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                    }
+                };
+                /**
+                @internal
+        
+                */
+                JoinConferenceArgs.prototype.setJoinSuccessTimestamp = function (value) {
+                    if (arguments.length == 1) {
+                        this._joinSuccessTimestamp = value;
+                    }
+                    else {
+                        throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                    }
+                };
+                /**
+                @internal
+        
+                */
+                JoinConferenceArgs.prototype.setJoinTimestamp = function (value) {
+                    if (arguments.length == 1) {
+                        this._joinTimestamp = value;
                     }
                     else {
                         throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -1043,6 +1105,7 @@ var __extends = (this && this.__extends) || (function () {
                     }
                     if (__arguments.length == 0) {
                         _this = _super.call(this) || this;
+                        _this.fmicelinkwebsync4LeaveConferenceArgsInit();
                         _this.setUnlinkAllOnSuccess(true);
                     }
                     else if (__arguments.length == 1) {
@@ -1051,6 +1114,7 @@ var __extends = (this && this.__extends) || (function () {
                         __arguments = new Array(0);
                         {
                             _this = _super.call(this) || this;
+                            _this.fmicelinkwebsync4LeaveConferenceArgsInit();
                             _this.setUnlinkAllOnSuccess(true);
                         }
                         _this.setConferenceChannel(conferenceChannel);
@@ -1062,6 +1126,11 @@ var __extends = (this && this.__extends) || (function () {
                 }
                 LeaveConferenceArgs.prototype.getTypeString = function () {
                     return '[fm.icelink.websync4.LeaveConferenceArgs]' + ',' + _super.prototype.getTypeString.call(this);
+                };
+                LeaveConferenceArgs.prototype.fmicelinkwebsync4LeaveConferenceArgsInit = function () {
+                    this._leaveSuccessTimestamp = 0;
+                    this._leaveTimestamp = 0;
+                    this._unlinkAllOnSuccess = false;
                 };
                 /**<span id='method-fm.icelink.websync4.LeaveConferenceArgs-getConferenceChannel'>&nbsp;</span>**/
                 /**
@@ -1075,6 +1144,30 @@ var __extends = (this && this.__extends) || (function () {
                 LeaveConferenceArgs.prototype.getConferenceChannel = function () {
                     if (arguments.length == 0) {
                         return this._conferenceChannel;
+                    }
+                    else {
+                        throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                    }
+                };
+                /**
+                @internal
+        
+                */
+                LeaveConferenceArgs.prototype.getLeaveSuccessTimestamp = function () {
+                    if (arguments.length == 0) {
+                        return this._leaveSuccessTimestamp;
+                    }
+                    else {
+                        throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                    }
+                };
+                /**
+                @internal
+        
+                */
+                LeaveConferenceArgs.prototype.getLeaveTimestamp = function () {
+                    if (arguments.length == 0) {
+                        return this._leaveTimestamp;
                     }
                     else {
                         throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -1147,6 +1240,30 @@ var __extends = (this && this.__extends) || (function () {
                 LeaveConferenceArgs.prototype.setConferenceChannel = function (value) {
                     if (arguments.length == 1) {
                         this._conferenceChannel = value;
+                    }
+                    else {
+                        throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                    }
+                };
+                /**
+                @internal
+        
+                */
+                LeaveConferenceArgs.prototype.setLeaveSuccessTimestamp = function (value) {
+                    if (arguments.length == 1) {
+                        this._leaveSuccessTimestamp = value;
+                    }
+                    else {
+                        throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                    }
+                };
+                /**
+                @internal
+        
+                */
+                LeaveConferenceArgs.prototype.setLeaveTimestamp = function (value) {
+                    if (arguments.length == 1) {
+                        this._leaveTimestamp = value;
                     }
                     else {
                         throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -1481,6 +1598,7 @@ var __extends = (this && this.__extends) || (function () {
                             }
                             state.getConnections().addOnLocalCandidate(action);
                             client.setDynamicValue(args.getConferenceChannel(), state);
+                            args.setJoinTimestamp(fm.icelink.ManagedStopwatch.getTimestamp());
                             var args3 = new fm.websync.chat.JoinArgs([args.getConferenceChannel(), instanceChannel], "fm.icelink.websync");
                             args3.setUserId(clientId);
                             args3.setUserNickname("fm.icelink.websync");
@@ -1496,6 +1614,9 @@ var __extends = (this && this.__extends) || (function () {
                             args3.setOnFailure(action2);
                             if ((fm.icelink.Global.equals(action3, null))) {
                                 action3 = function (e) {
+                                    args.setJoinSuccessTimestamp(fm.icelink.ManagedStopwatch.getTimestamp());
+                                    var num = icelink.MathAssistant.floor((args.getJoinSuccessTimestamp() - args.getJoinTimestamp()) / fm.icelink.Constants.getTicksPerMillisecond());
+                                    fm.icelink.Log.info(fm.icelink.StringExtensions.format("Client {0} took {1}ms to join {2}.", client.getClientId().toString(), fm.icelink.IntExtensions.toString(num), args.getConferenceChannel()));
                                     fm.icelink.websync4.ClientExtensions.raiseJoinSuccess(args, e, args.getConferenceChannel(), e.getUsers());
                                 };
                             }
@@ -1519,11 +1640,27 @@ var __extends = (this && this.__extends) || (function () {
                                         else {
                                             if ((fm.icelink.Global.equals(publishingUser.getUserNickname(), "fm.icelink.websync"))) {
                                                 if ((fm.icelink.Global.equals(e.getTag(), "fm.icelink.websync.offeranswer"))) {
-                                                    fm.icelink.websync4.ClientExtensions.receiveRemoteDescription(e, state, remoteUserId, remoteBoundRecords, client, args.getConferenceChannel());
+                                                    var remoteDescription = fm.icelink.SessionDescription.fromJson(e.getDataJson());
+                                                    if ((fm.icelink.Global.equals(remoteDescription, null))) {
+                                                        fm.icelink.Log.error(fm.icelink.StringExtensions.format("{0}: Could not parse remote description: {1}", remoteUserId, e.getDataJson()));
+                                                    }
+                                                    else {
+                                                        if ((fm.icelink.Global.equals(remoteDescription.getType(), fm.icelink.SessionDescriptionType.Offer))) {
+                                                            var num = icelink.MathAssistant.floor((fm.icelink.ManagedStopwatch.getTimestamp() - args.getJoinSuccessTimestamp()) / fm.icelink.Constants.getTicksPerMillisecond());
+                                                            fm.icelink.Log.info(fm.icelink.StringExtensions.format("Client {0} took {1}ms to receive offer.", client.getClientId().toString(), fm.icelink.IntExtensions.toString(num)));
+                                                        }
+                                                        fm.icelink.websync4.ClientExtensions.receiveRemoteDescription(remoteDescription, state, remoteUserId, remoteBoundRecords, client, args.getConferenceChannel());
+                                                    }
                                                 }
                                                 else {
                                                     if ((fm.icelink.Global.equals(e.getTag(), "fm.icelink.websync.candidate"))) {
-                                                        fm.icelink.websync4.ClientExtensions.receiveRemoteCandidate(e, state, remoteUserId, remoteBoundRecords);
+                                                        var remoteCandidate = fm.icelink.Candidate.fromJson(e.getDataJson());
+                                                        if ((fm.icelink.Global.equals(remoteCandidate, null))) {
+                                                            fm.icelink.Log.error(fm.icelink.StringExtensions.format("{0}: Could not parse remote candidate: {1}", remoteUserId, e.getDataJson()));
+                                                        }
+                                                        else {
+                                                            fm.icelink.websync4.ClientExtensions.receiveRemoteCandidate(remoteCandidate, state, remoteUserId, remoteBoundRecords);
+                                                        }
                                                     }
                                                     else {
                                                         fm.icelink.websync4.ClientExtensions.raiseJoinReceive(args, e, e.getChannel(), remoteUserId, remoteBoundRecords);
@@ -1631,6 +1768,7 @@ var __extends = (this && this.__extends) || (function () {
                             state.setUnlinkAllOnLeaveSuccess(args.getUnlinkAllOnSuccess());
                             var clientId = client.getClientId().toString();
                             var instanceChannel = fm.icelink.websync4.ClientExtensions.getInstanceChannel(args.getConferenceChannel(), clientId);
+                            args.setLeaveTimestamp(fm.icelink.ManagedStopwatch.getTimestamp());
                             var args5 = new fm.websync.chat.LeaveArgs([args.getConferenceChannel(), instanceChannel], "fm.icelink.websync");
                             args5.setRequestUrl(args.getRequestUrl());
                             args5.setSynchronous(args.getSynchronous());
@@ -1643,6 +1781,9 @@ var __extends = (this && this.__extends) || (function () {
                             args5.setOnFailure(action);
                             if ((fm.icelink.Global.equals(action2, null))) {
                                 action2 = function (e) {
+                                    args.setLeaveSuccessTimestamp(fm.icelink.ManagedStopwatch.getTimestamp());
+                                    var num = icelink.MathAssistant.floor((args.getLeaveSuccessTimestamp() - args.getLeaveTimestamp()) / fm.icelink.Constants.getTicksPerMillisecond());
+                                    fm.icelink.Log.info(fm.icelink.StringExtensions.format("Client {0} took {1}ms to leave {2}.", client.getClientId().toString(), fm.icelink.IntExtensions.toString(num), args.getConferenceChannel()));
                                     client.unsetDynamicValue(args.getConferenceChannel());
                                     if (state.getUnlinkAllOnLeaveSuccess()) {
                                         for (var _i = 0, _a = state.getConnections().getValues(); _i < _a.length; _i++) {
@@ -1703,29 +1844,43 @@ var __extends = (this && this.__extends) || (function () {
                 */
                 ClientExtensions.getAndCacheConnection = function (remoteClient) {
                     if (arguments.length == 1) {
+                        var action = null;
                         var state = remoteClient.getState();
-                        var connection = fm.icelink.websync4.ClientExtensions.raiseJoinRemoteClient(state.getConnections().getJoinArgs(), remoteClient, remoteClient.getInstanceId());
-                        if ((!fm.icelink.Global.equals(connection, null))) {
-                            connection.addOnSignallingStateChange(function (c) {
-                                if ((fm.icelink.Global.equals(c.getSignallingState(), fm.icelink.SignallingState.Stable))) {
-                                    fm.icelink.websync4.ClientExtensions.processReadyForRenegotiation(c);
-                                }
-                            });
-                            connection.addOnStateChange(function (c) {
+                        var joinArgs = state.getConnections().getJoinArgs();
+                        var connection = null;
+                        var tieBreaker = fm.icelink.Utility.generateTieBreaker();
+                        if (!state.getConnections().checkForExistingConnection(remoteClient.getInstanceId(), tieBreaker)) {
+                            return connection;
+                        }
+                        connection = fm.icelink.websync4.ClientExtensions.raiseJoinRemoteClient(joinArgs, remoteClient, remoteClient.getInstanceId());
+                        if ((fm.icelink.Global.equals(connection, null))) {
+                            return connection;
+                        }
+                        connection.setTieBreaker(tieBreaker);
+                        connection.addOnSignallingStateChange(function (c) {
+                            if ((fm.icelink.Global.equals(c.getSignallingState(), fm.icelink.SignallingState.Stable))) {
+                                fm.icelink.websync4.ClientExtensions.processReadyForRenegotiation(c);
+                            }
+                        });
+                        if ((fm.icelink.Global.equals(action, null))) {
+                            action = function (c) {
                                 if ((fm.icelink.Global.equals(c.getState(), fm.icelink.ConnectionState.Connected))) {
                                     fm.icelink.websync4.ClientExtensions.processReadyForRenegotiation(c);
                                 }
                                 else {
                                     if (((fm.icelink.Global.equals(c.getState(), fm.icelink.ConnectionState.Closed)) || (fm.icelink.Global.equals(c.getState(), fm.icelink.ConnectionState.Failed)))) {
                                         remoteClient.getState().getConnections().remove(c);
+                                        c.unsetDynamicValue("fm.icelink.retriableConnection");
                                     }
                                 }
-                            });
-                            if (state.getConnections().add(connection)) {
-                                return connection;
-                            }
+                            };
                         }
-                        return null;
+                        connection.addOnStateChange(action);
+                        if (!state.getConnections().add(connection)) {
+                            connection.close();
+                            connection = null;
+                        }
+                        return connection;
                     }
                     else {
                         throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -2053,15 +2208,9 @@ var __extends = (this && this.__extends) || (function () {
                 @internal
         
                 */
-                ClientExtensions.receiveRemoteCandidate = function (e, state, userId, boundRecords) {
+                ClientExtensions.receiveRemoteCandidate = function (remoteCandidate, state, userId, boundRecords) {
                     if (arguments.length == 4) {
-                        var connections = state.getConnections();
-                        var remoteCandidate = fm.icelink.Candidate.fromJson(e.getDataJson());
-                        if ((fm.icelink.Global.equals(remoteCandidate, null))) {
-                            fm.icelink.Log.error(fm.icelink.StringExtensions.format("{0}: Could not parse remote candidate: {1}", userId, e.getDataJson()));
-                            return false;
-                        }
-                        var byRemoteUserId = connections.getByRemoteUserId(userId);
+                        var byRemoteUserId = state.getConnections().getByRemoteUserId(userId);
                         if ((fm.icelink.Global.equals(byRemoteUserId, null))) {
                             byRemoteUserId = fm.icelink.websync4.ClientExtensions.getAndCacheConnection(fm.icelink.websync4.PeerClient.createPeerClient(userId, boundRecords, state));
                         }
@@ -2081,13 +2230,8 @@ var __extends = (this && this.__extends) || (function () {
                 @internal
         
                 */
-                ClientExtensions.receiveRemoteDescription = function (e, state, userId, boundRecords, client, conferenceChannel) {
+                ClientExtensions.receiveRemoteDescription = function (remoteDescription, state, userId, boundRecords, client, conferenceChannel) {
                     if (arguments.length == 6) {
-                        var remoteDescription = fm.icelink.SessionDescription.fromJson(e.getDataJson());
-                        if ((fm.icelink.Global.equals(remoteDescription, null))) {
-                            fm.icelink.Log.error(fm.icelink.StringExtensions.format("{0}: Could not parse remote description: {1}", userId, e.getDataJson()));
-                            return false;
-                        }
                         var byRemoteUserId = state.getConnections().getByRemoteUserId(userId);
                         if (remoteDescription.getIsOffer()) {
                             var sessionId = remoteDescription.getSessionId();
@@ -2121,7 +2265,7 @@ var __extends = (this && this.__extends) || (function () {
                             return false;
                         }
                         if ((fm.icelink.Global.equals(byRemoteUserId, null))) {
-                            fm.icelink.Log.error(fm.icelink.StringExtensions.format("Answer from user {0} received, but connection does not exist: {1}", userId, e.getDataJson()));
+                            fm.icelink.Log.error(fm.icelink.StringExtensions.format("Answer from user {0} received, but connection does not exist.", userId));
                             return false;
                         }
                         fm.icelink.websync4.ClientExtensions.acceptAnswer(byRemoteUserId, remoteDescription);
@@ -2144,19 +2288,26 @@ var __extends = (this && this.__extends) || (function () {
                 */
                 ClientExtensions.reconnectRemoteClient = function (client, remoteClient, failedConnection) {
                     if (arguments.length == 3) {
-                        if (((!fm.icelink.Global.equals(failedConnection, null)) && (!fm.icelink.Global.equals(failedConnection.getDynamicValue("fm.icelink.retriableConnection"), null)))) {
-                            var andCacheConnection = fm.icelink.websync4.ClientExtensions.getAndCacheConnection(remoteClient);
-                            if ((!fm.icelink.Global.equals(andCacheConnection, null))) {
-                                if ((!fm.icelink.Global.equals(remoteClient.getState(), null))) {
-                                    var conferenceChannel = remoteClient.getState().getConnections().getJoinArgs().getConferenceChannel();
-                                    fm.icelink.websync4.ClientExtensions.createAndSendOffer(andCacheConnection, client, conferenceChannel, remoteClient.getInstanceId());
+                        if ((!fm.icelink.Global.equals(failedConnection, null))) {
+                            if ((!fm.icelink.Global.equals(failedConnection.getState(), fm.icelink.ConnectionState.Failed))) {
+                                var message = fm.icelink.StringExtensions.format("Can only reconnect remote connections in Failed state, but reconnection on a connection with ID {1} in the {0} state was attempted.", new fm.icelink.ConnectionStateWrapper(failedConnection.getState()).toString(), failedConnection.getId());
+                                fm.icelink.Log.error(message);
+                                throw new fm.icelink.Exception(message);
+                            }
+                            if ((!fm.icelink.Global.equals(failedConnection.getDynamicValue("fm.icelink.retriableConnection"), null))) {
+                                var andCacheConnection = fm.icelink.websync4.ClientExtensions.getAndCacheConnection(remoteClient);
+                                if ((!fm.icelink.Global.equals(andCacheConnection, null))) {
+                                    if ((!fm.icelink.Global.equals(remoteClient.getState(), null))) {
+                                        var conferenceChannel = remoteClient.getState().getConnections().getJoinArgs().getConferenceChannel();
+                                        fm.icelink.websync4.ClientExtensions.createAndSendOffer(andCacheConnection, client, conferenceChannel, remoteClient.getInstanceId());
+                                    }
+                                    else {
+                                        fm.icelink.Log.error("Cannot reconnect remote client. Null state.");
+                                    }
                                 }
                                 else {
-                                    fm.icelink.Log.error("Cannot reconnect remote client. Null state.");
+                                    fm.icelink.Log.debug(fm.icelink.StringExtensions.format("Will not reconnect connection {0} because associated websync client encountered stream failure.", andCacheConnection.getId()));
                                 }
-                            }
-                            else {
-                                fm.icelink.Log.debug(fm.icelink.StringExtensions.format("Will not reconnect connection {0} because associated websync client encountered stream failure.", andCacheConnection.getId()));
                             }
                         }
                     }
@@ -2362,7 +2513,7 @@ var __extends = (this && this.__extends) || (function () {
                 ClientExtensions.fmicelinkwebsync4ClientExtensionsInitialize = function () {
                     if (!fm.icelink.websync4.ClientExtensions.__fmicelinkwebsync4ClientExtensionsInitialized) {
                         ClientExtensions.fm_icelink_websync4_ClientExtensions__retriable = "fm.icelink.retriableConnection";
-                        fm.icelink.websync4.ClientExtensions.fm_icelink_websync4_ClientExtensions___connectionRetryLock = new Object();
+                        fm.icelink.websync4.ClientExtensions.fm_icelink_websync4_ClientExtensions___lock = new Object();
                     }
                     fm.icelink.websync4.ClientExtensions.__fmicelinkwebsync4ClientExtensionsInitialized = true;
                 };
@@ -2491,31 +2642,7 @@ var __extends = (this && this.__extends) || (function () {
                 };
                 ConnectionCollection.prototype.add = function (value) {
                     if (arguments.length == 1) {
-                        var flag = false;
-                        if ((!fm.icelink.Global.equals(value, null))) {
-                            var connection = null;
-                            var dynamicValue = value.getDynamicValue("fm.icelink.remoteUserId");
-                            var _var0 = new fm.icelink.Holder(connection);
-                            var _var1 = this.tryGetByRemoteUserId(dynamicValue, _var0);
-                            connection = _var0.getValue();
-                            if ((_var1 && ((((!fm.icelink.Global.equals(connection.getState(), fm.icelink.ConnectionState.Closed)) && (!fm.icelink.Global.equals(connection.getState(), fm.icelink.ConnectionState.Closing))) && (!fm.icelink.Global.equals(connection.getState(), fm.icelink.ConnectionState.Failed))) && (!fm.icelink.Global.equals(connection.getState(), fm.icelink.ConnectionState.Failing))))) {
-                                if ((fm.icelink.StringExtensions.compareTo(connection.getRemoteDescription().getTieBreaker(), value.getTieBreaker()) > 0)) {
-                                    fm.icelink.Log.debug(fm.icelink.StringExtensions.format("There already exists connection with Id {0} for communicating with user {1} with a remote description containing tie-breaker. Connection {2} will close.", connection.getId(), dynamicValue, value.getId()));
-                                    flag = true;
-                                    value.close();
-                                    value.unsetDynamicValue("fm.icelink.retriableConnection");
-                                }
-                                else {
-                                    fm.icelink.Log.debug(fm.icelink.StringExtensions.format("There already exists connection with Id {0} for communicating with user {1} but new connection with Id {2} has a winning tie-breaker. Connection {0} will close.", connection.getId(), dynamicValue, value.getId()));
-                                    connection.unsetDynamicValue("fm.icelink.retriableConnection");
-                                    connection.close();
-                                }
-                            }
-                            if (!flag) {
-                                _super.prototype.add.call(this, value);
-                            }
-                        }
-                        return !flag;
+                        return _super.prototype.add.call(this, value);
                     }
                     else {
                         throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -2534,6 +2661,51 @@ var __extends = (this && this.__extends) || (function () {
                         _super.prototype.addSuccess.call(this, value);
                         this.__lookupByRemoteUserId[value.getDynamicValue("fm.icelink.remoteUserId")] = value;
                         value.addOnLocalCandidate(this.processLocalCandidate.bind(this));
+                    }
+                    else {
+                        throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                    }
+                };
+                ConnectionCollection.prototype.checkForExistingConnection = function (remoteUserId, tieBreaker) {
+                    if (arguments.length == 2) {
+                        var flag = true;
+                        var flag2 = false;
+                        var connection = null;
+                        var _var0 = new fm.icelink.Holder(connection);
+                        var _var1 = this.tryGetByRemoteUserId(remoteUserId, _var0);
+                        connection = _var0.getValue();
+                        if (!_var1) {
+                            return flag;
+                        }
+                        if (((((!fm.icelink.Global.equals(connection.getState(), fm.icelink.ConnectionState.Closed)) && (!fm.icelink.Global.equals(connection.getState(), fm.icelink.ConnectionState.Closing))) && (!fm.icelink.Global.equals(connection.getState(), fm.icelink.ConnectionState.Failed))) && (!fm.icelink.Global.equals(connection.getState(), fm.icelink.ConnectionState.Failing)))) {
+                            var remoteDescription = connection.getRemoteDescription();
+                            if ((!fm.icelink.Global.equals(remoteDescription, null))) {
+                                var str = remoteDescription.getTieBreaker();
+                                if (((!fm.icelink.Global.equals(str, null)) && (fm.icelink.StringExtensions.compareTo(str, tieBreaker) > 0))) {
+                                    fm.icelink.Log.debug(fm.icelink.StringExtensions.format("There already exists connection with Id {0} for communicating with user {1} with a remote description containing a winning tie-breaker {2}. New connection will not be created.", connection.getId(), remoteUserId, str));
+                                    flag = false;
+                                }
+                                else {
+                                    if ((!fm.icelink.Global.equals(str, null))) {
+                                        fm.icelink.Log.debug(fm.icelink.StringExtensions.format("There already exists connection with Id {0} for communicating with user {1} but a new connection has a winning tie-breaker. Connection {0} will close.", connection.getId(), remoteUserId));
+                                        flag2 = true;
+                                    }
+                                    else {
+                                        fm.icelink.Log.debug(fm.icelink.StringExtensions.format("There already exists connection with Id {0} for communicating with user {1} but that connection has remote description that does not have a tie-breaker set. Connection {0} will close.", connection.getId(), remoteUserId));
+                                        flag2 = true;
+                                    }
+                                }
+                            }
+                            else {
+                                fm.icelink.Log.debug(fm.icelink.StringExtensions.format("There already exists connection with Id {0} for communicating with user {1} but this existing connection does not have remote description set. Connection {0} will close.", connection.getId(), remoteUserId));
+                                flag2 = true;
+                            }
+                        }
+                        if (flag2) {
+                            connection.unsetDynamicValue("fm.icelink.retriableConnection");
+                            connection.close();
+                        }
+                        return flag;
                     }
                     else {
                         throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');

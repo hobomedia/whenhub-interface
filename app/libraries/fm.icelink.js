@@ -1,6 +1,6 @@
 //
 // Title: IceLink for JavaScript
-// Version: 3.2.1.456
+// Version: 3.2.3.684
 // Copyright Frozen Mountain Software 2011+
 //
 (function (name, dependencies, definition) {
@@ -74,6 +74,13 @@ var __extends = (this && this.__extends) || (function () {
                     array.push(v);
                 }
             };
+            ArrayExtensions.getRange = function (array, index, count) {
+                var newArray = new Array(count);
+                for (var i = 0; i < newArray.length; i++) {
+                    newArray[i] = array[i + index];
+                }
+                return newArray;
+            };
             ArrayExtensions.contains = function (array, value) {
                 for (var _i = 0, array_1 = array; _i < array_1.length; _i++) {
                     var obj = array_1[_i];
@@ -109,6 +116,9 @@ var __extends = (this && this.__extends) || (function () {
 (function (fm) {
     var icelink;
     (function (icelink) {
+        /**
+        @internal
+        */
         var AsyncLogger = /** @class */ (function () {
             function AsyncLogger(tag) {
                 var __arguments = new Array(arguments.length);
@@ -117,6 +127,7 @@ var __extends = (this && this.__extends) || (function () {
                 }
                 if (__arguments.length == 1) {
                     var tag_1 = __arguments[0];
+                    //super();
                     this.setTag(tag_1);
                 }
                 else {
@@ -126,50 +137,44 @@ var __extends = (this && this.__extends) || (function () {
             AsyncLogger.prototype.getTypeString = function () {
                 return '[fm.icelink.AsyncLogger]';
             };
-            AsyncLogger.prototype.getIsVerboseEnabled = function () {
-                return this.isLogEnabled(fm.icelink.LogLevel.Verbose);
-            };
-            AsyncLogger.prototype.verbose = function () {
-                if (arguments.length == 1) {
-                    var message = arguments[0];
-                    this.doLog(fm.icelink.LogLevel.Verbose, message, null);
-                }
-                else if (arguments.length == 2) {
-                    var message = arguments[0];
-                    var ex = arguments[1];
-                    this.doLog(fm.icelink.LogLevel.Verbose, message, ex);
-                }
-                else {
-                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
-                }
-            };
-            AsyncLogger.prototype.getIsDebugEnabled = function () {
-                return this.isLogEnabled(fm.icelink.LogLevel.Debug);
-            };
-            AsyncLogger.prototype.isLogEnabled = function (level) {
-                return icelink.LogConfiguration.getTagLogLevel(this._tag) <= level;
-            };
             AsyncLogger.prototype.debug = function () {
                 if (arguments.length == 1) {
                     var message = arguments[0];
-                    this.doLog(fm.icelink.LogLevel.Debug, message, null);
+                    this.doLog(fm.icelink.LogLevel.Debug, null, message, null);
                 }
-                else if (arguments.length == 2) {
+                else if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isError(arguments[1]))) {
                     var message = arguments[0];
                     var ex = arguments[1];
-                    this.doLog(fm.icelink.LogLevel.Debug, message, ex);
+                    this.doLog(fm.icelink.LogLevel.Debug, null, message, ex);
+                }
+                else if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isString(arguments[1]))) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    this.doLog(fm.icelink.LogLevel.Debug, scope, message, null);
+                }
+                else if (arguments.length == 3) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    var ex = arguments[2];
+                    this.doLog(fm.icelink.LogLevel.Debug, scope, message, ex);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            AsyncLogger.prototype.doLog = function (level, msg, ex) {
-                if (arguments.length == 3) {
-                    if ((fm.icelink.LogConfiguration.getTagLogLevel(this.getTag()) <= level)) {
-                        var logProviders = fm.icelink.LogConfiguration.getLogProviders();
-                        for (var _i = 0, logProviders_1 = logProviders; _i < logProviders_1.length; _i++) {
-                            var provider = logProviders_1[_i];
-                            provider.log(icelink.DateTime.getNow(), level, this._tag, msg, ex);
+            /**
+            @internal
+    
+            */
+            AsyncLogger.prototype.doLog = function (level, scope, msg, ex) {
+                if (arguments.length == 4) {
+                    if (fm.icelink.LogConfiguration.getHaveProviders()) {
+                        if ((fm.icelink.LogConfiguration.getTagLogLevel(this.getTag()) <= level)) {
+                            var logProviders = fm.icelink.LogConfiguration.getLogProviders();
+                            for (var _i = 0, logProviders_1 = logProviders; _i < logProviders_1.length; _i++) {
+                                var provider = logProviders_1[_i];
+                                provider.log(new fm.icelink.LogEvent(fm.icelink.DateTime.getNow(), this.getTag(), scope, level, msg, ex, fm.icelink.ManagedThread.getCurrentThreadId()));
+                            }
                         }
                     }
                 }
@@ -177,43 +182,101 @@ var __extends = (this && this.__extends) || (function () {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            AsyncLogger.prototype.getIsErrorEnabled = function () {
-                return this.isLogEnabled(fm.icelink.LogLevel.Error);
-            };
             AsyncLogger.prototype.error = function () {
-                if (arguments.length == 1) {
-                    var message = arguments[0];
-                    this.doLog(fm.icelink.LogLevel.Error, message, null);
+                if (arguments.length == 3) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    var ex = arguments[2];
+                    this.doLog(fm.icelink.LogLevel.Error, scope, message, ex);
                 }
-                else if (arguments.length == 2) {
+                else if (arguments.length == 1) {
+                    var message = arguments[0];
+                    this.doLog(fm.icelink.LogLevel.Error, null, message, null);
+                }
+                else if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isError(arguments[1]))) {
                     var message = arguments[0];
                     var ex = arguments[1];
-                    this.doLog(fm.icelink.LogLevel.Error, message, ex);
+                    this.doLog(fm.icelink.LogLevel.Error, null, message, ex);
+                }
+                else if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isString(arguments[1]))) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    this.doLog(fm.icelink.LogLevel.Error, scope, message, null);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            AsyncLogger.prototype.fatal = function () {
+                if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isString(arguments[1]))) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    this.doLog(fm.icelink.LogLevel.Fatal, scope, message, null);
+                }
+                else if (arguments.length == 1) {
+                    var message = arguments[0];
+                    this.doLog(fm.icelink.LogLevel.Fatal, null, message, null);
+                }
+                else if (arguments.length == 3) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    var ex = arguments[2];
+                    this.doLog(fm.icelink.LogLevel.Fatal, scope, message, ex);
+                }
+                else if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isError(arguments[1]))) {
+                    var message = arguments[0];
+                    var ex = arguments[1];
+                    this.doLog(fm.icelink.LogLevel.Fatal, null, message, ex);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            AsyncLogger.prototype.flush = function () {
+            };
+            AsyncLogger.prototype.getIsDebugEnabled = function () {
+                if (arguments.length == 0) {
+                    return this.isLogEnabled(fm.icelink.LogLevel.Debug);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            AsyncLogger.prototype.getIsErrorEnabled = function () {
+                if (arguments.length == 0) {
+                    return this.isLogEnabled(fm.icelink.LogLevel.Error);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             AsyncLogger.prototype.getIsFatalEnabled = function () {
-                return this.isLogEnabled(fm.icelink.LogLevel.Fatal);
-            };
-            AsyncLogger.prototype.fatal = function () {
-                if (arguments.length == 1) {
-                    var message = arguments[0];
-                    this.doLog(fm.icelink.LogLevel.Fatal, message, null);
-                }
-                else if (arguments.length == 2) {
-                    var message = arguments[0];
-                    var ex = arguments[1];
-                    this.doLog(fm.icelink.LogLevel.Fatal, message, ex);
+                if (arguments.length == 0) {
+                    return this.isLogEnabled(fm.icelink.LogLevel.Fatal);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            AsyncLogger.prototype.getLogLevel = function () {
+            AsyncLogger.prototype.getIsInfoEnabled = function () {
                 if (arguments.length == 0) {
-                    return this._logLevel;
+                    return this.isLogEnabled(fm.icelink.LogLevel.Info);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            AsyncLogger.prototype.getIsVerboseEnabled = function () {
+                if (arguments.length == 0) {
+                    return this.isLogEnabled(fm.icelink.LogLevel.Verbose);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            AsyncLogger.prototype.getIsWarnEnabled = function () {
+                if (arguments.length == 0) {
+                    return this.isLogEnabled(fm.icelink.LogLevel.Warn);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -227,39 +290,57 @@ var __extends = (this && this.__extends) || (function () {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            AsyncLogger.prototype.getIsInfoEnabled = function () {
-                return this.isLogEnabled(fm.icelink.LogLevel.Info);
-            };
             AsyncLogger.prototype.info = function () {
-                if (arguments.length == 1) {
-                    var message = arguments[0];
-                    this.doLog(fm.icelink.LogLevel.Info, message, null);
+                if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isString(arguments[1]))) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    this.doLog(fm.icelink.LogLevel.Info, scope, message, null);
                 }
-                else if (arguments.length == 2) {
+                else if (arguments.length == 1) {
+                    var message = arguments[0];
+                    this.doLog(fm.icelink.LogLevel.Info, null, message, null);
+                }
+                else if (arguments.length == 3) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    var ex = arguments[2];
+                    this.doLog(fm.icelink.LogLevel.Info, scope, message, ex);
+                }
+                else if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isError(arguments[1]))) {
                     var message = arguments[0];
                     var ex = arguments[1];
-                    this.doLog(fm.icelink.LogLevel.Info, message, ex);
+                    this.doLog(fm.icelink.LogLevel.Info, null, message, ex);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            AsyncLogger.prototype.log = function (message) {
+            AsyncLogger.prototype.isLogEnabled = function (level) {
                 if (arguments.length == 1) {
-                    this.doLog(fm.icelink.LogLevel.Info, message, null);
+                    return (fm.icelink.LogConfiguration.getTagLogLevel(this.getTag()) <= level);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            AsyncLogger.prototype.setLogLevel = function (value) {
+            AsyncLogger.prototype.log = function () {
                 if (arguments.length == 1) {
-                    this._logLevel = value;
+                    var message = arguments[0];
+                    this.doLog(fm.icelink.LogLevel.Info, null, message, null);
+                }
+                else if (arguments.length == 2) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    this.doLog(fm.icelink.LogLevel.Info, scope, message, null);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**
+            @internal
+    
+            */
             AsyncLogger.prototype.setTag = function (value) {
                 if (arguments.length == 1) {
                     this._tag = value;
@@ -268,28 +349,56 @@ var __extends = (this && this.__extends) || (function () {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            AsyncLogger.prototype.getIsWarnEnabled = function () {
-                return this.isLogEnabled(fm.icelink.LogLevel.Warn);
-            };
-            AsyncLogger.prototype.warn = function () {
-                if (arguments.length == 1) {
-                    var message = arguments[0];
-                    this.doLog(fm.icelink.LogLevel.Warn, message, null);
+            AsyncLogger.prototype.verbose = function () {
+                if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isString(arguments[1]))) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    this.doLog(fm.icelink.LogLevel.Verbose, scope, message, null);
                 }
-                else if (arguments.length == 2) {
+                else if (arguments.length == 1) {
+                    var message = arguments[0];
+                    this.doLog(fm.icelink.LogLevel.Verbose, null, message, null);
+                }
+                else if (arguments.length == 3) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    var ex = arguments[2];
+                    this.doLog(fm.icelink.LogLevel.Verbose, scope, message, ex);
+                }
+                else if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isError(arguments[1]))) {
                     var message = arguments[0];
                     var ex = arguments[1];
-                    this.doLog(fm.icelink.LogLevel.Warn, message, ex);
+                    this.doLog(fm.icelink.LogLevel.Verbose, null, message, ex);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            AsyncLogger.fmAsyncLoggerInitialize = function () {
-                fm.icelink.AsyncLogger.__fmAsyncLoggerInitialized = true;
+            AsyncLogger.prototype.warn = function () {
+                if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isString(arguments[1]))) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    this.doLog(fm.icelink.LogLevel.Warn, scope, message, null);
+                }
+                else if (arguments.length == 1) {
+                    var message = arguments[0];
+                    this.doLog(fm.icelink.LogLevel.Warn, null, message, null);
+                }
+                else if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isError(arguments[1]))) {
+                    var message = arguments[0];
+                    var ex = arguments[1];
+                    this.doLog(fm.icelink.LogLevel.Warn, null, message, ex);
+                }
+                else if (arguments.length == 3) {
+                    var scope = arguments[0];
+                    var message = arguments[1];
+                    var ex = arguments[2];
+                    this.doLog(fm.icelink.LogLevel.Warn, scope, message, ex);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
             };
-            AsyncLogger.prototype.flush = function () { };
-            AsyncLogger.__fmAsyncLoggerInitialized = false;
             return AsyncLogger;
         }());
         icelink.AsyncLogger = AsyncLogger;
@@ -830,7 +939,9 @@ var __extends = (this && this.__extends) || (function () {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkLogProviderInit();
                     this.setLevel(fm.icelink.LogLevel.Info);
+                    this.setProcessId(fm.icelink.Platform.getInstance().getProcessId());
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -839,102 +950,8 @@ var __extends = (this && this.__extends) || (function () {
             LogProvider.prototype.getTypeString = function () {
                 return '[fm.icelink.LogProvider]';
             };
-            LogProvider.getPrefix = function () {
-                if (arguments.length == 1) {
-                    var level = arguments[0];
-                    var str = "IceLink";
-                    var _var0 = level;
-                    if (_var0 == fm.icelink.LogLevel.Verbose) {
-                        do {
-                            return fm.icelink.StringExtensions.format("[{0}] VERBOSE", str);
-                        } while (false);
-                    }
-                    else if (_var0 == fm.icelink.LogLevel.Debug) {
-                        do {
-                            return fm.icelink.StringExtensions.format("[{0}] DEBUG  ", str);
-                        } while (false);
-                    }
-                    else if (_var0 == fm.icelink.LogLevel.Info) {
-                        do {
-                            return fm.icelink.StringExtensions.format("[{0}] INFO   ", str);
-                        } while (false);
-                    }
-                    else if (_var0 == fm.icelink.LogLevel.Warn) {
-                        do {
-                            return fm.icelink.StringExtensions.format("[{0}] WARN   ", str);
-                        } while (false);
-                    }
-                    else if (_var0 == fm.icelink.LogLevel.Error) {
-                        do {
-                            return fm.icelink.StringExtensions.format("[{0}] ERROR  ", str);
-                        } while (false);
-                    }
-                    else if (_var0 == fm.icelink.LogLevel.Fatal) {
-                        do {
-                            return fm.icelink.StringExtensions.format("[{0}] FATAL  ", str);
-                        } while (false);
-                    }
-                    else if (_var0 == fm.icelink.LogLevel.None) {
-                        do {
-                            return fm.icelink.StringExtensions.format("[{0}] NONE   ", str);
-                        } while (false);
-                    }
-                    return fm.icelink.StringExtensions.format("[{0}] ?????  ", str);
-                }
-                else if (arguments.length == 2) {
-                    var level = arguments[0];
-                    var includeTimestamp = arguments[1];
-                    var prefix = fm.icelink.LogProvider.getPrefix(level);
-                    if (includeTimestamp) {
-                        prefix = fm.icelink.StringExtensions.format("{0} {1}", prefix, fm.icelink.LogProvider.getPrefixTimestamp(fm.icelink.DateTime.getUtcNow()));
-                    }
-                    return prefix;
-                }
-                else {
-                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
-                }
-            };
-            /**<span id='method-fm.icelink.LogProvider-getPrefixTimestamp'>&nbsp;</span>**/
-            /**
-             <div>
-             Converts a timestamp to a string formatted for
-             rendering in a log message (yyyy/MM/dd-hh:mm:ss).
-             </div>
-    
-            @param {fm.icelink.DateTime} timestamp The timestamp.
-            @return {string} The timestamp as a formatted string.
-            */
-            LogProvider.getPrefixTimestamp = function (timestamp) {
-                if (arguments.length == 1) {
-                    var str = fm.icelink.IntExtensions.toString(timestamp.getYear());
-                    var str2 = fm.icelink.IntExtensions.toString(timestamp.getMonth());
-                    var str3 = fm.icelink.IntExtensions.toString(timestamp.getDay());
-                    var str4 = fm.icelink.IntExtensions.toString(timestamp.getHour());
-                    var str5 = fm.icelink.IntExtensions.toString(timestamp.getMinute());
-                    var str6 = fm.icelink.IntExtensions.toString(timestamp.getSecond());
-                    while ((str.length < 4)) {
-                        str = fm.icelink.StringExtensions.concat("0", str);
-                    }
-                    while ((str2.length < 2)) {
-                        str2 = fm.icelink.StringExtensions.concat("0", str2);
-                    }
-                    while ((str3.length < 2)) {
-                        str3 = fm.icelink.StringExtensions.concat("0", str3);
-                    }
-                    while ((str4.length < 2)) {
-                        str4 = fm.icelink.StringExtensions.concat("0", str4);
-                    }
-                    while ((str5.length < 2)) {
-                        str5 = fm.icelink.StringExtensions.concat("0", str5);
-                    }
-                    while ((str6.length < 2)) {
-                        str6 = fm.icelink.StringExtensions.concat("0", str6);
-                    }
-                    return fm.icelink.StringExtensions.format("{0}/{1}/{2}-{3}:{4}:{5}", [str, str2, str3, str4, str5, str6]);
-                }
-                else {
-                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
-                }
+            LogProvider.prototype.fmicelinkLogProviderInit = function () {
+                this._processId = 0;
             };
             /**<span id='method-fm.icelink.LogProvider-generateLogLine'>&nbsp;</span>**/
             /**
@@ -942,20 +959,17 @@ var __extends = (this && this.__extends) || (function () {
              Generates a default log line.
              </div>
     
-            @param {fm.icelink.DateTime} timestamp When the event occurred.
-            @param {fm.icelink.LogLevel} level The log level,
-            @param {string} tag Which logger it came from.
-            @param {string} message The log message.
-            @param {fm.icelink.Exception} ex The exception if one is available.
+            @param {fm.icelink.LogEvent} logItem The log event containing the details.
             @return {string}
             */
-            LogProvider.prototype.generateLogLine = function (timestamp, level, tag, message, ex) {
-                if (arguments.length == 5) {
-                    var str = fm.icelink.StringExtensions.format("{0} [{1}] {2} {3}", [fm.icelink.LogProvider.getPrefix(level), tag, fm.icelink.LogProvider.getPrefixTimestamp(timestamp), message]);
-                    if ((!fm.icelink.Global.equals(ex, null))) {
-                        str = fm.icelink.StringExtensions.concat(str, fm.icelink.StringExtensions.format("\n{0}", ex.toString()));
+            LogProvider.prototype.generateLogLine = function (logItem) {
+                if (arguments.length == 1) {
+                    var product = this.getProduct();
+                    var str2 = fm.icelink.StringExtensions.format("[{0}][{1}][{2}] {3} [{4}][{5}] {6} {7}", [product, fm.icelink.IntExtensions.toString(this.getProcessId()), fm.icelink.IntExtensions.toString(logItem.getThreadId()), this.getLogLevelString(logItem.getLogLevel()), logItem.getTag(), ((fm.icelink.Global.equals(logItem.getScope(), null)) ? "-" : logItem.getScope()), this.getPrefixTimestamp(logItem.getTimeStamp()), logItem.getMessage()]);
+                    if ((!fm.icelink.Global.equals(logItem.getException(), null))) {
+                        str2 = fm.icelink.StringExtensions.concat(str2, fm.icelink.StringExtensions.format("\n{0}", logItem.getException().toString()));
                     }
-                    return str;
+                    return str2;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -995,28 +1009,186 @@ var __extends = (this && this.__extends) || (function () {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            LogProvider.prototype.log = function () {
-                if (arguments.length == 4) {
-                    var timestamp = arguments[0];
-                    var level = arguments[1];
-                    var tag = arguments[2];
-                    var message = arguments[3];
-                    this.log(timestamp, level, tag, message, null);
+            /**<span id='method-fm.icelink.LogProvider-getLogLevelString'>&nbsp;</span>**/
+            /**
+             <div>
+             Converts a log-level to a 5-character string for
+             consistently-spaced character sequences.
+             </div>
+    
+            @param {fm.icelink.LogLevel} level The log level.
+            @return {string} The log level as an upper-case string
+             with right-side whitespace padding to ensure
+             a 5-character sequence.
+            */
+            LogProvider.prototype.getLogLevelString = function (level) {
+                if (arguments.length == 1) {
+                    var _var0 = level;
+                    if (_var0 == fm.icelink.LogLevel.Verbose) {
+                        do {
+                            return "VERBOSE";
+                        } while (false);
+                    }
+                    else if (_var0 == fm.icelink.LogLevel.Debug) {
+                        do {
+                            return "DEBUG  ";
+                        } while (false);
+                    }
+                    else if (_var0 == fm.icelink.LogLevel.Info) {
+                        do {
+                            return "INFO   ";
+                        } while (false);
+                    }
+                    else if (_var0 == fm.icelink.LogLevel.Warn) {
+                        do {
+                            return "WARN   ";
+                        } while (false);
+                    }
+                    else if (_var0 == fm.icelink.LogLevel.Error) {
+                        do {
+                            return "ERROR  ";
+                        } while (false);
+                    }
+                    else if (_var0 == fm.icelink.LogLevel.Fatal) {
+                        do {
+                            return "FATAL  ";
+                        } while (false);
+                    }
+                    else if (_var0 == fm.icelink.LogLevel.None) {
+                        do {
+                            return "NONE   ";
+                        } while (false);
+                    }
+                    return "?????  ";
                 }
-                else if (arguments.length == 5) {
-                    var timestamp = arguments[0];
-                    var level = arguments[1];
-                    var tag = arguments[2];
-                    var message = arguments[3];
-                    var ex = arguments[4];
-                    if ((level >= this.getLevel())) {
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.LogProvider-getPrefix'>&nbsp;</span>**/
+            /**
+             <div>
+             Converts a log-level to a 5-character string for
+             consistently-spaced character sequences.
+             </div>
+    
+            @param {fm.icelink.LogLevel} level The log level.
+            @param {boolean} includeTimestamp Whether to include a timestamp in the prefix.
+            @return {string} The log level as an upper-case string
+             with right-side whitespace padding to ensure
+             a 5-character sequence.
+            */
+            LogProvider.prototype.getPrefix = function (level, includeTimestamp) {
+                if (arguments.length == 2) {
+                    var logLevelString = this.getLogLevelString(level);
+                    if (includeTimestamp) {
+                        logLevelString = fm.icelink.StringExtensions.format("{0} {1}", logLevelString, this.getPrefixTimestamp(fm.icelink.DateTime.getUtcNow()));
+                    }
+                    return logLevelString;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.LogProvider-getPrefixTimestamp'>&nbsp;</span>**/
+            /**
+             <div>
+             Converts a timestamp to a string formatted for
+             rendering in a log message (yyyy/MM/dd-hh:mm:ss).
+             </div>
+    
+            @param {fm.icelink.DateTime} timestamp The timestamp.
+            @return {string} The timestamp as a formatted string.
+            */
+            LogProvider.prototype.getPrefixTimestamp = function (timestamp) {
+                if (arguments.length == 1) {
+                    var str = fm.icelink.IntExtensions.toString(timestamp.getYear());
+                    var str2 = fm.icelink.IntExtensions.toString(timestamp.getMonth());
+                    var str3 = fm.icelink.IntExtensions.toString(timestamp.getDay());
+                    var str4 = fm.icelink.IntExtensions.toString(timestamp.getHour());
+                    var str5 = fm.icelink.IntExtensions.toString(timestamp.getMinute());
+                    var str6 = fm.icelink.IntExtensions.toString(timestamp.getSecond());
+                    var str7 = fm.icelink.IntExtensions.toString(timestamp.getMillisecond());
+                    while ((str.length < 4)) {
+                        str = fm.icelink.StringExtensions.concat("0", str);
+                    }
+                    while ((str2.length < 2)) {
+                        str2 = fm.icelink.StringExtensions.concat("0", str2);
+                    }
+                    while ((str3.length < 2)) {
+                        str3 = fm.icelink.StringExtensions.concat("0", str3);
+                    }
+                    while ((str4.length < 2)) {
+                        str4 = fm.icelink.StringExtensions.concat("0", str4);
+                    }
+                    while ((str5.length < 2)) {
+                        str5 = fm.icelink.StringExtensions.concat("0", str5);
+                    }
+                    while ((str6.length < 2)) {
+                        str6 = fm.icelink.StringExtensions.concat("0", str6);
+                    }
+                    while ((str7.length < 3)) {
+                        str7 = fm.icelink.StringExtensions.concat("0", str7);
+                    }
+                    return fm.icelink.StringExtensions.format("{0}/{1}/{2}-{3}:{4}:{5}.{6}", [str, str2, str3, str4, str5, str6, str7]);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.LogProvider-getProcessId'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the current process id.
+             </div>
+    
+    
+            @return {number}
+            */
+            LogProvider.prototype.getProcessId = function () {
+                if (arguments.length == 0) {
+                    return this._processId;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.LogProvider-getProduct'>&nbsp;</span>**/
+            /**
+             <div>
+             Returns the name of the current product.
+             </div>
+    
+    
+            @return {string}
+            */
+            LogProvider.prototype.getProduct = function () {
+                if (arguments.length == 0) {
+                    return "IceLink";
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.LogProvider-log'>&nbsp;</span>**/
+            /**
+             <div>
+             Log a message.
+             </div>
+    
+            @param {fm.icelink.LogEvent} logItem The log event containing the details.
+            @return {void}
+            */
+            LogProvider.prototype.log = function (logItem) {
+                if (arguments.length == 1) {
+                    if ((logItem.getLogLevel() >= this.getLevel())) {
                         try {
                             var flag = true;
                             if ((!fm.icelink.Global.equals(this.getFilter(), null))) {
-                                flag = this.getFilter()(tag, level);
+                                flag = this.getFilter()(logItem.getTag(), logItem.getLogLevel());
                             }
                             if (flag) {
-                                this.doLog(timestamp, level, tag, message, ex);
+                                this.doLog(logItem);
                             }
                         }
                         catch (obj1) {
@@ -1065,6 +1237,18 @@ var __extends = (this && this.__extends) || (function () {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**
+            @internal
+    
+            */
+            LogProvider.prototype.setProcessId = function (value) {
+                if (arguments.length == 1) {
+                    this._processId = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             return LogProvider;
         }());
         icelink.LogProvider = LogProvider;
@@ -1094,8 +1278,8 @@ var __extends = (this && this.__extends) || (function () {
                     window.console.log(text);
                 }
             };
-            ConsoleLogProvider.prototype.doLog = function (timestamp, level, tag, message, ex) {
-                var text = _super.prototype.generateLogLine.call(this, timestamp, level, tag, message, ex);
+            ConsoleLogProvider.prototype.doLog = function (logItem) {
+                var text = _super.prototype.generateLogLine.call(this, logItem);
                 this.writeLine(text);
             };
             return ConsoleLogProvider;
@@ -1183,6 +1367,9 @@ var __extends = (this && this.__extends) || (function () {
             DateTime.prototype.getSecond = function () {
                 return this._date.getUTCSeconds();
             };
+            DateTime.prototype.getMillisecond = function () {
+                return this._date.getUTCMilliseconds();
+            };
             DateTime.prototype.addSeconds = function (seconds) {
                 var newMilliseconds = this._date.getTime() + (seconds * 1000);
                 var unixTime = newMilliseconds / 1000; // Get unix seconds.
@@ -1227,6 +1414,48 @@ var __extends = (this && this.__extends) || (function () {
         })(DateTimeStyles = icelink.DateTimeStyles || (icelink.DateTimeStyles = {}));
     })(icelink = fm.icelink || (fm.icelink = {}));
 })(fm || (fm = {}));
+
+(function (fm) {
+    var icelink;
+    (function (icelink) {
+        var DispatchQueue = /** @class */ (function () {
+            function DispatchQueue(action) {
+                var __arguments = new Array(arguments.length);
+                for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
+                    __arguments[__argumentIndex] = arguments[__argumentIndex];
+                }
+                if (__arguments.length == 1) {
+                    this._action = action;
+                    this._count = new fm.icelink.AtomicLong();
+                }
+                else {
+                    throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
+                }
+            }
+            DispatchQueue.prototype.getTypeString = function () {
+                return '[fm.icelink.DispatchQueue]';
+            };
+            DispatchQueue.prototype.getQueueCount = function () {
+                return this._count.getValue();
+            };
+            DispatchQueue.prototype.enqueue = function (item) {
+                var action = this._action;
+                var atomic = this._count;
+                atomic.increment();
+                window.setTimeout(function () {
+                    try {
+                        action(item);
+                    }
+                    finally {
+                        atomic.decrement();
+                    }
+                }, 1);
+            };
+            return DispatchQueue;
+        }());
+        icelink.DispatchQueue = DispatchQueue;
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
 /// <reference path="LogProvider.ts" />
 
 /// <reference path="LogProvider.ts" />
@@ -1252,8 +1481,8 @@ var __extends = (this && this.__extends) || (function () {
                 div.innerHTML = text.replace(/\n/g, '<br />');
                 this._container.appendChild(div);
             };
-            DomLogProvider.prototype.doLog = function (timestamp, level, tag, message, ex) {
-                var text = _super.prototype.generateLogLine.call(this, timestamp, level, tag, message, ex);
+            DomLogProvider.prototype.doLog = function (logItem) {
+                var text = _super.prototype.generateLogLine.call(this, logItem);
                 this.writeLine(text);
             };
             return DomLogProvider;
@@ -2259,6 +2488,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
         icelink.HttpTransfer = HttpTransfer;
     })(icelink = fm.icelink || (fm.icelink = {}));
 })(fm || (fm = {}));
+var fmicelinkGlobalIsError = function (obj) {
+    return (obj instanceof Error);
+};
 
 (function (fm) {
     var icelink;
@@ -2301,6 +2533,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             Util.isRegExp = function (obj) {
                 return Object.prototype.toString.call(obj) === '[object RegExp]';
+            };
+            Util.isError = function (obj) {
+                return fmicelinkGlobalIsError(obj);
             };
             Util.isObject = function (obj) {
                 return Object.prototype.toString.call(obj) === '[object Object]';
@@ -3642,11 +3877,61 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
 (function (fm) {
     var icelink;
     (function (icelink) {
+        var ManagedStopwatch = /** @class */ (function () {
+            function ManagedStopwatch() {
+                this.startTime = 0;
+                this.stopTime = 0;
+            }
+            ManagedStopwatch.prototype.getTypeString = function () {
+                return '[fm.icelink.ManagedStopwatch]';
+            };
+            ManagedStopwatch.dispatch = function (action) {
+                window.setTimeout(function () {
+                    action();
+                }, 1);
+            };
+            ManagedStopwatch.getTimestamp = function () {
+                return (new Date().getTime()) * icelink.Constants.getTicksPerMillisecond();
+            };
+            ManagedStopwatch.prototype.getElapsedTicks = function () {
+                return this.getElapsedMilliseconds() * icelink.Constants.getTicksPerMillisecond();
+            };
+            ManagedStopwatch.prototype.getElapsedMilliseconds = function () {
+                if (this.startTime == 0) {
+                    return 0;
+                }
+                if (this.stopTime == 0) {
+                    return ((new Date().getTime()) - this.startTime);
+                }
+                return (this.stopTime - this.startTime);
+            };
+            ManagedStopwatch.prototype.start = function () {
+                this.startTime = (new Date().getTime());
+                this.stopTime = 0;
+            };
+            ManagedStopwatch.prototype.stop = function () {
+                this.stopTime = (new Date().getTime());
+            };
+            ManagedStopwatch.prototype.restart = function () {
+                this.start();
+            };
+            return ManagedStopwatch;
+        }());
+        icelink.ManagedStopwatch = ManagedStopwatch;
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
+
+(function (fm) {
+    var icelink;
+    (function (icelink) {
         var ManagedThread = /** @class */ (function () {
             function ManagedThread() {
             }
             ManagedThread.prototype.getTypeString = function () {
                 return '[fm.icelink.ManagedThread]';
+            };
+            ManagedThread.getCurrentThreadId = function () {
+                return 1;
             };
             ManagedThread.dispatch = function (action) {
                 window.setTimeout(function () {
@@ -3718,6 +4003,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             MathAssistant.pow = function (x, y) {
                 return Math.pow(x, y);
+            };
+            MathAssistant.round = function (value) {
+                return Math.round(value);
             };
             MathAssistant.sin = function (val) {
                 return Math.sin(val);
@@ -3997,6 +4285,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             Platform.prototype.getDirectorySeparator = function () {
                 return '/';
             };
+            Platform.prototype.getProcessId = function () {
+                return 1;
+            };
             Platform.instance = new Platform();
             return Platform;
         }());
@@ -4136,12 +4427,6 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                         url = url + (url.indexOf('?') === -1 ? '?' : '&') + options.cacheBusterParameterName + '=' + (new Date()).getTime();
                     }
                     x_1.open(options.method, url, !options.sync);
-                    for (var name_2 in options.headers) {
-                        var value = options.headers[name_2];
-                        if (name_2.toLowerCase() !== 'referer' && name_2.toLowerCase() !== 'origin') {
-                            x_1.setRequestHeader(name_2, value);
-                        }
-                    }
                     if (Xhr.getDisableBinary()) {
                         x_1.setRequestHeader('X-FM-DisableBinary', 'true');
                     }
@@ -4158,11 +4443,15 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     }
                     if (options.onRequestCreated) {
                         options = options.onRequestCreated(x_1);
-                        for (var name_3 in options.headers) {
-                            var value = options.headers[name_3];
-                            if (name_3.toLowerCase() !== 'referer' && name_3.toLowerCase() !== 'origin') {
-                                x_1.setRequestHeader(name_3, value);
+                    }
+                    var useDefaultContentType = true;
+                    for (var name_2 in options.headers) {
+                        var value = options.headers[name_2];
+                        if (name_2.toLowerCase() !== 'referer' && name_2.toLowerCase() !== 'origin') {
+                            if (name_2.toLowerCase() === 'content-type') {
+                                useDefaultContentType = false;
                             }
+                            x_1.setRequestHeader(name_2, value);
                         }
                     }
                     var c_1;
@@ -4211,7 +4500,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     }
                     if (!sentBinary) {
                         if (options.content) {
-                            x_1.setRequestHeader('Content-Type', 'application/json');
+                            if (useDefaultContentType) {
+                                x_1.setRequestHeader('Content-Type', 'application/json');
+                            }
                             x_1.send(options.content);
                         }
                         else {
@@ -4572,7 +4863,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             */
             PromiseBase.prototype.addReject = function (promise, reject) {
                 if (arguments.length == 2) {
-                    if ((!fm.icelink.Global.equals(this.__pendingPromisesToReject, null))) {
+                    if ((fm.icelink.Global.equals(this.__pendingPromisesToReject, null))) {
                         this.__pendingPromisesToReject = new Array();
                     }
                     if ((fm.icelink.Global.equals(this.__pendingRejects, null))) {
@@ -4591,7 +4882,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             */
             PromiseBase.prototype.addResolve = function (promise, resolve) {
                 if (arguments.length == 2) {
-                    if ((!fm.icelink.Global.equals(this.__pendingPromisesToResolve, null))) {
+                    if ((fm.icelink.Global.equals(this.__pendingPromisesToResolve, null))) {
                         this.__pendingPromisesToResolve = new Array();
                     }
                     if ((fm.icelink.Global.equals(this.__pendingResolves, null))) {
@@ -4738,6 +5029,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                         callback(exception);
                     }
                     catch (exception2) {
+                        fm.icelink.Log.error("Could not reject promise. Promise rejection callback threw an unhandled exception.", exception2);
                         promise.reject(exception2);
                     }
                     finally {
@@ -4774,6 +5066,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                         callback(result);
                     }
                     catch (exception) {
+                        fm.icelink.Log.error("Could not resolve promise. Promise resolution callback threw an unhandled exception.", exception);
                         promise.reject(exception);
                     }
                     finally {
@@ -6220,6 +6513,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkSerializableInit();
                     this.setIsSerialized(false);
                     this.setIsDirty(false);
                 }
@@ -6229,6 +6523,10 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             }
             Serializable.prototype.getTypeString = function () {
                 return '[fm.icelink.Serializable]';
+            };
+            Serializable.prototype.fmicelinkSerializableInit = function () {
+                this._isDirty = false;
+                this._isSerialized = false;
             };
             /**<span id='method-fm.icelink.Serializable-getIsDirty'>&nbsp;</span>**/
             /**
@@ -6501,6 +6799,15 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             Stream.prototype.getTypeString = function () {
                 return '[fm.icelink.Stream]' + ',' + _super.prototype.getTypeString.call(this);
             };
+            Stream.prototype.getState = function () {
+                return this._getInternal().getState();
+            };
+            Stream.prototype.addOnStateChange = function (value) {
+                this._getInternal().addOnStateChange(value);
+            };
+            Stream.prototype.removeOnStateChange = function (value) {
+                this._getInternal().removeOnStateChange(value);
+            };
             Stream.prototype.changeDirection = function (newDirection) {
                 return this._getInternal().changeDirection(newDirection);
             };
@@ -6548,9 +6855,6 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             Stream.prototype.getType = function () {
                 return this._getInternal().getType();
-            };
-            Stream.prototype.setId = function (value) {
-                this._getInternal().setId(value);
             };
             Stream.prototype.setLocalDirection = function (value) {
                 this._getInternal().setLocalDirection(value);
@@ -7039,6 +7343,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             Connection.prototype.getError = function () {
                 return this._internal.getError();
             };
+            Connection.prototype.getExternalId = function () {
+                return this._internal.getExternalId();
+            };
             Connection.prototype.getIceGatherPolicy = function () {
                 return this._internal.getIceGatherPolicy();
             };
@@ -7144,6 +7451,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             Connection.prototype.setDeadStreamTimeout = function (value) {
                 this._internal.setDeadStreamTimeout(value);
             };
+            Connection.prototype.setExternalId = function (value) {
+                this._internal.setExternalId(value);
+            };
             Connection.prototype.setIceGatherPolicy = function (value) {
                 this._internal.setIceGatherPolicy(value);
             };
@@ -7152,9 +7462,6 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             Connection.prototype.setIceServers = function (value) {
                 this._internal.setIceServers(value);
-            };
-            Connection.prototype.setId = function (value) {
-                this._internal.setId(value);
             };
             Connection.prototype.setLocalDescription = function (localDescription) {
                 return this._internal.setLocalDescription(localDescription);
@@ -7167,6 +7474,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             Connection.prototype.setTrickleIcePolicy = function (value) {
                 this._internal.setTrickleIcePolicy(value);
+            };
+            Connection.prototype.setTieBreaker = function (value) {
+                this._internal.setTieBreaker(value);
             };
             Connection.prototype.getRemoteMedia = function () {
                 //TODO: review this
@@ -7261,6 +7571,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             DataChannel.prototype.getLabel = function () {
                 return this._getInternal().getLabel();
+            };
+            DataChannel.prototype.getId = function () {
+                return this._getInternal().getId();
             };
             DataChannel.prototype.getOrdered = function () {
                 return this._getInternal().getOrdered();
@@ -7411,6 +7724,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkLayoutPresetInit();
                     _this.__floatWidthPercent = 0;
                     _this.__floatHeightPercent = 0;
                     _this.__floatMarginXPercent = 0;
@@ -7438,6 +7752,25 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             }
             LayoutPreset.prototype.getTypeString = function () {
                 return '[fm.icelink.LayoutPreset]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            LayoutPreset.prototype.fmicelinkLayoutPresetInit = function () {
+                this.__blockHeight = 0;
+                this.__blockHeightPercent = 0;
+                this.__blockMarginX = 0;
+                this.__blockMarginXPercent = 0;
+                this.__blockMarginY = 0;
+                this.__blockMarginYPercent = 0;
+                this.__blockWidth = 0;
+                this.__blockWidthPercent = 0;
+                this.__floatHeight = 0;
+                this.__floatHeightPercent = 0;
+                this.__floatMarginX = 0;
+                this.__floatMarginXPercent = 0;
+                this.__floatMarginY = 0;
+                this.__floatMarginYPercent = 0;
+                this.__floatWidth = 0;
+                this.__floatWidthPercent = 0;
+                this._inlineMargin = 0;
             };
             /**
             @internal
@@ -9591,6 +9924,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             LayoutManager.prototype.fmicelinkLayoutManagerInit = function () {
                 var _this = this;
                 this.__onLayout = [];
+                this._inBatch = false;
                 this._onLayout = function (p0) { for (var _i = 0, _a = _this.__onLayout; _i < _a.length; _i++) {
                     var action = _a[_i];
                     action(p0);
@@ -10797,21 +11131,39 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             LocalMedia.prototype.removeOnVideoStopped = function (value) {
                 return this._getInternal().removeOnVideoStopped(value);
             };
+            /**
+             * Deprecated: Use fm.icelink.Plugin.getChromeExtensionId()
+             */
             LocalMedia.getChromeExtensionId = function () {
                 return icelink.WebRtcLocalMedia.getChromeExtensionId();
             };
+            /**
+             * Deprecated: Use fm.icelink.Plugin.setChromeExtensionId()
+             */
             LocalMedia.setChromeExtensionId = function (chromeExtensionId) {
                 icelink.WebRtcLocalMedia.setChromeExtensionId(chromeExtensionId);
             };
+            /**
+             * Deprecated: Use fm.icelink.Plugin.getChromeExtensionUrl()
+             */
             LocalMedia.getChromeExtensionUrl = function () {
                 return icelink.WebRtcLocalMedia.getChromeExtensionUrl();
             };
+            /**
+             * Deprecated: Use fm.icelink.Plugin.getChromeExtensionInstalled()
+             */
             LocalMedia.getChromeExtensionInstalled = function () {
                 return icelink.WebRtcLocalMedia.getChromeExtensionInstalled();
             };
+            /**
+             * Deprecated: Use fm.icelink.Plugin.getChromeExtensionRequiresUserGesture()
+             */
             LocalMedia.getChromeExtensionRequiresUserGesture = function () {
                 return icelink.WebRtcLocalMedia.getChromeExtensionRequiresUserGesture();
             };
+            /**
+             * Deprecated: Use fm.icelink.Plugin.setChromeExtensionRequiresUserGesture()
+             */
             LocalMedia.setChromeExtensionRequiresUserGesture = function (chromeExtensionRequiresUserGesture) {
                 icelink.WebRtcLocalMedia.setChromeExtensionRequiresUserGesture(chromeExtensionRequiresUserGesture);
             };
@@ -10928,10 +11280,10 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             function PluginConstants() {
             }
             PluginConstants.getLoaderClassId = function () {
-                return 'BDE5137F-2255-362C-9C58-EC58C2546743';
+                return 'FADC3556-11E9-3125-90C3-D55A78B403C8';
             };
             PluginConstants.getDomVideoSinkClassId = function () {
-                return '60AC7E14-91AE-3763-A067-683D29D9F8C8';
+                return 'FC83AAE7-A6EA-3F89-8CA7-45A27ECD8F3A';
             };
             return PluginConstants;
         }());
@@ -10970,34 +11322,63 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             Plugin.getPluginConfig = function () {
                 return this._pluginConfig;
             };
-            Plugin.hasWebRtc = function () {
+            Plugin.hasRtcPeerConnection = function () {
                 return (typeof RTCPeerConnection !== 'undefined');
             };
-            Plugin.hasOrtc = function () {
-                return (typeof RTCIceTransport !== 'undefined' && typeof RTCDataChannel === 'undefined');
+            Plugin.hasRtcDataChannel = function () {
+                return (typeof RTCDataChannel !== 'undefined' || typeof icelink.DataChannel !== 'undefined'); // DataChannel is non-standard
             };
-            Plugin.hasNative = function () {
-                return (this.hasWebRtc() || this.hasOrtc());
+            Plugin.hasGetUserMedia = function () {
+                return (typeof navigator.fmGetUserMedia !== 'undefined');
+            };
+            Plugin.hasRtcIceGatherer = function () {
+                return (typeof RTCIceGatherer !== 'undefined');
+            };
+            Plugin.hasRtcIceTransport = function () {
+                return (typeof RTCIceTransport !== 'undefined');
+            };
+            Plugin.hasRtcDtlsTransport = function () {
+                return (typeof RTCDtlsTransport !== 'undefined');
+            };
+            Plugin.hasRtcRtpSender = function () {
+                return (typeof RTCRtpSender !== 'undefined');
+            };
+            Plugin.hasRtcRtpReceiver = function () {
+                return (typeof RTCRtpReceiver !== 'undefined');
+            };
+            Plugin.hasWebRtc = function (localMedia, dataChannels) {
+                return ((localMedia ? this.hasGetUserMedia() : true) && (dataChannels ? this.hasRtcDataChannel() : true) && this.hasRtcPeerConnection());
+            };
+            Plugin.hasOrtc = function (localMedia, dataChannels) {
+                return ((localMedia ? this.hasGetUserMedia() : true) && (dataChannels ? this.hasRtcDataChannel() : true) && this.hasRtcIceGatherer() && this.hasRtcIceTransport() && this.hasRtcDtlsTransport() && this.hasRtcRtpSender() && this.hasRtcRtpReceiver());
+            };
+            Plugin.hasNative = function (localMedia, dataChannels) {
+                return (this.hasWebRtc(localMedia, dataChannels) || this.hasOrtc(localMedia, dataChannels));
             };
             Plugin.hasActiveX = function () {
                 return this._hasActiveX;
             };
-            Plugin.useActiveX = function () {
+            Plugin.isReady = function (localMedia, dataChannels) {
+                return (this.hasActiveX() || this.hasNative(localMedia, dataChannels));
+            };
+            Plugin.useActiveX = function (localMedia, dataChannels) {
                 if (this._pluginConfig && this._pluginConfig.getPreferActiveX()) {
                     return this.hasActiveX();
                 }
                 else {
-                    return (this.hasActiveX() && !this.hasNative());
+                    return (this.hasActiveX() && !this.hasNative(localMedia, dataChannels));
                 }
             };
-            Plugin.useNative = function () {
-                return (!this.useActiveX() && this.hasNative());
+            Plugin.useNative = function (localMedia, dataChannels) {
+                return (!this.useActiveX(localMedia, dataChannels) && this.hasNative(localMedia, dataChannels));
             };
             Plugin.checkForActiveX = function (promise, object, startTime) {
                 var _this = this;
                 var loaded = false;
                 try {
-                    loaded = object.GetIsLoaded();
+                    if (!icelink.Util.isNullOrUndefined(object.GetIsLoaded)) {
+                        loaded = object.GetIsLoaded();
+                    }
                 }
                 catch (ex) {
                     loaded = false;
@@ -11014,6 +11395,24 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                         _this.checkForActiveX(promise, object, startTime);
                     }, 10);
                 }
+            };
+            Plugin.getChromeExtensionId = function () {
+                return icelink.WebRtcLocalMedia.getChromeExtensionId();
+            };
+            Plugin.setChromeExtensionId = function (chromeExtensionId) {
+                icelink.WebRtcLocalMedia.setChromeExtensionId(chromeExtensionId);
+            };
+            Plugin.getChromeExtensionUrl = function () {
+                return icelink.WebRtcLocalMedia.getChromeExtensionUrl();
+            };
+            Plugin.getChromeExtensionInstalled = function () {
+                return icelink.WebRtcLocalMedia.getChromeExtensionInstalled();
+            };
+            Plugin.getChromeExtensionRequiresUserGesture = function () {
+                return icelink.WebRtcLocalMedia.getChromeExtensionRequiresUserGesture();
+            };
+            Plugin.setChromeExtensionRequiresUserGesture = function (chromeExtensionRequiresUserGesture) {
+                icelink.WebRtcLocalMedia.setChromeExtensionRequiresUserGesture(chromeExtensionRequiresUserGesture);
             };
             /** @internal */
             Plugin._hasActiveX = false;
@@ -11087,13 +11486,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
                         __arguments[__argumentIndex] = arguments[__argumentIndex];
                     }
-                    if (__arguments.length == 2) {
-                        var value = __arguments[0];
-                        var duration = __arguments[1];
+                    if (__arguments.length == 0) {
                         //super();
-                        this.setValue(value);
-                        this.setDuration(duration);
-                        this.setRemainingDuration(duration);
+                        this.fmicelinkdtmfToneInit();
                     }
                     else if (__arguments.length == 1) {
                         var value = __arguments[0];
@@ -11105,13 +11500,20 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                             var value_1 = __arguments[0];
                             var duration = __arguments[1];
                             //super();
+                            this.fmicelinkdtmfToneInit();
                             this.setValue(value_1);
                             this.setDuration(duration);
                             this.setRemainingDuration(duration);
                         }
                     }
-                    else if (__arguments.length == 0) {
+                    else if (__arguments.length == 2) {
+                        var value = __arguments[0];
+                        var duration = __arguments[1];
                         //super();
+                        this.fmicelinkdtmfToneInit();
+                        this.setValue(value);
+                        this.setDuration(duration);
+                        this.setRemainingDuration(duration);
                     }
                     else {
                         throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -11119,6 +11521,11 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 }
                 Tone.prototype.getTypeString = function () {
                     return '[fm.icelink.dtmf.Tone]';
+                };
+                Tone.prototype.fmicelinkdtmfToneInit = function () {
+                    this._duration = 0;
+                    this._remainingDuration = 0;
+                    this._timestamp = 0;
                 };
                 /**
                 @internal
@@ -12137,6 +12544,18 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                         throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                     }
                 };
+                /**
+                @internal
+        
+                */
+                Tone.prototype.getTimestamp = function () {
+                    if (arguments.length == 0) {
+                        return this._timestamp;
+                    }
+                    else {
+                        throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                    }
+                };
                 /**<span id='method-fm.icelink.dtmf.Tone-getValue'>&nbsp;</span>**/
                 /**
                  <div>
@@ -12173,6 +12592,18 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 Tone.prototype.setRemainingDuration = function (value) {
                     if (arguments.length == 1) {
                         this._remainingDuration = value;
+                    }
+                    else {
+                        throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                    }
+                };
+                /**
+                @internal
+        
+                */
+                Tone.prototype.setTimestamp = function (value) {
+                    if (arguments.length == 1) {
+                        this._timestamp = value;
                     }
                     else {
                         throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -12248,6 +12679,8 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 /** @internal */
                 _this._onDirectionChangeValues = [];
                 /** @internal */
+                _this._onStateChangeValues = [];
+                /** @internal */
                 _this._onReceiveDtmfToneValues = [];
                 /** @internal */
                 _this._onReceiveDtmfToneChangeValues = [];
@@ -12257,12 +12690,20 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 _this._onSendDtmfToneChangeValues = [];
                 _this._external = external;
                 _this._axo = new ActiveXObject("fm.icelink.AudioStream");
-                _this._axo.Initialize(_this.getLocalTrack().getMedia().getHandle(), remoteTrack.getMedia().getHandle());
+                _this._axo.Initialize(_this.getLocalTrack() == null ? 0 : _this.getLocalTrack().getMedia().getHandle(), remoteTrack == null ? 0 : remoteTrack.getMedia().getHandle());
                 _this._axo.SetOnDirectionChange(function () {
                     setTimeout(function () {
                         for (var _i = 0, _a = _this._onDirectionChangeValues; _i < _a.length; _i++) {
                             var value = _a[_i];
                             value();
+                        }
+                    }, 1);
+                });
+                _this._axo.SetOnStateChange(function () {
+                    setTimeout(function () {
+                        for (var _i = 0, _a = _this._onStateChangeValues; _i < _a.length; _i++) {
+                            var onStateChangeValue = _a[_i];
+                            onStateChangeValue();
                         }
                     }, 1);
                 });
@@ -12310,6 +12751,15 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             /** @internal */
             PluginAudioStream.prototype._getAxo = function () {
                 return this._axo;
+            };
+            PluginAudioStream.prototype.getState = function () {
+                return this._getAxo().GetState();
+            };
+            PluginAudioStream.prototype.addOnStateChange = function (value) {
+                icelink.ArrayExtensions.add(this._onStateChangeValues, value);
+            };
+            PluginAudioStream.prototype.removeOnStateChange = function (value) {
+                icelink.ArrayExtensions.remove(this._onStateChangeValues, value);
             };
             PluginAudioStream.prototype.getLocalReceive = function () {
                 return this._getAxo().GetLocalReceive();
@@ -12364,9 +12814,6 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             PluginAudioStream.prototype.getType = function () {
                 return icelink.StreamType.Audio;
-            };
-            PluginAudioStream.prototype.setId = function (value) {
-                this._getAxo().SetId(value);
             };
             PluginAudioStream.prototype.setLocalDirection = function (value) {
                 this._getAxo().SetLocalDirection(value);
@@ -12846,6 +13293,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             PluginConnection.prototype.getDeadStreamTimeout = function () {
                 return this._getAxo().GetDeadStreamTimeout();
             };
+            PluginConnection.prototype.getExternalId = function () {
+                return this._getAxo().GetExternalId();
+            };
             PluginConnection.prototype.getError = function () {
                 return icelink.Error.fromJson(this._getAxo().GetError());
             };
@@ -12935,6 +13385,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             PluginConnection.prototype.setDeadStreamTimeout = function (value) {
                 this._getAxo().SetDeadStreamTimeout(value);
             };
+            PluginConnection.prototype.setExternalId = function (value) {
+                this._getAxo().SetExternalId(value);
+            };
             PluginConnection.prototype.setIceGatherPolicy = function (value) {
                 this._getAxo().SetIceGatherPolicy(value);
             };
@@ -12944,8 +13397,8 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             PluginConnection.prototype.setIceServers = function (value) {
                 this._getAxo().SetIceServers(icelink.IceServer.toJsonArray(value));
             };
-            PluginConnection.prototype.setId = function (value) {
-                this._getAxo().SetId(value);
+            PluginConnection.prototype.setTieBreaker = function (value) {
+                this._getAxo().SetTieBreaker(value);
             };
             PluginConnection.prototype.setLocalDescription = function (localDescription) {
                 var promise = new icelink.Promise();
@@ -13048,6 +13501,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             PluginDataChannel.prototype.getOrdered = function () {
                 return this._getAxo().GetOrdered();
             };
+            PluginDataChannel.prototype.getId = function () {
+                return this._getAxo().GetId();
+            };
             PluginDataChannel.prototype.getState = function () {
                 return this._getAxo().GetState();
             };
@@ -13058,11 +13514,15 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 icelink.ArrayExtensions.remove(this._onStateChangeValues, value);
             };
             PluginDataChannel.prototype.sendDataBytes = function (dataBytes) {
+                var promise = new fm.icelink.Promise();
                 var strDataBytes = icelink.Base64.encodeBuffer(dataBytes);
-                this._getAxo().SendDataBytes(strDataBytes);
+                this._getAxo().PromisedSendDataBytes(strDataBytes, promise);
+                return promise;
             };
             PluginDataChannel.prototype.sendDataString = function (dataString) {
-                this._getAxo().SendDataString(dataString);
+                var promise = new fm.icelink.Promise();
+                this._getAxo().PromisedSendDataString(dataString, promise);
+                return promise;
             };
             PluginDataChannel.prototype.setOnReceive = function (value) {
                 this._onReceive = value;
@@ -13084,6 +13544,8 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 var _this = _super.call(this) || this;
                 /** @internal */
                 _this._onDirectionChangeValues = [];
+                /** @internal */
+                _this._onStateChangeValues = [];
                 _this._external = external;
                 _this._channels = channels;
                 _this._axo = new ActiveXObject("fm.icelink.DataStream");
@@ -13095,6 +13557,14 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                         for (var _i = 0, _a = _this._onDirectionChangeValues; _i < _a.length; _i++) {
                             var onDirectionChangeValue = _a[_i];
                             onDirectionChangeValue();
+                        }
+                    }, 1);
+                });
+                _this._axo.SetOnStateChange(function () {
+                    setTimeout(function () {
+                        for (var _i = 0, _a = _this._onStateChangeValues; _i < _a.length; _i++) {
+                            var onStateChangeValue = _a[_i];
+                            onStateChangeValue();
                         }
                     }, 1);
                 });
@@ -13110,6 +13580,15 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             /** @internal */
             PluginDataStream.prototype._getAxo = function () {
                 return this._axo;
+            };
+            PluginDataStream.prototype.getState = function () {
+                return this._getAxo().GetState();
+            };
+            PluginDataStream.prototype.addOnStateChange = function (value) {
+                icelink.ArrayExtensions.add(this._onStateChangeValues, value);
+            };
+            PluginDataStream.prototype.removeOnStateChange = function (value) {
+                icelink.ArrayExtensions.remove(this._onStateChangeValues, value);
             };
             PluginDataStream.prototype.getLocalReceive = function () {
                 return this._getAxo().GetLocalReceive();
@@ -13155,9 +13634,6 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             PluginDataStream.prototype.getType = function () {
                 return icelink.StreamType.Application;
-            };
-            PluginDataStream.prototype.setId = function (value) {
-                this._getAxo().SetId(value);
             };
             PluginDataStream.prototype.setLocalDirection = function (value) {
                 this._getAxo().SetLocalDirection(value);
@@ -13342,7 +13818,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 var _this = this;
                 var loaded = false;
                 try {
-                    loaded = object.GetIsLoaded();
+                    if (!icelink.Util.isNullOrUndefined(object.GetIsLoaded)) {
+                        loaded = object.GetIsLoaded();
+                    }
                 }
                 catch (ex) {
                     loaded = false;
@@ -13606,12 +14084,15 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             PluginLocalMedia.prototype.start = function () {
                 var _this = this;
+                if (!this.unloadHandler) {
+                    this.unloadHandler = function (evt) {
+                        _this._axo.Stop(new icelink.Promise());
+                    };
+                }
                 var promise = new icelink.Promise();
                 window.setTimeout(function () {
                     _this._axo.Start(promise);
-                    icelink.Util.observe(window, 'unload', function (evt) {
-                        _this._axo.Stop(new icelink.Promise());
-                    });
+                    icelink.Util.observe(window, 'unload', _this.unloadHandler);
                 }, 1);
                 return promise;
             };
@@ -13619,6 +14100,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 var _this = this;
                 var promise = new icelink.Promise();
                 window.setTimeout(function () {
+                    icelink.Util.unobserve(window, 'unload', _this.unloadHandler);
                     _this._axo.Stop(promise);
                 }, 1);
                 return promise;
@@ -13742,7 +14224,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 var _this = this;
                 var loaded = false;
                 try {
-                    loaded = this._videoSink._getAxo().GetIsLoaded();
+                    if (!icelink.Util.isNullOrUndefined(this._videoSink._getAxo().GetIsLoaded)) {
+                        loaded = this._videoSink._getAxo().GetIsLoaded();
+                    }
                 }
                 catch (ex) {
                     loaded = false;
@@ -13808,7 +14292,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 var _this = this;
                 var loaded = false;
                 try {
-                    loaded = this._videoSink._getAxo().GetIsLoaded();
+                    if (!icelink.Util.isNullOrUndefined(this._videoSink._getAxo().GetIsLoaded)) {
+                        loaded = this._videoSink._getAxo().GetIsLoaded();
+                    }
                 }
                 catch (ex) {
                     loaded = false;
@@ -13930,14 +14416,24 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 var _this = _super.call(this, localTrack, remoteTrack) || this;
                 /** @internal */
                 _this._onDirectionChangeValues = [];
+                /** @internal */
+                _this._onStateChangeValues = [];
                 _this._external = external;
                 _this._axo = new ActiveXObject("fm.icelink.VideoStream");
-                _this._axo.Initialize(_this.getLocalTrack().getMedia().getHandle(), remoteTrack.getMedia().getHandle());
+                _this._axo.Initialize(_this.getLocalTrack() == null ? 0 : _this.getLocalTrack().getMedia().getHandle(), remoteTrack == null ? 0 : remoteTrack.getMedia().getHandle());
                 _this._axo.SetOnDirectionChange(function () {
                     setTimeout(function () {
                         for (var _i = 0, _a = _this._onDirectionChangeValues; _i < _a.length; _i++) {
                             var onDirectionChangeValue = _a[_i];
                             onDirectionChangeValue();
+                        }
+                    }, 1);
+                });
+                _this._axo.SetOnStateChange(function () {
+                    setTimeout(function () {
+                        for (var _i = 0, _a = _this._onStateChangeValues; _i < _a.length; _i++) {
+                            var onStateChangeValue = _a[_i];
+                            onStateChangeValue();
                         }
                     }, 1);
                 });
@@ -13953,6 +14449,15 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             /** @internal */
             PluginVideoStream.prototype._getAxo = function () {
                 return this._axo;
+            };
+            PluginVideoStream.prototype.getState = function () {
+                return this._getAxo().GetState();
+            };
+            PluginVideoStream.prototype.addOnStateChange = function (value) {
+                icelink.ArrayExtensions.add(this._onStateChangeValues, value);
+            };
+            PluginVideoStream.prototype.removeOnStateChange = function (value) {
+                icelink.ArrayExtensions.remove(this._onStateChangeValues, value);
             };
             PluginVideoStream.prototype.getLocalReceive = function () {
                 return this._getAxo().GetLocalReceive();
@@ -14007,9 +14512,6 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             PluginVideoStream.prototype.getType = function () {
                 return icelink.StreamType.Video;
-            };
-            PluginVideoStream.prototype.setId = function (value) {
-                this._getAxo().SetId(value);
             };
             PluginVideoStream.prototype.setLocalDirection = function (value) {
                 this._getAxo().SetLocalDirection(value);
@@ -14376,8 +14878,11 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     _this = _super.call(this) || this;
                     _this.fmicelinkWebRtcStreamBaseInit();
                     _this.__remoteSupportsTrickleIce = false;
-                    _this.setId(fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", ""));
+                    _this.__id = fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", "");
+                    _this.__stateLock = new Object();
                     _this.setType(type_3);
+                    _this.setConnectedTimestamp(-1);
+                    _this.__stateMachine = new fm.icelink.StreamStateMachine();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -14390,7 +14895,14 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             WebRtcStreamBase.prototype.fmicelinkWebRtcStreamBaseInit = function () {
                 var _this = this;
                 this.__onDirectionChange = [];
+                this.__onStateChange = [];
+                this.__remoteSupportsTrickleIce = false;
+                this._connectedTimestamp = 0;
                 this._onDirectionChange = function () { for (var _i = 0, _a = _this.__onDirectionChange; _i < _a.length; _i++) {
+                    var action = _a[_i];
+                    action();
+                } };
+                this._onStateChange = function () { for (var _i = 0, _a = _this.__onStateChange; _i < _a.length; _i++) {
                     var action = _a[_i];
                     action();
                 } };
@@ -14413,6 +14925,59 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.WebRtcStreamBase-addOnStateChange'>&nbsp;</span>**/
+            /**
+             <div>
+             Adds a handler that is raised when the stream state changes.
+             </div>
+    
+    
+            @param {fm.icelink.IAction0} value
+            @return {void}
+            */
+            WebRtcStreamBase.prototype.addOnStateChange = function (value) {
+                if (arguments.length == 1) {
+                    fm.icelink.ArrayExtensions.add(this.__onStateChange, value);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcStreamBase-getConnectedTimestamp'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the ManagedStopwatch.GetTimestamp() value representing the ticks that
+             passed when this stream's connection state changed to connected.
+             </div>
+    
+    
+            @return {number}
+            */
+            WebRtcStreamBase.prototype.getConnectedTimestamp = function () {
+                if (arguments.length == 0) {
+                    return this._connectedTimestamp;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcStreamBase-getConnectionId'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the connection identifier.
+             </div>
+    
+    
+            @return {string}
+            */
+            WebRtcStreamBase.prototype.getConnectionId = function () {
+                if (arguments.length == 0) {
+                    return this._connectionId;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.WebRtcStreamBase-getId'>&nbsp;</span>**/
             /**
              <div>
@@ -14424,7 +14989,58 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             */
             WebRtcStreamBase.prototype.getId = function () {
                 if (arguments.length == 0) {
-                    return this._id;
+                    return this.__id;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcStreamBase-getIsTerminated'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets a value indicating whether the stream is currently closed or failed.
+             </div>
+    
+    
+            @return {boolean}
+            */
+            WebRtcStreamBase.prototype.getIsTerminated = function () {
+                if (arguments.length == 0) {
+                    return ((fm.icelink.Global.equals(this.getState(), fm.icelink.StreamState.Closed)) || (fm.icelink.Global.equals(this.getState(), fm.icelink.StreamState.Failed)));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcStreamBase-getIsTerminating'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets a value indicating whether the stream is currently closing or failing.
+             </div>
+    
+    
+            @return {boolean}
+            */
+            WebRtcStreamBase.prototype.getIsTerminating = function () {
+                if (arguments.length == 0) {
+                    return ((fm.icelink.Global.equals(this.getState(), fm.icelink.StreamState.Closing)) || (fm.icelink.Global.equals(this.getState(), fm.icelink.StreamState.Failing)));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcStreamBase-getIsTerminatingOrTerminated'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets a value indicating whether the stream is currently closing, failing, closed, or failed.
+             </div>
+    
+    
+            @return {boolean}
+            */
+            WebRtcStreamBase.prototype.getIsTerminatingOrTerminated = function () {
+                if (arguments.length == 0) {
+                    return (this.getIsTerminating() || this.getIsTerminated());
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -14514,6 +15130,35 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.WebRtcStreamBase-getState'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the state of the stream.
+             </div>
+    
+    
+            @return {fm.icelink.StreamState}
+            */
+            WebRtcStreamBase.prototype.getState = function () {
+                if (arguments.length == 0) {
+                    return this.__stateMachine.getState();
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            WebRtcStreamBase.prototype.getStateLock = function () {
+                if (arguments.length == 0) {
+                    return this.__stateLock;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.WebRtcStreamBase-getTag'>&nbsp;</span>**/
             /**
              <div>
@@ -14552,6 +15197,20 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             @internal
     
             */
+            WebRtcStreamBase.prototype.logInvalidStateTransition = function (state) {
+                if (arguments.length == 1) {
+                    if (fm.icelink.Log.getIsDebugEnabled()) {
+                        fm.icelink.Log.debug(fm.icelink.StringExtensions.format("Stream {0} state for connection {1} is currently {2}. Cannot transition to {3} state.", [this.getId(), this.getConnectionId(), fm.icelink.StringExtensions.toLower(new fm.icelink.StreamStateWrapper(this.getState()).toString()), fm.icelink.StringExtensions.toLower(new fm.icelink.StreamStateWrapper(state).toString())]));
+                    }
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
             WebRtcStreamBase.prototype.processSdpMediaDescription = function (sdpMessage, sdpMediaDescription, isLocalDescription, isOffer, isRenegotiation) {
                 if (arguments.length == 5) {
                     if (!isLocalDescription) {
@@ -14567,6 +15226,38 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.WebRtcStreamBase-processStateChange'>&nbsp;</span>**/
+            /**
+             <div>
+             Processes a state change.
+             </div>
+    
+    
+            @return {void}
+            */
+            WebRtcStreamBase.prototype.processStateChange = function () {
+                if (arguments.length == 0) {
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcStreamBase-processStateLockChange'>&nbsp;</span>**/
+            /**
+             <div>
+             Processes a state lock change.
+             </div>
+    
+    
+            @return {void}
+            */
+            WebRtcStreamBase.prototype.processStateLockChange = function () {
+                if (arguments.length == 0) {
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**
             @internal
     
@@ -14576,6 +15267,21 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     var onDirectionChange = this._onDirectionChange;
                     if ((!fm.icelink.Global.equals(onDirectionChange, null))) {
                         onDirectionChange();
+                    }
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            WebRtcStreamBase.prototype.raiseStateChange = function () {
+                if (arguments.length == 0) {
+                    var onStateChange = this._onStateChange;
+                    if ((!fm.icelink.Global.equals(onStateChange, null))) {
+                        onStateChange();
                     }
                 }
                 else {
@@ -14600,19 +15306,43 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            /**<span id='method-fm.icelink.WebRtcStreamBase-setId'>&nbsp;</span>**/
+            /**<span id='method-fm.icelink.WebRtcStreamBase-removeOnStateChange'>&nbsp;</span>**/
             /**
              <div>
-             Sets the identifier.
+             Removes a handler that is raised when the stream state changes.
              </div>
     
     
-            @param {string} value
+            @param {fm.icelink.IAction0} value
             @return {void}
             */
-            WebRtcStreamBase.prototype.setId = function (value) {
+            WebRtcStreamBase.prototype.removeOnStateChange = function (value) {
                 if (arguments.length == 1) {
-                    this._id = value;
+                    fm.icelink.ArrayExtensions.remove(this.__onStateChange, value);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            WebRtcStreamBase.prototype.setConnectedTimestamp = function (value) {
+                if (arguments.length == 1) {
+                    this._connectedTimestamp = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            WebRtcStreamBase.prototype.setConnectionId = function (value) {
+                if (arguments.length == 1) {
+                    this._connectionId = value;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -14733,6 +15463,50 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             WebRtcStreamBase.prototype.setRemoteSupportsTrickleIce = function (value) {
                 if (arguments.length == 1) {
                     this.__remoteSupportsTrickleIce = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            WebRtcStreamBase.prototype.setState = function (state) {
+                if (arguments.length == 1) {
+                    if (!this.__stateMachine.transition(state)) {
+                        if (((!fm.icelink.Global.equals(state, this.getState())) && ((!fm.icelink.Global.equals(state, fm.icelink.StreamState.Closing)) || ((!fm.icelink.Global.equals(this.getState(), fm.icelink.StreamState.Closed)) && (!fm.icelink.Global.equals(this.getState(), fm.icelink.StreamState.Failed)))))) {
+                            this.logInvalidStateTransition(state);
+                        }
+                        return false;
+                    }
+                    if ((fm.icelink.Global.equals(this.getState(), fm.icelink.StreamState.Connected))) {
+                        this.setConnectedTimestamp(fm.icelink.ManagedStopwatch.getTimestamp());
+                    }
+                    if (fm.icelink.Log.getIsInfoEnabled()) {
+                        if ((fm.icelink.Global.equals(this.getState(), fm.icelink.StreamState.Connected))) {
+                            fm.icelink.Log.info(fm.icelink.StringExtensions.format("{0} stream {1} for connection {2} took {3}ms to connect (connectivity checks and secure key exchange).", [new fm.icelink.StreamTypeWrapper(this.getType()).toString(), this.getId(), this.getConnectionId(), fm.icelink.IntExtensions.toString(this.__stateMachine.getLastStateMillis())]));
+                        }
+                        fm.icelink.Log.info(fm.icelink.StringExtensions.format("Setting {0} stream {1} state for connection {2} to {3}.", [fm.icelink.StringExtensions.toLower(new fm.icelink.StreamTypeWrapper(this.getType()).toString()), this.getId(), this.getConnectionId(), fm.icelink.StringExtensions.toLower(new fm.icelink.StreamStateWrapper(this.getState()).toString())]));
+                    }
+                    this.raiseStateChange();
+                    this.processStateChange();
+                    return true;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            WebRtcStreamBase.prototype.setStateLock = function (value) {
+                if (arguments.length == 1) {
+                    if ((!fm.icelink.Global.equals(this.__stateLock, value))) {
+                        this.__stateLock = value;
+                        this.processStateLockChange();
+                    }
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -14870,6 +15644,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 if (__arguments.length == 1) {
                     var type_4 = __arguments[0];
                     _this = _super.call(this, type_4) || this;
+                    _this.fmicelinkWebRtcMediaStreamBaseInit();
                     _this._renegotiationLock = new Object();
                     _this.__pendingLocalDirection = fm.icelink.StreamDirection.Inactive;
                     _this.setLocalDirection(fm.icelink.StreamDirection.Unset);
@@ -14884,6 +15659,11 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             }
             WebRtcMediaStreamBase.prototype.getTypeString = function () {
                 return '[fm.icelink.WebRtcMediaStreamBase]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            WebRtcMediaStreamBase.prototype.fmicelinkWebRtcMediaStreamBaseInit = function () {
+                this._localBandwidth = 0;
+                this._remoteBandwidth = 0;
+                this._renegotiationPending = false;
             };
             /**<span id='method-fm.icelink.WebRtcMediaStreamBase-changeDirection'>&nbsp;</span>**/
             /**
@@ -15267,8 +16047,24 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 }
                 //TODO: can we initialize the remote track early?
                 _this.setRemoteDirection(icelink.StreamDirection.SendReceive); // until we know better
-                _this._localTrack = localTrack;
-                _this._remoteTrack = remoteTrack;
+                _this.setLocalTrack(localTrack);
+                _this.setRemoteTrack(remoteTrack);
+                if (localTrack) {
+                    localTrack.addOutput(_this);
+                }
+                if (remoteTrack) {
+                    remoteTrack.addInput(_this);
+                }
+                _this.addOnStateChange(function () {
+                    if (_this.getState() == icelink.StreamState.Closed || _this.getState() == icelink.StreamState.Failed) {
+                        if (localTrack) {
+                            localTrack.removeOutput(_this);
+                        }
+                        if (remoteTrack) {
+                            remoteTrack.removeInput(_this);
+                        }
+                    }
+                });
                 return _this;
             }
             WebRtcMediaStream.prototype.getTypeString = function () {
@@ -15276,6 +16072,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             WebRtcMediaStream.prototype.getLocalTrack = function () {
                 return this._localTrack;
+            };
+            WebRtcMediaStream.prototype.setLocalTrack = function (localTrack) {
+                this._localTrack = localTrack;
             };
             WebRtcMediaStream.prototype.getRemoteTrack = function () {
                 return this._remoteTrack;
@@ -15293,6 +16092,22 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     return this._localTrack.getMuted();
                 }
                 return false;
+            };
+            /** @internal */
+            WebRtcMediaStream.prototype.replaceLocalTrack = function (localTrack) {
+                var connection = this.getConnection();
+                if (!connection) {
+                    return icelink.Promise.rejectNow(new icelink.Exception('Not connected.'));
+                }
+                return connection.replaceLocalTrack(localTrack, this);
+            };
+            /** @internal */
+            WebRtcMediaStream.prototype.replaceRemoteTrack = function (remoteTrack) {
+                var connection = this.getConnection();
+                if (!connection) {
+                    return icelink.Promise.rejectNow(new icelink.Exception('Not connected.'));
+                }
+                return connection.replaceRemoteTrack(remoteTrack, this);
             };
             WebRtcMediaStream.prototype.processCachedChanges = function () {
                 var direction = this.getPendingLocalDirection();
@@ -15467,12 +16282,40 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 /** @internal */
                 _this._onDestroyedValues = [];
                 /** @internal */
+                _this._outputs = [];
+                /** @internal */
+                _this._inputs = [];
+                /** @internal */
                 _this._mediaStreamTrackDisabled = false;
                 _this._media = media;
                 return _this;
             }
             WebRtcMediaTrack.prototype.getTypeString = function () {
                 return '[fm.icelink.WebRtcMediaTrack]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            /** @internal */
+            WebRtcMediaTrack.prototype.getOutputs = function () {
+                return this._outputs;
+            };
+            /** @internal */
+            WebRtcMediaTrack.prototype.addOutput = function (output) {
+                icelink.ArrayExtensions.add(this._outputs, output);
+            };
+            /** @internal */
+            WebRtcMediaTrack.prototype.removeOutput = function (output) {
+                return icelink.ArrayExtensions.remove(this._outputs, output);
+            };
+            /** @internal */
+            WebRtcMediaTrack.prototype.getInputs = function () {
+                return this._inputs;
+            };
+            /** @internal */
+            WebRtcMediaTrack.prototype.addInput = function (input) {
+                icelink.ArrayExtensions.add(this._inputs, input);
+            };
+            /** @internal */
+            WebRtcMediaTrack.prototype.removeInput = function (input) {
+                return icelink.ArrayExtensions.remove(this._inputs, input);
             };
             /** @internal */
             WebRtcMediaTrack.prototype._getMediaStreamTrack = function () {
@@ -15497,8 +16340,19 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 }
                 else {
                     this._mediaStreamTrackDisabled = true;
+                    if (this._mediaStreamTrack) {
+                        this._mediaStreamTrack.onended = null;
+                    }
                 }
                 this._mediaStreamTrack = mediaStreamTrack;
+                for (var _b = 0, _c = this.getOutputs(); _b < _c.length; _b++) {
+                    var output = _c[_b];
+                    output.replaceLocalTrack(this);
+                }
+                for (var _d = 0, _e = this.getInputs(); _d < _e.length; _d++) {
+                    var input = _e[_d];
+                    input.replaceRemoteTrack(this);
+                }
             };
             /** @internal */
             WebRtcMediaTrack.prototype._getMediaStreamTrackDisabled = function () {
@@ -15597,7 +16451,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             WebRtcAudioTrack.prototype.changeSinkOutput = function (sinkOutput) {
                 if (this.isLocal()) {
-                    throw new icelink.Exception('Cannot call AudioTrack.changeSinkOutput on a local track.');
+                    var promise = new icelink.Promise();
+                    promise.reject(new icelink.Exception('Cannot call AudioTrack.changeSinkOutput on a local track.'));
+                    return promise;
                 }
                 return this.getMedia().changeAudioSinkOutput(sinkOutput);
             };
@@ -15609,7 +16465,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             WebRtcAudioTrack.prototype.getSinkOutputs = function () {
                 if (this.isLocal()) {
-                    throw new icelink.Exception('Cannot call AudioTrack.getSinkOutputs on a local track.');
+                    var promise = new icelink.Promise();
+                    promise.reject(new icelink.Exception('Cannot call AudioTrack.getSinkOutputs on a local track.'));
+                    return promise;
                 }
                 return this.getMedia().getAudioSinkOutputs();
             };
@@ -15621,7 +16479,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             WebRtcAudioTrack.prototype.changeSourceInput = function (sourceInput) {
                 if (!this.isLocal()) {
-                    throw new icelink.Exception('Cannot call AudioTrack.changeSourceInput on a remote track.');
+                    var promise = new icelink.Promise();
+                    promise.reject(new icelink.Exception('Cannot call AudioTrack.changeSourceInput on a remote track.'));
+                    return promise;
                 }
                 return this.getMedia().changeAudioSourceInput(sourceInput);
             };
@@ -15633,7 +16493,9 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             };
             WebRtcAudioTrack.prototype.getSourceInputs = function () {
                 if (!this.isLocal()) {
-                    throw new icelink.Exception('Cannot call AudioTrack.getSourceInputs on a remote track.');
+                    var promise = new icelink.Promise();
+                    promise.reject(new icelink.Exception('Cannot call AudioTrack.getSourceInputs on a remote track.'));
+                    return promise;
                 }
                 return this.getMedia().getAudioSourceInputs();
             };
@@ -15700,12 +16562,19 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     var sharedLock_1 = __arguments[0];
                     _this = _super.call(this) || this;
                     _this.fmicelinkWebRtcConnectionBaseInit();
+                    _this.__id = fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", "");
                     _this.__iceServers = new fm.icelink.IceServerCollection();
                     _this.__useTrickleIce = true;
                     _this.__trickleIcePolicy = fm.icelink.TrickleIcePolicy.FullTrickle;
                     _this._earlyRemoteCandidatePromises = new Array();
+                    _this.__signallingState = fm.icelink.SignallingState.New;
                     _this._connectionLock = sharedLock_1;
-                    _this.initializeBase();
+                    _this.setTieBreaker(fm.icelink.Utility.generateTieBreaker());
+                    _this.setTimeout(30000);
+                    _this.setDeadStreamTimeout(15000);
+                    _this.setIceGatherPolicy(fm.icelink.IceGatherPolicy.All);
+                    _this.setTrickleIcePolicy(fm.icelink.TrickleIcePolicy.FullTrickle);
+                    _this.__stateMachine = new fm.icelink.ConnectionStateMachine();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -15725,6 +16594,8 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                 this.__onRemoteDescription = [];
                 this.__onSignallingStateChange = [];
                 this.__onStateChange = [];
+                this.__useTrickleIce = false;
+                this._deadStreamTimeout = 0;
                 this._onGatheringStateChange = function (p0) { for (var _i = 0, _a = _this.__onGatheringStateChange; _i < _a.length; _i++) {
                     var action = _a[_i];
                     action(p0);
@@ -15757,6 +16628,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     var action = _a[_i];
                     action(p0);
                 } };
+                this._timeout = 0;
             };
             /**<span id='method-fm.icelink.WebRtcConnectionBase-addIceServer'>&nbsp;</span>**/
             /**
@@ -15956,7 +16828,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                         }
                         return item;
                     }
-                    if (!this.getIsInTerminatingOrTerminatedState()) {
+                    if (!this.getIsTerminatingOrTerminated()) {
                         this.addRemoteCandidatePromise(item);
                     }
                     return item;
@@ -16037,6 +16909,67 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.WebRtcConnectionBase-doProcessDescription'>&nbsp;</span>**/
+            /**
+             <div>
+             Processes a session description.
+             </div>
+    
+            @param {fm.icelink.SessionDescription} description The session description.
+            @param {boolean} isLocalDescription Whether this is a local session description.
+            @return {fm.icelink.Error}
+            */
+            WebRtcConnectionBase.prototype.doProcessDescription = function (description, isLocalDescription) {
+                if (arguments.length == 2) {
+                    var sdpMessage = description.getSdpMessage();
+                    if ((fm.icelink.Global.equals(sdpMessage, null))) {
+                        return new fm.icelink.Error(fm.icelink.ErrorCode.LocalDescriptionError, new fm.icelink.Exception(fm.icelink.StringExtensions.format("{0} session description is empty.", (isLocalDescription ? "Local" : "Remote"))));
+                    }
+                    var streams = this.getStreams();
+                    if (((fm.icelink.Global.equals(streams, null)) || (fm.icelink.Global.equals(streams.length, 0)))) {
+                        return new fm.icelink.Error(fm.icelink.ErrorCode.ConnectionInvalidArchitecture, new fm.icelink.Exception("At least one local stream is required for the connection to conduct signalling exchange."));
+                    }
+                    var mediaDescriptions = sdpMessage.getMediaDescriptions();
+                    if (((fm.icelink.Global.equals(mediaDescriptions, null)) || (fm.icelink.Global.equals(mediaDescriptions.length, 0)))) {
+                        return new fm.icelink.Error(fm.icelink.ErrorCode.ConnectionInvalidArchitecture, new fm.icelink.Exception("At least one media description is required for the connection to conduct signalling exchange."));
+                    }
+                    var length_5 = streams.length;
+                    var num2 = mediaDescriptions.length;
+                    if ((!fm.icelink.Global.equals(length_5, num2))) {
+                        return new fm.icelink.Error(fm.icelink.ErrorCode.ConnectionInvalidArchitecture, new fm.icelink.Exception(fm.icelink.StringExtensions.format("There is a mismatch between the number of local streams ({0}) and the number of media descriptions ({1}).", fm.icelink.IntExtensions.toString(length_5), fm.icelink.IntExtensions.toString(num2))));
+                    }
+                    var flag = true;
+                    var remoteSupportsTrickleIce = false;
+                    for (var i = 0; (i < streams.length); i++) {
+                        var stream = streams[i];
+                        var sdpMediaDescription = mediaDescriptions[i];
+                        var type = fm.icelink.sdp.MediaType.toStreamType(sdpMediaDescription.getMedia().getMediaType());
+                        if ((!fm.icelink.Global.equals(stream.getType(), type))) {
+                            return new fm.icelink.Error(fm.icelink.ErrorCode.ConnectionInvalidArchitecture, new fm.icelink.Exception(fm.icelink.StringExtensions.format("There is a media type mismatch between the local stream at index {0} ({1}) and the media description at index {0} ({2}).", fm.icelink.IntExtensions.toString(i), new fm.icelink.StreamTypeWrapper(stream.getType()).toString(), new fm.icelink.StreamTypeWrapper(type).toString())));
+                        }
+                        this.processSdpMediaDescription(stream, sdpMediaDescription, i, isLocalDescription, description.getRenegotiation());
+                        var error = stream.processSdpMediaDescription(sdpMessage, sdpMediaDescription, isLocalDescription, description.getIsOffer(), description.getRenegotiation());
+                        if ((!fm.icelink.Global.equals(error, null))) {
+                            return error;
+                        }
+                        remoteSupportsTrickleIce = stream.getRemoteSupportsTrickleIce();
+                        flag = (flag && remoteSupportsTrickleIce);
+                    }
+                    if ((!isLocalDescription && (fm.icelink.Global.equals(this.getTrickleIcePolicy(), fm.icelink.TrickleIcePolicy.HalfTrickle)))) {
+                        if (flag) {
+                            fm.icelink.Log.debug(fm.icelink.StringExtensions.format("Peer supports Trickle-Ice. Trickle Ice will be enabled in all subsequent communications with the peer for the lifetime of connection {0}.", this.getId()));
+                            this.setUseTrickleIce(true);
+                        }
+                        else {
+                            this.setUseTrickleIce(false);
+                        }
+                    }
+                    return null;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.WebRtcConnectionBase-getAudioStream'>&nbsp;</span>**/
             /**
              <div>
@@ -16111,6 +17044,23 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             WebRtcConnectionBase.prototype.getError = function () {
                 if (arguments.length == 0) {
                     return this._error;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcConnectionBase-getExternalId'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the external identifier.
+             </div>
+    
+    
+            @return {string}
+            */
+            WebRtcConnectionBase.prototype.getExternalId = function () {
+                if (arguments.length == 0) {
+                    return this._externalId;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -16229,31 +17179,58 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             */
             WebRtcConnectionBase.prototype.getId = function () {
                 if (arguments.length == 0) {
-                    return this._id;
+                    return this.__id;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.WebRtcConnectionBase-getIsTerminated'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Gets a value indicating whether the connection is currently closed or failed.
+             </div>
     
+    
+            @return {boolean}
             */
-            WebRtcConnectionBase.prototype.getInternalId = function () {
+            WebRtcConnectionBase.prototype.getIsTerminated = function () {
                 if (arguments.length == 0) {
-                    return this._internalId;
+                    return ((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Closed)) || (fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Failed)));
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.WebRtcConnectionBase-getIsTerminating'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Gets a value indicating whether the connection is currently closing or failing.
+             </div>
     
+    
+            @return {boolean}
             */
-            WebRtcConnectionBase.prototype.getIsInTerminatingOrTerminatedState = function () {
+            WebRtcConnectionBase.prototype.getIsTerminating = function () {
                 if (arguments.length == 0) {
-                    return ((((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Closed)) || (fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Closing))) || (fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Failed))) || (fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Failing)));
+                    return ((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Closing)) || (fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Failing)));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcConnectionBase-getIsTerminatingOrTerminated'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets a value indicating whether the connection is currently closing, failing, closed, or failed.
+             </div>
+    
+    
+            @return {boolean}
+            */
+            WebRtcConnectionBase.prototype.getIsTerminatingOrTerminated = function () {
+                if (arguments.length == 0) {
+                    return (this.getIsTerminating() || this.getIsTerminated());
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -16287,7 +17264,7 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             */
             WebRtcConnectionBase.prototype.getState = function () {
                 if (arguments.length == 0) {
-                    return this.__state;
+                    return this.__stateMachine.getState();
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -16404,16 +17381,11 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             @internal
     
             */
-            WebRtcConnectionBase.prototype.initializeBase = function () {
-                if (arguments.length == 0) {
-                    this.setId(fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", ""));
-                    this.setInternalId(fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", ""));
-                    this.setTieBreaker(fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", ""));
-                    this.setState(fm.icelink.ConnectionState.New);
-                    this.setTimeout(30000);
-                    this.setDeadStreamTimeout(15000);
-                    this.setIceGatherPolicy(fm.icelink.IceGatherPolicy.All);
-                    this.setTrickleIcePolicy(fm.icelink.TrickleIcePolicy.FullTrickle);
+            WebRtcConnectionBase.prototype.logInvalidStateTransition = function (state) {
+                if (arguments.length == 1) {
+                    if (fm.icelink.Log.getIsDebugEnabled()) {
+                        fm.icelink.Log.debug(fm.icelink.StringExtensions.format("Connection {0} state is currently {1}. Cannot transition to {2}.", this.getId(), fm.icelink.StringExtensions.toLower(new fm.icelink.ConnectionStateWrapper(this.getState()).toString()), fm.icelink.StringExtensions.toLower(new fm.icelink.ConnectionStateWrapper(state).toString())));
+                    }
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -16431,50 +17403,62 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             */
             WebRtcConnectionBase.prototype.processDescription = function (description, isLocalDescription) {
                 if (arguments.length == 2) {
-                    var sdpMessage = description.getSdpMessage();
-                    if ((fm.icelink.Global.equals(sdpMessage, null))) {
-                        return new fm.icelink.Error(fm.icelink.ErrorCode.LocalDescriptionError, new fm.icelink.Exception(fm.icelink.StringExtensions.format("{0} session description is empty.", (isLocalDescription ? "Local" : "Remote"))));
-                    }
+                    return this.doProcessDescription(description, isLocalDescription);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcConnectionBase-processStateChange'>&nbsp;</span>**/
+            /**
+             <div>
+             Processes a state change.
+             </div>
+    
+    
+            @return {void}
+            */
+            WebRtcConnectionBase.prototype.processStateChange = function () {
+                if (arguments.length == 0) {
                     var streams = this.getStreams();
-                    if (((fm.icelink.Global.equals(streams, null)) || (fm.icelink.Global.equals(streams.length, 0)))) {
-                        return new fm.icelink.Error(fm.icelink.ErrorCode.ConnectionInvalidArchitecture, new fm.icelink.Exception("At least one local stream is required for the connection to conduct signalling exchange."));
-                    }
-                    var mediaDescriptions = sdpMessage.getMediaDescriptions();
-                    if (((fm.icelink.Global.equals(mediaDescriptions, null)) || (fm.icelink.Global.equals(mediaDescriptions.length, 0)))) {
-                        return new fm.icelink.Error(fm.icelink.ErrorCode.ConnectionInvalidArchitecture, new fm.icelink.Exception("At least one media description is required for the connection to conduct signalling exchange."));
-                    }
-                    var length_5 = streams.length;
-                    var num2 = mediaDescriptions.length;
-                    if ((!fm.icelink.Global.equals(length_5, num2))) {
-                        return new fm.icelink.Error(fm.icelink.ErrorCode.ConnectionInvalidArchitecture, new fm.icelink.Exception(fm.icelink.StringExtensions.format("There is a mismatch between the number of local streams ({0}) and the number of media descriptions ({1}).", fm.icelink.IntExtensions.toString(length_5), fm.icelink.IntExtensions.toString(num2))));
-                    }
-                    var flag = true;
-                    var remoteSupportsTrickleIce = false;
-                    for (var i = 0; (i < streams.length); i++) {
-                        var stream = streams[i];
-                        var sdpMediaDescription = mediaDescriptions[i];
-                        var type = fm.icelink.sdp.MediaType.toStreamType(sdpMediaDescription.getMedia().getMediaType());
-                        if ((!fm.icelink.Global.equals(stream.getType(), type))) {
-                            return new fm.icelink.Error(fm.icelink.ErrorCode.ConnectionInvalidArchitecture, new fm.icelink.Exception(fm.icelink.StringExtensions.format("There is a media type mismatch between the local stream at index {0} ({1}) and the media description at index {0} ({2}).", fm.icelink.IntExtensions.toString(i), new fm.icelink.StreamTypeWrapper(stream.getType()).toString(), new fm.icelink.StreamTypeWrapper(type).toString())));
+                    if ((!fm.icelink.Global.equals(streams, null))) {
+                        for (var _i = 0, streams_2 = streams; _i < streams_2.length; _i++) {
+                            var local = streams_2[_i];
+                            if ((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Initializing))) {
+                                local.setState(fm.icelink.StreamState.Initializing);
+                            }
+                            else {
+                                if ((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Connecting))) {
+                                    local.setState(fm.icelink.StreamState.Connecting);
+                                }
+                                else {
+                                    if ((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Connected))) {
+                                        local.setState(fm.icelink.StreamState.Connected);
+                                    }
+                                    else {
+                                        if ((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Closing))) {
+                                            local.setState(fm.icelink.StreamState.Closing);
+                                        }
+                                        else {
+                                            if ((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Closed))) {
+                                                local.setState(fm.icelink.StreamState.Closed);
+                                            }
+                                            else {
+                                                if ((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Failing))) {
+                                                    local.setState(fm.icelink.StreamState.Failing);
+                                                }
+                                                else {
+                                                    if ((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Failed))) {
+                                                        local.setState(fm.icelink.StreamState.Failed);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
-                        this.processSdpMediaDescription(stream, sdpMediaDescription, i, isLocalDescription, description.getRenegotiation());
-                        var error = stream.processSdpMediaDescription(sdpMessage, sdpMediaDescription, isLocalDescription, description.getIsOffer(), description.getRenegotiation());
-                        if ((!fm.icelink.Global.equals(error, null))) {
-                            return error;
-                        }
-                        remoteSupportsTrickleIce = stream.getRemoteSupportsTrickleIce();
-                        flag = (flag && remoteSupportsTrickleIce);
                     }
-                    if ((!isLocalDescription && (fm.icelink.Global.equals(this.getTrickleIcePolicy(), fm.icelink.TrickleIcePolicy.HalfTrickle)))) {
-                        if (flag) {
-                            fm.icelink.Log.debug(fm.icelink.StringExtensions.format("Peer supports Trickle-Ice. Trickle Ice will be enabled in all subsequent communications with the peer for the lifetime of connection {0}.", this.getId()));
-                            this.setUseTrickleIce(true);
-                        }
-                        else {
-                            this.setUseTrickleIce(false);
-                        }
-                    }
-                    return null;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -16830,19 +17814,31 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            /**<span id='method-fm.icelink.WebRtcConnectionBase-setError'>&nbsp;</span>**/
             /**
-             <div>
-             Sets the error.
-             </div>
+            @internal
     
-    
-            @param {fm.icelink.Error} value
-            @return {void}
             */
             WebRtcConnectionBase.prototype.setError = function (value) {
                 if (arguments.length == 1) {
                     this._error = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcConnectionBase-setExternalId'>&nbsp;</span>**/
+            /**
+             <div>
+             Sets the external identifier.
+             </div>
+    
+    
+            @param {string} value
+            @return {void}
+            */
+            WebRtcConnectionBase.prototype.setExternalId = function (value) {
+                if (arguments.length == 1) {
+                    this._externalId = value;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -16897,36 +17893,6 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
             WebRtcConnectionBase.prototype.setIceServers = function (value) {
                 if (arguments.length == 1) {
                     this.__iceServers.replace(value);
-                }
-                else {
-                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
-                }
-            };
-            /**<span id='method-fm.icelink.WebRtcConnectionBase-setId'>&nbsp;</span>**/
-            /**
-             <div>
-             Sets the identifier.
-             </div>
-    
-    
-            @param {string} value
-            @return {void}
-            */
-            WebRtcConnectionBase.prototype.setId = function (value) {
-                if (arguments.length == 1) {
-                    this._id = value;
-                }
-                else {
-                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
-                }
-            };
-            /**
-            @internal
-    
-            */
-            WebRtcConnectionBase.prototype.setInternalId = function (value) {
-                if (arguments.length == 1) {
-                    this._internalId = value;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -17017,79 +17983,67 @@ var fmicelinkGlobalError = /** @class */ (function (_super) {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            /**<span id='method-fm.icelink.WebRtcConnectionBase-setState'>&nbsp;</span>**/
-            /**
-             <div>
-             Sets the state of the connection.
-             </div>
-    
-    
-            @param {fm.icelink.ConnectionState} value
-            @return {void}
-            */
-            WebRtcConnectionBase.prototype.setState = function (value) {
-                if (arguments.length == 1) {
+            WebRtcConnectionBase.prototype.setState = function () {
+                if (arguments.length == 2) {
+                    var state = arguments[0];
+                    var error = arguments[1];
                     var flag = false;
-                    if ((!fm.icelink.Global.equals(this.__state, value))) {
-                        if ((((fm.icelink.Global.equals(value, fm.icelink.ConnectionState.Closed)) || (fm.icelink.Global.equals(value, fm.icelink.ConnectionState.Closing))) && ((fm.icelink.Global.equals(this.__state, fm.icelink.ConnectionState.Failing)) || (fm.icelink.Global.equals(this.__state, fm.icelink.ConnectionState.Failed))))) {
-                            var str = ((fm.icelink.Global.equals(this.__state, fm.icelink.ConnectionState.Failing)) ? "failing" : "failed");
-                            fm.icelink.Log.debug(fm.icelink.StringExtensions.format("Connection {0} is currently in the {1} state. Will not transition to {2} state.", this.getId(), str, fm.icelink.StringExtensions.toLower(new fm.icelink.ConnectionStateWrapper(value).toString())));
-                            return;
+                    if (((fm.icelink.Global.equals(state, fm.icelink.ConnectionState.Failing)) && (fm.icelink.Global.equals(error, null)))) {
+                        throw new fm.icelink.Exception("Transitioning to the failing state requires an error.");
+                    }
+                    if (((!fm.icelink.Global.equals(state, fm.icelink.ConnectionState.Failing)) && (!fm.icelink.Global.equals(error, null)))) {
+                        throw new fm.icelink.Exception("An error can only be specified when transitioning to the failing state.");
+                    }
+                    if (!this.__stateMachine.transition(state)) {
+                        if (((!fm.icelink.Global.equals(state, this.getState())) && ((!fm.icelink.Global.equals(state, fm.icelink.ConnectionState.Closing)) || ((!fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Closed)) && (!fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Failed)))))) {
+                            this.logInvalidStateTransition(state);
                         }
-                        if ((fm.icelink.Global.equals(value, fm.icelink.ConnectionState.Closed))) {
-                            if ((!fm.icelink.Global.equals(this.__state, fm.icelink.ConnectionState.Closing))) {
-                                fm.icelink.Log.info(fm.icelink.StringExtensions.format("Setting connection state to closing for connection {0}.", this.getId(), new fm.icelink.ConnectionStateWrapper(value).toString()));
-                                this.__state = fm.icelink.ConnectionState.Closing;
-                                this.raiseStateChange();
-                            }
+                        return false;
+                    }
+                    if ((!fm.icelink.Global.equals(error, null))) {
+                        this.setError(error);
+                    }
+                    var id = this.getId();
+                    var externalId = this.getExternalId();
+                    if ((!fm.icelink.Global.equals(externalId, null))) {
+                        id = fm.icelink.StringExtensions.format("{0} (external ID {1})", id, externalId);
+                    }
+                    flag = (fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Connecting));
+                    if (fm.icelink.Log.getIsInfoEnabled()) {
+                        if ((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Connecting))) {
+                            fm.icelink.Log.info(fm.icelink.StringExtensions.format("Connection {0} took {1}ms to initialize (offer/answer signalling).", this.getId(), fm.icelink.IntExtensions.toString(this.__stateMachine.getLastStateMillis())));
                         }
                         else {
-                            if ((fm.icelink.Global.equals(value, fm.icelink.ConnectionState.Failed))) {
-                                if (((!fm.icelink.Global.equals(this.__state, fm.icelink.ConnectionState.Closing)) && (!fm.icelink.Global.equals(this.__state, fm.icelink.ConnectionState.Failing)))) {
-                                    if ((fm.icelink.Global.equals(this.getError(), null))) {
-                                        this.setError(new fm.icelink.Error(fm.icelink.ErrorCode.ConnectionInternalError, new fm.icelink.Exception("Connection is failing.")));
-                                    }
-                                    fm.icelink.Log.info(fm.icelink.StringExtensions.format("Setting connection state to failing for connection {0}.", this.getId(), new fm.icelink.ConnectionStateWrapper(value).toString()));
-                                    this.__state = fm.icelink.ConnectionState.Failing;
-                                    this.raiseStateChange();
-                                }
-                            }
-                            else {
-                                if ((fm.icelink.Global.equals(value, fm.icelink.ConnectionState.Connecting))) {
-                                    flag = true;
-                                }
+                            if ((fm.icelink.Global.equals(this.getState(), fm.icelink.ConnectionState.Connected))) {
+                                fm.icelink.Log.info(fm.icelink.StringExtensions.format("Connection {0} took {1}ms to connect (connectivity checks and secure key exchange).", this.getId(), fm.icelink.IntExtensions.toString(this.__stateMachine.getLastStateMillis())));
                             }
                         }
-                        if (fm.icelink.Log.getIsInfoEnabled()) {
-                            var num = void 0;
-                            if (((fm.icelink.Global.equals(this.__state, fm.icelink.ConnectionState.Initializing)) && (fm.icelink.Global.equals(value, fm.icelink.ConnectionState.Connecting)))) {
-                                num = ((fm.icelink.DateTime.getUtcNow().getTicks() - this.__stateTimestamp.getTicks()) / fm.icelink.Constants.getTicksPerMillisecond());
-                                fm.icelink.Log.info(fm.icelink.StringExtensions.format("Connection {0} took {1}ms to initialize (offer/answer signalling).", this.getId(), fm.icelink.IntExtensions.toString(num)));
-                            }
-                            else {
-                                if (((fm.icelink.Global.equals(this.__state, fm.icelink.ConnectionState.Connecting)) && (fm.icelink.Global.equals(value, fm.icelink.ConnectionState.Connected)))) {
-                                    num = ((fm.icelink.DateTime.getUtcNow().getTicks() - this.__stateTimestamp.getTicks()) / fm.icelink.Constants.getTicksPerMillisecond());
-                                    fm.icelink.Log.info(fm.icelink.StringExtensions.format("Connection {0} took {1}ms to connect (connectivity checks and secure key exchange).", this.getId(), fm.icelink.IntExtensions.toString(num)));
-                                }
-                            }
-                            fm.icelink.Log.info(fm.icelink.StringExtensions.format("Setting connection {0} state to {1}.", this.getId(), fm.icelink.StringExtensions.toLower(new fm.icelink.ConnectionStateWrapper(value).toString())));
-                        }
-                        this.__state = value;
-                        this.__stateTimestamp = fm.icelink.DateTime.getUtcNow();
-                        this.raiseStateChange();
-                        this.processStateChange();
+                        fm.icelink.Log.info(fm.icelink.StringExtensions.format("Setting connection {0} state to {1}.", id, fm.icelink.StringExtensions.toLower(new fm.icelink.ConnectionStateWrapper(this.getState()).toString())));
                     }
+                    this.raiseStateChange();
+                    this.processStateChange();
                     if (flag) {
                         this.raiseCachedCandidates();
                     }
+                    return true;
+                }
+                else if (arguments.length == 1) {
+                    var state = arguments[0];
+                    return this.setState(state, null);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.WebRtcConnectionBase-setTieBreaker'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the tie breaker.
+             </div>
     
+    
+            @param {string} value
+            @return {void}
             */
             WebRtcConnectionBase.prototype.setTieBreaker = function (value) {
                 if (arguments.length == 1) {
@@ -17205,6 +18159,9 @@ function makeMediaStream() {
             __extends(WebRtcConnection, _super);
             function WebRtcConnection(external, streams, remoteMedia) {
                 var _this = _super.call(this, new Object()) || this;
+                _this._remoteMediaTrackCount = 0;
+                _this._dataStreamsReady = false;
+                _this._mediaStreamsReady = false;
                 /** @internal */
                 _this._iceCandidateProcessingTimeout = 1000;
                 _this.dtmfSender = null;
@@ -17213,7 +18170,6 @@ function makeMediaStream() {
                 if (!icelink.Plugin.hasWebRtc() && !icelink.Plugin.hasOrtc()) {
                     throw new icelink.Exception('Native browser support for WebRTC/ORTC could not be found.');
                 }
-                _this.setSignallingState(icelink.SignallingState.New);
                 _this._streams = [];
                 _this._mediaStreams = [];
                 _this._audioStreams = [];
@@ -17224,6 +18180,11 @@ function makeMediaStream() {
                 _this._localDescription = null;
                 _this._remoteDescription = null;
                 _this.addStreamsInternal(streams);
+                for (var _i = 0, streams_3 = streams; _i < streams_3.length; _i++) {
+                    var stream = streams_3[_i];
+                    stream.setConnectionId(_this.getId());
+                    stream.setStateLock(_this._connectionLock);
+                }
                 return _this;
             }
             WebRtcConnection.prototype.getTypeString = function () {
@@ -17277,12 +18238,24 @@ function makeMediaStream() {
                 icelink.ArrayExtensions.add(this._streams, stream);
             };
             WebRtcConnection.prototype.addStreamsInternal = function (streams) {
-                for (var _i = 0, streams_2 = streams; _i < streams_2.length; _i++) {
-                    var stream = streams_2[_i];
+                for (var _i = 0, streams_4 = streams; _i < streams_4.length; _i++) {
+                    var stream = streams_4[_i];
                     this.addStreamInternal(stream);
                 }
             };
             WebRtcConnection.prototype.processStateChange = function () {
+                var _this = this;
+                _super.prototype.processStateChange.call(this);
+                if (this.getState() == icelink.ConnectionState.Initializing) {
+                    window.setTimeout(function () {
+                        if (_this.getState() == icelink.ConnectionState.Initializing || _this.getState() == icelink.ConnectionState.Connecting) {
+                            if (_this.setState(icelink.ConnectionState.Failing, new icelink.Error(icelink.ErrorCode.ConnectionNotEstablished, new icelink.Exception('Could not establish connectivity with remote peer. Shutting down connection.')))) {
+                                _this.doClose();
+                                _this.setState(icelink.ConnectionState.Failed);
+                            }
+                        }
+                    }, this.getTimeout());
+                }
             };
             WebRtcConnection.prototype.getStreams = function () {
                 return this._streams;
@@ -17298,47 +18271,6 @@ function makeMediaStream() {
             };
             WebRtcConnection.prototype.getDataStreams = function () {
                 return this._dataStreams;
-            };
-            WebRtcConnection.prototype.setInitializing = function () {
-                var _this = this;
-                this.setState(icelink.ConnectionState.Initializing);
-                this._connectingTimer = window.setTimeout(function () {
-                    if (_this.getState() == icelink.ConnectionState.Initializing || _this.getState() == icelink.ConnectionState.Connecting) {
-                        _this.setFailing(new icelink.Error(icelink.ErrorCode.ConnectionNotEstablished, new icelink.Exception('Could not establish connectivity with remote peer. Shutting down connection.')));
-                        _this.doClose();
-                        _this.setFailed();
-                    }
-                }, this.getTimeout());
-            };
-            WebRtcConnection.prototype.setConnecting = function () {
-                this.setState(icelink.ConnectionState.Connecting);
-            };
-            WebRtcConnection.prototype.setConnected = function () {
-                this.clearConnectingTimer();
-                this.setState(icelink.ConnectionState.Connected);
-            };
-            WebRtcConnection.prototype.setClosing = function () {
-                this.clearConnectingTimer();
-                this.setState(icelink.ConnectionState.Closing);
-            };
-            WebRtcConnection.prototype.setClosed = function () {
-                this.clearConnectingTimer();
-                this.setState(icelink.ConnectionState.Closed);
-            };
-            WebRtcConnection.prototype.setFailing = function (error) {
-                this.clearConnectingTimer();
-                this.setError(error);
-                this.setState(icelink.ConnectionState.Failing);
-            };
-            WebRtcConnection.prototype.setFailed = function () {
-                this.clearConnectingTimer();
-                this.setState(icelink.ConnectionState.Failed);
-            };
-            WebRtcConnection.prototype.clearConnectingTimer = function () {
-                if (this._connectingTimer) {
-                    window.clearTimeout(this._connectingTimer);
-                    this._connectingTimer = 0;
-                }
             };
             WebRtcConnection.prototype.getStats = function () {
                 var _this = this;
@@ -17771,7 +18703,7 @@ function makeMediaStream() {
             };
             WebRtcConnection.prototype.initialize = function () {
                 var _this = this;
-                this.setInitializing();
+                this.setState(icelink.ConnectionState.Initializing);
                 var allowTcp = (this._ortcSupportsTcp || (icelink.Plugin.hasWebRtc() && !icelink.Plugin.hasOrtc()));
                 var servers = [];
                 for (var _i = 0, _a = this.getIceServers(); _i < _a.length; _i++) {
@@ -17862,7 +18794,8 @@ function makeMediaStream() {
                     this._iceConnectionState = icelink.IceConnectionState.New;
                     try {
                         this._nativePeerConnection = new RTCPeerConnection({
-                            iceServers: rtcServers
+                            iceServers: rtcServers,
+                            bundlePolicy: 'max-compat'
                         });
                     }
                     catch (error) {
@@ -17875,7 +18808,8 @@ function makeMediaStream() {
                                 }
                             }
                             this._nativePeerConnection = new RTCPeerConnection({
-                                iceServers: rtcServers
+                                iceServers: rtcServers,
+                                bundlePolicy: 'max-compat'
                             });
                         }
                         catch (error) {
@@ -17888,7 +18822,8 @@ function makeMediaStream() {
                             }
                             delete rtcServer.urls;
                             this._nativePeerConnection = new RTCPeerConnection({
-                                iceServers: rtcServers
+                                iceServers: rtcServers,
+                                bundlePolicy: 'max-compat'
                             });
                         }
                     }
@@ -17953,7 +18888,7 @@ function makeMediaStream() {
                         }
                     };
                     var dataChannelsConnected_1 = 0;
-                    var dataStreamsReady_1 = (dataChannelsConnected_1 == dataChannelCount);
+                    this._dataStreamsReady = (dataChannelsConnected_1 == dataChannelCount);
                     var processDataChannelStateChange_1 = function (dataChannel) {
                         var dataChannelState = dataChannel.getState();
                         if (dataChannelState == icelink.DataChannelState.Connected) {
@@ -17962,21 +18897,25 @@ function makeMediaStream() {
                         else if (dataChannelState == icelink.DataChannelState.Closed) {
                             dataChannelsConnected_1--;
                             if (dataChannelsConnected_1 == 0 && mediaStreamCount == 0) {
-                                if (_this.getState() == icelink.ConnectionState.Connected) {
-                                    _this.setClosing();
+                                if (_this.setState(icelink.ConnectionState.Closing)) {
+                                    _this.doClose();
+                                    _this.setState(icelink.ConnectionState.Closed);
                                 }
-                                _this.setClosed();
                             }
                         }
                         else if (dataChannelState == icelink.DataChannelState.Failed) {
                             dataChannelsConnected_1--;
                             if (dataChannelsConnected_1 == 0 && mediaStreamCount == 0) {
-                                _this.setFailing(new icelink.Error(icelink.ErrorCode.ReliableDataChannelSendError, new icelink.Exception('Data channel failed.')));
-                                _this.doClose();
-                                _this.setFailed();
+                                if (_this.setState(icelink.ConnectionState.Failing, new icelink.Error(icelink.ErrorCode.ReliableDataChannelSendError, new icelink.Exception('Data channel failed.')))) {
+                                    _this.doClose();
+                                    _this.setState(icelink.ConnectionState.Failed);
+                                }
                             }
                         }
-                        dataStreamsReady_1 = (dataChannelsConnected_1 == dataChannelCount);
+                        _this._dataStreamsReady = (dataChannelsConnected_1 == dataChannelCount);
+                        if (_this._dataStreamsReady && _this._mediaStreamsReady && _this.getState() == icelink.ConnectionState.Connecting) {
+                            _this.setState(icelink.ConnectionState.Connected);
+                        }
                     };
                     var _loop_1 = function (dataStream) {
                         if (this_1._offerer) {
@@ -18011,8 +18950,7 @@ function makeMediaStream() {
                         var dataStream = _k[_j];
                         _loop_1(dataStream);
                     }
-                    var mediaStreamsInitialized = 0;
-                    var mediaStreamsReady_1 = (mediaStreamsInitialized == mediaStreamCount);
+                    this._mediaStreamsReady = (mediaStreamCount == 0);
                     if (mediaStreamCount > 0) {
                         var pendingNativeMediaStreams_1 = [];
                         var processNativeMediaStream_1 = function (nativeMediaStreams) {
@@ -18053,11 +18991,10 @@ function makeMediaStream() {
                                             }
                                         }
                                     }
-                                    //TODO: if the remote stream is receive-only or inactive,
-                                    // it won't invoke this event - we need to account for that.
-                                    // currently, we just wait 1 second as a workaround before
-                                    // raising in this case, but that's completely unnecessary
-                                    mediaStreamsReady_1 = true;
+                                    _this._mediaStreamsReady = true;
+                                    if (_this._dataStreamsReady && _this._mediaStreamsReady && _this.getState() == icelink.ConnectionState.Connecting) {
+                                        _this.setState(icelink.ConnectionState.Connected);
+                                    }
                                 }
                             }
                         };
@@ -18107,30 +19044,19 @@ function makeMediaStream() {
                                 window.clearTimeout(deadStreamTimer_1);
                                 deadStreamTimer_1 = null;
                             }
-                            var raiseAfter_1 = new Date().getTime() + 1000;
-                            var raiseUpIfReady_1 = function () {
-                                if (mediaStreamsReady_1 && dataStreamsReady_1) {
-                                    _this.setConnected();
-                                }
-                                else {
-                                    if (new Date().getTime() > raiseAfter_1) {
-                                        _this.setConnected();
-                                    }
-                                    else {
-                                        window.setTimeout(raiseUpIfReady_1, 1);
-                                    }
-                                }
-                            };
-                            raiseUpIfReady_1();
+                            if (_this._dataStreamsReady && _this._mediaStreamsReady && _this.getState() == icelink.ConnectionState.Connecting) {
+                                _this.setState(icelink.ConnectionState.Connected);
+                            }
                         }
                         if (_this._nativePeerConnection.iceConnectionState == 'disconnected' && _this.getState() == icelink.ConnectionState.Connected) {
                             icelink.Log.debug('Some connectivity checks have failed. Monitoring for dead stream.');
                             if (!deadStreamTimer_1) {
                                 deadStreamTimer_1 = window.setTimeout(function () {
                                     deadStreamTimer_1 = null;
-                                    _this.setFailing(new icelink.Error(icelink.ErrorCode.ConnectionDeadStream, new icelink.Exception('Dead stream detected.')));
-                                    _this.doClose();
-                                    _this.setFailed();
+                                    if (_this.setState(icelink.ConnectionState.Failing, new icelink.Error(icelink.ErrorCode.ConnectionDeadStream, new icelink.Exception('Dead stream detected.')))) {
+                                        _this.doClose();
+                                        _this.setState(icelink.ConnectionState.Failed);
+                                    }
                                 }, _this.getDeadStreamTimeout());
                             }
                         }
@@ -18731,20 +19657,20 @@ function makeMediaStream() {
                                 type: _this._offerer ? icelink.SessionDescriptionType.Offer : icelink.SessionDescriptionType.Answer
                             };
                             var cname = icelink.Guid.newGuid().toString().replace('-', '').substr(0, 8);
-                            for (var i_1 = 0; i_1 < _this._nativeIceGatherers.length; i_1++) {
+                            for (var i = 0; i < _this._nativeIceGatherers.length; i++) {
                                 var localMediaDescription = {
-                                    kind: _this._rtpKinds[i_1],
-                                    direction: _this._mediaStreams[i_1].getDirection(),
-                                    iceParams: _this._nativeIceGatherers[i_1].getLocalParameters(),
-                                    dtlsParams: _this._nativeDtlsTransports[i_1].getLocalParameters(),
+                                    kind: _this._rtpKinds[i],
+                                    direction: _this._mediaStreams[i].getDirection(),
+                                    iceParams: _this._nativeIceGatherers[i].getLocalParameters(),
+                                    dtlsParams: _this._nativeDtlsTransports[i].getLocalParameters(),
                                     codecCaps: [],
                                     candidates: [],
                                     ssrc: Math.floor(Math.random() * 4294967296),
                                     cname: cname
                                 };
                                 // get send/receive codecs and use union of the two going forward
-                                var send = RTCRtpSender.getCapabilities(_this._rtpKinds[i_1]);
-                                var receive = RTCRtpReceiver.getCapabilities(_this._rtpKinds[i_1]);
+                                var send = RTCRtpSender.getCapabilities(_this._rtpKinds[i]);
+                                var receive = RTCRtpReceiver.getCapabilities(_this._rtpKinds[i]);
                                 var receiveCodecs = {};
                                 for (var _i = 0, _a = receive.codecs; _i < _a.length; _i++) {
                                     var codec = _a[_i];
@@ -18766,7 +19692,7 @@ function makeMediaStream() {
                                 });
                                 // if we have remote parameters, update based on negotiated parameters
                                 if (_this._ortcRemoteDescription) {
-                                    var remoteMediaDescription = _this._ortcRemoteDescription.mediaDescriptions[i_1];
+                                    var remoteMediaDescription = _this._ortcRemoteDescription.mediaDescriptions[i];
                                     // update DTLS role
                                     if (remoteMediaDescription.dtlsParams.role == 'auto' || remoteMediaDescription.dtlsParams.role == 'server') {
                                         localMediaDescription.dtlsParams.role = 'client';
@@ -18909,10 +19835,24 @@ function makeMediaStream() {
                             var videoStreamCount = (_this.getVideoStreams().length);
                             try {
                                 if (_this._offerer) {
-                                    for (var i = 0; i < audioStreamCount; i++) {
+                                    var transceivers = _this._nativePeerConnection.getTransceivers();
+                                    var videoTransceiverCount = 0;
+                                    var audioTransceiverCount = 0;
+                                    for (var _l = 0, transceivers_1 = transceivers; _l < transceivers_1.length; _l++) {
+                                        var transceiver = transceivers_1[_l];
+                                        if (transceiver.sender.track && transceiver.sender.track.kind == 'video') {
+                                            videoTransceiverCount++;
+                                        }
+                                        if (transceiver.sender.track && transceiver.sender.track.kind == 'audio') {
+                                            audioTransceiverCount++;
+                                        }
+                                    }
+                                    var addAudioTransceivers = audioStreamCount - audioTransceiverCount;
+                                    var addVideoTransceivers = videoStreamCount - videoTransceiverCount;
+                                    for (var j = 0; j < addAudioTransceivers; j++) {
                                         _this._nativePeerConnection.addTransceiver('audio');
                                     }
-                                    for (var i = 0; i < videoStreamCount; i++) {
+                                    for (var j = 0; j < addVideoTransceivers; j++) {
                                         _this._nativePeerConnection.addTransceiver('video');
                                     }
                                     _this._nativePeerConnection.createOffer().then(createSuccess, createFailure);
@@ -19082,7 +20022,7 @@ function makeMediaStream() {
                                 _this._localDescription = localDescription;
                                 if (_this.getRemoteDescription()) {
                                     if (_this.getState() != icelink.ConnectionState.Connected) {
-                                        _this.setConnecting();
+                                        _this.setState(icelink.ConnectionState.Connecting);
                                         _this.startOrtc();
                                     }
                                 }
@@ -19094,14 +20034,14 @@ function makeMediaStream() {
                                     _this._localDescription = localDescription;
                                     if (_this.getRemoteDescription()) {
                                         if (_this.getState() != icelink.ConnectionState.Connected) {
-                                            _this.setConnecting();
+                                            _this.setState(icelink.ConnectionState.Connecting);
                                         }
                                     }
                                     _this.setNativeDescriptionSuccess(localDescription, promise);
                                     //promise.resolve(localDescription);
                                 };
-                                var failureCallback = function (domError) {
-                                    promise.reject(new icelink.Exception('Could not set local description (' + domError + ').'));
+                                var failureCallback = function (ex) {
+                                    promise.reject(ex);
                                 };
                                 try {
                                     _this._nativePeerConnection.setLocalDescription(webrtcSessionDescription.sessionDescription).then(successCallback, failureCallback);
@@ -19219,20 +20159,15 @@ function makeMediaStream() {
                                         remoteMediaDescription.cname = '';
                                     }
                                     if (remoteMediaDescription.candidates.length > 0) {
-                                        _this._nativeIceTransports[i].setRemoteCandidates(remoteMediaDescription.candidates);
-                                        // wait briefly before signalling "no more candidates"
-                                        if (!_this._remoteCandidatesTimer) {
-                                            _this._remoteCandidatesTimer = setTimeout(function () {
-                                                if (_this.getState() != icelink.ConnectionState.Connected) {
-                                                    for (var i_2 = 0; i_2 < _this._nativeIceTransports.length; i_2++) {
-                                                        _this._nativeIceTransports[i_2].addRemoteCandidate({});
-                                                    }
-                                                    _this._remoteCandidatesDone = true;
-                                                }
-                                            }, 1500); //TODO: this.getEarlyCandidatesTimeout());
+                                        for (var j = 0; j < remoteMediaDescription.candidates.length; j++) {
+                                            if (_this._nativeIceTransports[i].state != "closed") {
+                                                _this._nativeIceTransports[i].addRemoteCandidate(remoteMediaDescription.candidates[j]);
+                                            }
                                         }
                                     }
                                 }
+                                // wait briefly before signalling "no more candidates"                        
+                                _this.setRemoteCandidatesDoneTimer();
                                 _this._remoteDescription = remoteDescription;
                                 var signallingState = _this.getSignallingState();
                                 if (signallingState == icelink.SignallingState.New) {
@@ -19246,7 +20181,7 @@ function makeMediaStream() {
                                 }
                                 if (_this.getLocalDescription()) {
                                     if (_this.getState() != icelink.ConnectionState.Connected) {
-                                        _this.setConnecting();
+                                        _this.setState(icelink.ConnectionState.Connecting);
                                         _this.startOrtc();
                                     }
                                 }
@@ -19259,6 +20194,9 @@ function makeMediaStream() {
                                     if (sdpMediaDescription.getSsrcAttributes().length > 0) {
                                         _this._remoteMediaTrackCount++;
                                     }
+                                }
+                                if (_this._remoteMediaTrackCount == 0) {
+                                    _this._mediaStreamsReady = true; // there won't be any ontrack/onstream events
                                 }
                                 //If this is a renegotiation, do not proceed with changing direction:
                                 //ABB:
@@ -19303,13 +20241,13 @@ function makeMediaStream() {
                                     }
                                     if (_this.getLocalDescription()) {
                                         if (_this.getState() != icelink.ConnectionState.Connected) {
-                                            _this.setConnecting();
+                                            _this.setState(icelink.ConnectionState.Connecting);
                                         }
                                     }
                                     promise.resolve(remoteDescription);
                                 };
-                                var failureCallback = function (domError) {
-                                    promise.reject(new icelink.Exception('Could not set remote description (' + domError + ').'));
+                                var failureCallback = function (ex) {
+                                    promise.reject(ex);
                                 };
                                 try {
                                     _this._nativePeerConnection.setRemoteDescription(webrtcSessionDescription.sessionDescription).then(successCallback, failureCallback);
@@ -19369,14 +20307,16 @@ function makeMediaStream() {
                     iceRole = 'controlled';
                 }
                 iceGatherer.onerror = function (evt) {
-                    _this.setFailing(new icelink.Error(icelink.ErrorCode.IceStartError, new icelink.Exception('An ICE gatherer error occurred.')));
-                    _this.doClose();
-                    _this.setFailed();
+                    if (_this.setState(icelink.ConnectionState.Failing, new icelink.Error(icelink.ErrorCode.IceStartError, new icelink.Exception('An ICE gatherer error occurred.')))) {
+                        _this.doClose();
+                        _this.setState(icelink.ConnectionState.Failed);
+                    }
                 };
                 dtlsTransport.onerror = function (evt) {
-                    _this.setFailing(new icelink.Error(icelink.ErrorCode.DtlsInternalError, new icelink.Exception('A DTLS transport error occurred.')));
-                    _this.doClose();
-                    _this.setFailed();
+                    if (_this.setState(icelink.ConnectionState.Failing, new icelink.Error(icelink.ErrorCode.DtlsInternalError, new icelink.Exception('A DTLS transport error occurred.')))) {
+                        _this.doClose();
+                        _this.setState(icelink.ConnectionState.Failed);
+                    }
                 };
                 iceTransport.onicestatechange = function (evt) {
                     icelink.Log.debug('ORTC ICE transport state has changed to ' + iceTransport.state);
@@ -19407,7 +20347,7 @@ function makeMediaStream() {
                     if (dtlsTransport.state == 'connected') {
                         _this._transportsRemaining--;
                         if (_this._transportsRemaining == 0) {
-                            _this.setConnected();
+                            _this.setState(icelink.ConnectionState.Connected);
                         }
                     }
                 };
@@ -19481,26 +20421,27 @@ function makeMediaStream() {
                             if (ortcCandidate.candidate.protocol == icelink.sdp.ice.TransportProtocol.getTcp() && !_this._ortcSupportsTcp) {
                                 throw new icelink.Exception('ORTC does not currently support the TCP protocol.');
                             }
-                            _this._nativeIceTransports[ortcCandidate.mediaIndex].addRemoteCandidate(ortcCandidate.candidate);
-                            // wait briefly before signalling "no more candidates"
-                            if (!_this._remoteCandidatesTimer) {
-                                _this._remoteCandidatesTimer = setTimeout(function () {
-                                    if (_this.getState() != icelink.ConnectionState.Connected) {
-                                        for (var i = 0; i < _this._nativeIceTransports.length; i++) {
-                                            _this._nativeIceTransports[i].addRemoteCandidate({});
-                                        }
-                                        _this._remoteCandidatesDone = true;
-                                    }
-                                }, 1500); //TODO: this.getEarlyCandidatesTimeout());
+                            if (_this._nativeIceTransports[ortcCandidate.mediaIndex].state != "closed") {
+                                _this._nativeIceTransports[ortcCandidate.mediaIndex].addRemoteCandidate(ortcCandidate.candidate);
                             }
+                            // wait briefly before signalling "no more candidates"                        
+                            _this.setRemoteCandidatesDoneTimer();
                             promise.resolve(remoteCandidate);
                         }
                         else {
-                            _this._nativePeerConnection.addIceCandidate(_this.webrtcCandidateFromCandidate(remoteCandidate), function () {
+                            var successCallback = function () {
                                 promise.resolve(remoteCandidate);
-                            }, function (domError) {
-                                promise.reject(new icelink.Exception('Could not add remote candidate (' + domError + ').'));
-                            });
+                            };
+                            var failureCallback = function (ex) {
+                                promise.reject(ex);
+                            };
+                            try {
+                                _this._nativePeerConnection.addIceCandidate(_this.webrtcCandidateFromCandidate(remoteCandidate)).then(successCallback, failureCallback);
+                            }
+                            catch (error) {
+                                // deprecated API
+                                _this._nativePeerConnection.addIceCandidate(_this.webrtcCandidateFromCandidate(remoteCandidate), successCallback, failureCallback);
+                            }
                         }
                     }
                     catch (error) {
@@ -19508,14 +20449,32 @@ function makeMediaStream() {
                     }
                 });
             };
+            WebRtcConnection.prototype.setRemoteCandidatesDoneTimer = function () {
+                var _this = this;
+                // wait briefly before signalling "no more candidates"
+                if (this._remoteCandidatesTimer) {
+                    clearTimeout(this._remoteCandidatesTimer);
+                }
+                this._remoteCandidatesTimer = setTimeout(function () {
+                    if (_this.getState() != icelink.ConnectionState.Connected) {
+                        for (var i = 0; i < _this._nativeIceTransports.length; i++) {
+                            //this._nativeIceTransports[i].addRemoteCandidate(<RTCIceCandidateComplete>{});
+                            var iceTransport = _this._nativeIceTransports[i];
+                            if (iceTransport.state === "new" && iceTransport.getRemoteCandidates().length > 0) {
+                                iceTransport.addRemoteCandidate({});
+                            }
+                        }
+                        _this._remoteCandidatesDone = true;
+                    }
+                }, 1500); //TODO: this.getEarlyCandidatesTimeout());
+            };
             WebRtcConnection.prototype.assignRemoteDescriptionInternal = function (sessionDescription) {
                 throw new icelink.Exception('assignRemoteDescriptionInternal');
             };
             WebRtcConnection.prototype.close = function () {
-                if (this.getState() == icelink.ConnectionState.Connected || this.getState() == icelink.ConnectionState.Initializing || this.getState() == icelink.ConnectionState.Connecting) {
-                    this.setClosing();
+                if (this.setState(icelink.ConnectionState.Closing)) {
                     this.doClose();
-                    this.setClosed();
+                    this.setState(icelink.ConnectionState.Closed);
                 }
             };
             WebRtcConnection.prototype.doClose = function () {
@@ -19562,10 +20521,12 @@ function makeMediaStream() {
                     }
                 }
                 else {
-                    try {
-                        this._nativePeerConnection.close();
+                    if (this._nativePeerConnection) {
+                        try {
+                            this._nativePeerConnection.close();
+                        }
+                        catch (error) { }
                     }
-                    catch (error) { }
                 }
             };
             WebRtcConnection.prototype.getDtmfSender = function () {
@@ -19643,6 +20604,62 @@ function makeMediaStream() {
                 }
                 return this.dtmfSender;
             };
+            WebRtcConnection.prototype.replaceLocalTrack = function (localTrack, mediaStream) {
+                var promise = new icelink.Promise();
+                try {
+                    var mediaStreamIndex = 0;
+                    var mediaStreams = this.getMediaStreams();
+                    for (var _i = 0, mediaStreams_3 = mediaStreams; _i < mediaStreams_3.length; _i++) {
+                        var ms = mediaStreams_3[_i];
+                        if (ms == mediaStream) {
+                            break;
+                        }
+                        mediaStreamIndex++;
+                    }
+                    if (mediaStreamIndex == mediaStreams.length) {
+                        throw new icelink.Exception('Media stream is not attached to this connection.');
+                    }
+                    var rtpSender = this.getRtpSender(mediaStreamIndex);
+                    if (!rtpSender.replaceTrack) {
+                        throw new icelink.Exception('Browser does not support replaceTrack.');
+                    }
+                    rtpSender.replaceTrack(localTrack._getMediaStreamTrack() /*, local media stream*/).then(function () {
+                        promise.resolve(null);
+                    }, function (ex) {
+                        promise.reject(ex);
+                    });
+                    promise.resolve(null);
+                }
+                catch (ex) {
+                    promise.reject(ex);
+                }
+                return promise;
+            };
+            WebRtcConnection.prototype.replaceRemoteTrack = function (remoteTrack, mediaStream) {
+                return icelink.Promise.rejectNow(new icelink.Exception('Replacing the remote track is not supported.'));
+            };
+            WebRtcConnection.prototype.getRtpSender = function (mediaStreamIndex) {
+                var rtpSenders = [];
+                if (icelink.Plugin.hasOrtc()) {
+                    if (!this._nativeRtpSenders) {
+                        throw new icelink.Exception('ORTC peer connection not initialized.');
+                    }
+                    rtpSenders = this._nativeRtpSenders;
+                }
+                else {
+                    if (!this._nativePeerConnection) {
+                        throw new icelink.Exception('WebRTC peer connection not initialized.');
+                    }
+                    if (!this._nativePeerConnection.getSenders) {
+                        throw new icelink.Exception('WebRTC browser does not support getSenders.');
+                    }
+                    rtpSenders = this._nativePeerConnection.getSenders();
+                }
+                if (mediaStreamIndex >= rtpSenders.length) {
+                    throw new icelink.Exception('Media stream index exceeds RTP senders count.');
+                }
+                return rtpSenders[mediaStreamIndex];
+            };
             /** @internal */
             WebRtcConnection.webRtcConnectionInitialize = function () {
                 if (!this.__webRtcConnectionInitialized) {
@@ -19710,12 +20727,12 @@ function makeMediaStream() {
                     var subprotocol_1 = __arguments[2];
                     _this = _super.call(this) || this;
                     _this.fmicelinkWebRtcDataChannelBaseInit();
-                    _this._stateLock = new Object();
-                    _this.setId(fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", ""));
-                    _this.setState(fm.icelink.DataChannelState.New);
+                    _this.__id = fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", "");
+                    _this.__stateLock = new Object();
                     _this.setLabel(label_1);
                     _this.setOrdered(ordered_1);
                     _this.setSubprotocol(subprotocol_1);
+                    _this.__stateMachine = new fm.icelink.DataChannelStateMachine();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -19732,11 +20749,12 @@ function makeMediaStream() {
                     var action = _a[_i];
                     action(p0);
                 } };
+                this._ordered = false;
             };
             /**<span id='method-fm.icelink.WebRtcDataChannelBase-addOnStateChange'>&nbsp;</span>**/
             /**
              <div>
-             Adds a handler that is raised when the state changes.
+             Adds a handler that is raised when the data channel state changes.
              </div>
     
     
@@ -19746,6 +20764,23 @@ function makeMediaStream() {
             WebRtcDataChannelBase.prototype.addOnStateChange = function (value) {
                 if (arguments.length == 1) {
                     fm.icelink.ArrayExtensions.add(this.__onStateChange, value);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcDataChannelBase-getConnectionId'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the connection identifier.
+             </div>
+    
+    
+            @return {string}
+            */
+            WebRtcDataChannelBase.prototype.getConnectionId = function () {
+                if (arguments.length == 0) {
+                    return this._connectionId;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -19762,7 +20797,58 @@ function makeMediaStream() {
             */
             WebRtcDataChannelBase.prototype.getId = function () {
                 if (arguments.length == 0) {
-                    return this._id;
+                    return this.__id;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcDataChannelBase-getIsTerminated'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets a value indicating whether the data channel is currently closed or failed.
+             </div>
+    
+    
+            @return {boolean}
+            */
+            WebRtcDataChannelBase.prototype.getIsTerminated = function () {
+                if (arguments.length == 0) {
+                    return ((fm.icelink.Global.equals(this.getState(), fm.icelink.DataChannelState.Closed)) || (fm.icelink.Global.equals(this.getState(), fm.icelink.DataChannelState.Failed)));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcDataChannelBase-getIsTerminating'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets a value indicating whether the data channel is currently closing.
+             </div>
+    
+    
+            @return {boolean}
+            */
+            WebRtcDataChannelBase.prototype.getIsTerminating = function () {
+                if (arguments.length == 0) {
+                    return (fm.icelink.Global.equals(this.getState(), fm.icelink.DataChannelState.Closing));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcDataChannelBase-getIsTerminatingOrTerminated'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets a value indicating whether the data channel is currently closing, closed, or failed.
+             </div>
+    
+    
+            @return {boolean}
+            */
+            WebRtcDataChannelBase.prototype.getIsTerminatingOrTerminated = function () {
+                if (arguments.length == 0) {
+                    return (this.getIsTerminating() || this.getIsTerminated());
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -19830,7 +20916,36 @@ function makeMediaStream() {
             */
             WebRtcDataChannelBase.prototype.getState = function () {
                 if (arguments.length == 0) {
-                    return this.__state;
+                    return this.__stateMachine.getState();
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            WebRtcDataChannelBase.prototype.getStateLock = function () {
+                if (arguments.length == 0) {
+                    return this.__stateLock;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcDataChannelBase-getStreamId'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the stream identifier.
+             </div>
+    
+    
+            @return {string}
+            */
+            WebRtcDataChannelBase.prototype.getStreamId = function () {
+                if (arguments.length == 0) {
+                    return this._streamId;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -19848,6 +20963,52 @@ function makeMediaStream() {
             WebRtcDataChannelBase.prototype.getSubprotocol = function () {
                 if (arguments.length == 0) {
                     return this._subprotocol;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            WebRtcDataChannelBase.prototype.logInvalidStateTransition = function (state) {
+                if (arguments.length == 1) {
+                    if (fm.icelink.Log.getIsDebugEnabled()) {
+                        fm.icelink.Log.debug(fm.icelink.StringExtensions.format("Data channel {0} ({1}) state for stream {2} for connection {3} is currently {4}. Cannot transition to {5} state.", [this.getId(), this.getLabel(), this.getStreamId(), this.getConnectionId(), fm.icelink.StringExtensions.toLower(new fm.icelink.DataChannelStateWrapper(this.getState()).toString()), fm.icelink.StringExtensions.toLower(new fm.icelink.DataChannelStateWrapper(state).toString())]));
+                    }
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcDataChannelBase-processStateChange'>&nbsp;</span>**/
+            /**
+             <div>
+             Processes a state change.
+             </div>
+    
+    
+            @return {void}
+            */
+            WebRtcDataChannelBase.prototype.processStateChange = function () {
+                if (arguments.length == 0) {
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcDataChannelBase-processStateLockChange'>&nbsp;</span>**/
+            /**
+             <div>
+             Processes a state lock change.
+             </div>
+    
+    
+            @return {void}
+            */
+            WebRtcDataChannelBase.prototype.processStateLockChange = function () {
+                if (arguments.length == 0) {
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -19897,10 +21058,25 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**
+            @internal
+    
+            */
+            WebRtcDataChannelBase.prototype.raiseStateChange = function () {
+                if (arguments.length == 0) {
+                    var onStateChange = this._onStateChange;
+                    if ((!fm.icelink.Global.equals(onStateChange, null))) {
+                        onStateChange(this.getInstance());
+                    }
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.WebRtcDataChannelBase-removeOnStateChange'>&nbsp;</span>**/
             /**
              <div>
-             Removes a handler that is raised when the state changes.
+             Removes a handler that is raised when the data channel state changes.
              </div>
     
     
@@ -19915,19 +21091,13 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            /**<span id='method-fm.icelink.WebRtcDataChannelBase-setId'>&nbsp;</span>**/
             /**
-             <div>
-             Sets the identifier.
-             </div>
+            @internal
     
-    
-            @param {string} value
-            @return {void}
             */
-            WebRtcDataChannelBase.prototype.setId = function (value) {
+            WebRtcDataChannelBase.prototype.setConnectionId = function (value) {
                 if (arguments.length == 1) {
-                    this._id = value;
+                    this._connectionId = value;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -19975,25 +21145,54 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            /**<span id='method-fm.icelink.WebRtcDataChannelBase-setState'>&nbsp;</span>**/
             /**
-             <div>
-             Sets the state.
-             </div>
+            @internal
     
-    
-            @param {fm.icelink.DataChannelState} value
-            @return {void}
             */
-            WebRtcDataChannelBase.prototype.setState = function (value) {
+            WebRtcDataChannelBase.prototype.setState = function (state) {
                 if (arguments.length == 1) {
-                    if ((!fm.icelink.Global.equals(this.__state, value))) {
-                        this.__state = value;
-                        var onStateChange = this._onStateChange;
-                        if ((!fm.icelink.Global.equals(onStateChange, null))) {
-                            onStateChange(this.getInstance());
+                    if (!this.__stateMachine.transition(state)) {
+                        if (((!fm.icelink.Global.equals(state, this.getState())) && ((!fm.icelink.Global.equals(state, fm.icelink.DataChannelState.Closing)) || ((!fm.icelink.Global.equals(this.getState(), fm.icelink.DataChannelState.Closed)) && (!fm.icelink.Global.equals(this.getState(), fm.icelink.DataChannelState.Failed)))))) {
+                            this.logInvalidStateTransition(state);
                         }
+                        return false;
                     }
+                    if (fm.icelink.Log.getIsInfoEnabled()) {
+                        if ((fm.icelink.Global.equals(this.getState(), fm.icelink.DataChannelState.Connected))) {
+                            fm.icelink.Log.info(fm.icelink.StringExtensions.format("Data channel {0} ({1} for stream {2} for connection {3} took {4}ms to connect.", [this.getId(), this.getLabel(), this.getStreamId(), this.getConnectionId(), fm.icelink.IntExtensions.toString(this.__stateMachine.getLastStateMillis())]));
+                        }
+                        fm.icelink.Log.info(fm.icelink.StringExtensions.format("Setting data channel {0} ({1}) state for stream {2} for connection {3} to {4}.", [this.getId(), this.getLabel(), this.getStreamId(), this.getConnectionId(), fm.icelink.StringExtensions.toLower(new fm.icelink.DataChannelStateWrapper(this.getState()).toString())]));
+                    }
+                    this.raiseStateChange();
+                    this.processStateChange();
+                    return true;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            WebRtcDataChannelBase.prototype.setStateLock = function (value) {
+                if (arguments.length == 1) {
+                    if ((!fm.icelink.Global.equals(this.__stateLock, value))) {
+                        this.__stateLock = value;
+                        this.processStateLockChange();
+                    }
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            WebRtcDataChannelBase.prototype.setStreamId = function (value) {
+                if (arguments.length == 1) {
+                    this._streamId = value;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -20033,6 +21232,7 @@ function makeMediaStream() {
                 }
                 _this = _super.call(this, label, ordered, subprotocol) || this;
                 _this._external = external;
+                _this.sendQueue = [];
                 return _this;
             }
             WebRtcDataChannel.prototype.getTypeString = function () {
@@ -20063,16 +21263,17 @@ function makeMediaStream() {
                         };
                         this.setState(icelink.DataChannelState.Connecting);
                         this._nativeDataChannel.onopen = function (event) {
-                            _this._nativeDataChannel.binaryType = 'arraybuffer';
                             _this.setState(icelink.DataChannelState.Connected);
+                            _this._nativeDataChannel.binaryType = 'arraybuffer';
+                            _this.sendQueue.forEach(function (msg) { return _this._nativeDataChannel.send(msg); });
                         };
                         this._nativeDataChannel.onerror = function (event) {
                             _this.setState(icelink.DataChannelState.Failed);
                         };
                         this._nativeDataChannel.onclose = function (event) {
-                            //TODO: can we raise this earlier?
-                            _this.setState(icelink.DataChannelState.Closing);
-                            _this.setState(icelink.DataChannelState.Closed);
+                            if (_this.setState(icelink.DataChannelState.Closing)) {
+                                _this.setState(icelink.DataChannelState.Closed);
+                            }
                         };
                     }
                 }
@@ -20081,16 +21282,64 @@ function makeMediaStream() {
                 return this;
             };
             WebRtcDataChannel.prototype.sendDataString = function (dataString) {
+                var promise = new icelink.Promise();
+                this.promisedSendDataString(dataString, promise);
+                return promise;
+            };
+            /** @internal */
+            WebRtcDataChannel.prototype.promisedSendDataBytes = function (dataBytes, promise) {
                 var nativeDataChannel = this.getNativeDataChannel();
                 if (nativeDataChannel) {
-                    nativeDataChannel.send(dataString);
+                    var state = nativeDataChannel.readyState;
+                    if (state === 'open') {
+                        nativeDataChannel.send(dataBytes.toArray());
+                        promise.resolve(dataBytes);
+                    }
+                    else if (state == 'connecting') {
+                        this.sendQueue.push(dataBytes.toArray());
+                        promise.resolve(dataBytes);
+                    }
+                    else {
+                        var errorStr = 'Attempt to communicate on a data channel that is not open or connecting.';
+                        icelink.Log.debug(errorStr);
+                        promise.reject(new icelink.Exception(errorStr));
+                    }
+                }
+                else {
+                    var errorStr = 'Attempt to communicate on a data channel that has not been prepared.';
+                    icelink.Log.debug(errorStr);
+                    promise.reject(new icelink.Exception(errorStr));
+                }
+            };
+            /** @internal */
+            WebRtcDataChannel.prototype.promisedSendDataString = function (dataString, promise) {
+                var nativeDataChannel = this.getNativeDataChannel();
+                if (nativeDataChannel) {
+                    var state = nativeDataChannel.readyState;
+                    if (state === 'open') {
+                        nativeDataChannel.send(dataString);
+                        promise.resolve(dataString);
+                    }
+                    else if (state == 'connecting') {
+                        this.sendQueue.push(dataString);
+                        promise.resolve(dataString);
+                    }
+                    else {
+                        var errorStr = 'Attempt to communicate on a data channel that is not open or connecting.';
+                        icelink.Log.debug(errorStr);
+                        promise.reject(new icelink.Exception(errorStr));
+                    }
+                }
+                else {
+                    var errorStr = 'Attempt to communicate on a data channel that has not been prepared.';
+                    icelink.Log.debug(errorStr);
+                    promise.reject(new icelink.Exception(errorStr));
                 }
             };
             WebRtcDataChannel.prototype.sendDataBytes = function (dataBytes) {
-                var nativeDataChannel = this.getNativeDataChannel();
-                if (nativeDataChannel) {
-                    nativeDataChannel.send(dataBytes.toArray());
-                }
+                var promise = new icelink.Promise();
+                this.promisedSendDataBytes(dataBytes, promise);
+                return promise;
             };
             return WebRtcDataChannel;
         }(icelink.WebRtcDataChannelBase));
@@ -20230,6 +21479,68 @@ function makeMediaStream() {
             WebRtcDataStreamBase.prototype.getRemoteDirection = function () {
                 if (arguments.length == 0) {
                     return fm.icelink.StreamDirection.SendReceive;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcDataStreamBase-processStateChange'>&nbsp;</span>**/
+            /**
+             <div>
+             Processes a state change.
+             </div>
+    
+    
+            @return {void}
+            */
+            WebRtcDataStreamBase.prototype.processStateChange = function () {
+                if (arguments.length == 0) {
+                    _super.prototype.processStateChange.call(this);
+                    var channels = this.getChannels();
+                    if ((!fm.icelink.Global.equals(channels, null))) {
+                        for (var _i = 0, channels_1 = channels; _i < channels_1.length; _i++) {
+                            var local = channels_1[_i];
+                            if ((fm.icelink.Global.equals(_super.prototype.getState.call(this), fm.icelink.StreamState.Closing))) {
+                                local.setState(fm.icelink.DataChannelState.Closing);
+                            }
+                            else {
+                                if ((fm.icelink.Global.equals(_super.prototype.getState.call(this), fm.icelink.StreamState.Closed))) {
+                                    local.setState(fm.icelink.DataChannelState.Closed);
+                                }
+                                else {
+                                    if ((fm.icelink.Global.equals(_super.prototype.getState.call(this), fm.icelink.StreamState.Failed))) {
+                                        local.setState(fm.icelink.DataChannelState.Failed);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.WebRtcDataStreamBase-processStateLockChange'>&nbsp;</span>**/
+            /**
+             <div>
+             Processes a state lock change.
+             </div>
+    
+    
+            @return {void}
+            */
+            WebRtcDataStreamBase.prototype.processStateLockChange = function () {
+                if (arguments.length == 0) {
+                    _super.prototype.processStateLockChange.call(this);
+                    var channels = this.getChannels();
+                    if ((!fm.icelink.Global.equals(channels, null))) {
+                        for (var _i = 0, channels_2 = channels; _i < channels_2.length; _i++) {
+                            var local = channels_2[_i];
+                            local.setStreamId(_super.prototype.getId.call(this));
+                            local.setConnectionId(_super.prototype.getConnectionId.call(this));
+                            local.setStateLock(_super.prototype.getStateLock.call(this));
+                        }
+                    }
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -20491,6 +21802,12 @@ function makeMediaStream() {
                 }
                 this._track = track;
                 this._local = icelink.Util.isObjectType(this._track.getMedia(), '[fm.icelink.WebRtcLocalMedia]');
+                if (this._local) {
+                    this._container.className = 'fm-video fm-video-local';
+                }
+                else {
+                    this._container.className = 'fm-video fm-video-remote';
+                }
                 if (this.getLocal()) {
                     var localMedia = this.getTrack().getMedia();
                     var videoConstraints = localMedia.getVideoConstraints();
@@ -20517,6 +21834,12 @@ function makeMediaStream() {
                 this.setMuted(this.getLocal());
                 icelink.ManagedThread.dispatch(function () {
                     var nativeMediaStream = _this.getTrack().getMedia()._getVideoMediaStream();
+                    try {
+                        _this._video.audioVolume = 0;
+                    }
+                    catch (error) {
+                        icelink.Log.error('Could not set ' + (_this.getLocal() ? 'local' : 'remote') + ' video element audio volume.', error);
+                    }
                     try {
                         if (typeof _this._video.srcObject !== 'undefined') {
                             _this._video.srcObject = nativeMediaStream;
@@ -20981,18 +22304,17 @@ function makeMediaStream() {
                     var hasAudio = (audioMediaStream.getAudioTracks().length > 0);
                     if (hasAudio) {
                         this._audioTrack._setMediaStreamTrack(audioMediaStream.getAudioTracks()[0]);
-                        // only set the track if there isn't a corresponding video track,
-                        // as the video sink will pass-through audio as well
-                        if (!this._videoTrack._getMediaStreamTrack()) {
-                            this._audioSink.setTrack(this._audioTrack);
-                        }
+                        this._audioSink.setTrack(this._audioTrack);
+                        this.initializeAudioContext(); // initialize audio context (if events are present)
                     }
                     else {
                         this._audioTrack._setMediaStreamTrack(null);
+                        this.destroyAudioContext(); // destroy audio context (even if events are present)
                     }
                 }
                 else {
                     this._audioTrack._setMediaStreamTrack(null);
+                    this.destroyAudioContext(); // destroy audio context (even if events are present)
                 }
                 return true;
             };
@@ -21018,8 +22340,8 @@ function makeMediaStream() {
             };
             /** @internal */
             WebRtcMedia.prototype._setMediaStreams = function (audioMediaStream, videoMediaStream) {
-                this._setVideoMediaStream(videoMediaStream);
                 this._setAudioMediaStream(audioMediaStream);
+                this._setVideoMediaStream(videoMediaStream);
             };
             /** @internal */
             WebRtcMedia.prototype._setMediaStream = function (mediaStream) {
@@ -21038,50 +22360,8 @@ function makeMediaStream() {
                 icelink.ArrayExtensions.remove(this._onVideoDestroyedValues, value);
             };
             WebRtcMedia.prototype.addOnAudioLevel = function (value) {
-                var _this = this;
                 icelink.ArrayExtensions.add(this._onAudioLevelValues, value);
-                if (this._audioMediaStream && !this._audioContext) {
-                    try {
-                        var audioTracks = this._audioMediaStream.getAudioTracks();
-                        if (audioTracks && audioTracks.length > 0) {
-                            if (this._audioContext == null && typeof AudioContext !== 'undefined') {
-                                this._audioContext = new AudioContext();
-                            }
-                            if (this._audioContext == null && typeof (window.webkitAudioContext) !== 'undefined') {
-                                this._audioContext = new (window.webkitAudioContext());
-                            }
-                            if (this._audioContext != null) {
-                                this._audioMicrophone = this._audioContext.createMediaStreamSource(this._audioMediaStream);
-                                this._audioAnalyser = this._audioContext.createAnalyser();
-                                this._audioScriptNode = this._audioContext.createScriptProcessor(2048, 1, 1);
-                                this._audioMicrophone.connect(this._audioAnalyser);
-                                this._audioAnalyser.connect(this._audioScriptNode);
-                                this._audioScriptNode.connect(this._audioContext.destination);
-                                this._audioScriptNode.onaudioprocess = function (event) {
-                                    var input = event.inputBuffer.getChannelData(0);
-                                    var sum = 0.0;
-                                    for (var i = 0; i < input.length; i++) {
-                                        sum += input[i] * input[i];
-                                    }
-                                    var level = Math.sqrt(sum / input.length);
-                                    for (var _i = 0, _a = _this._onAudioLevelValues; _i < _a.length; _i++) {
-                                        var onAudioLevelValue = _a[_i];
-                                        onAudioLevelValue(level);
-                                    }
-                                };
-                            }
-                            for (var _i = 0, audioTracks_1 = audioTracks; _i < audioTracks_1.length; _i++) {
-                                var audioTrack = audioTracks_1[_i];
-                                audioTrack.onended = function (event) {
-                                    _this.cleanupAudioContext();
-                                };
-                            }
-                        }
-                    }
-                    catch (ex) {
-                        icelink.Log.error('Could not initialize AudioContext.', ex);
-                    }
-                }
+                this.initializeAudioContext(); // initialize audio context (if there is one)
             };
             WebRtcMedia.prototype.addOnVideoSize = function (value) {
                 var _this = this;
@@ -21125,9 +22405,6 @@ function makeMediaStream() {
                 if (this._audioSink.getTrack()) {
                     return this._audioSink.getVolume();
                 }
-                else if (this._videoSink.getTrack()) {
-                    return this._videoSink.getVolume();
-                }
                 return 1.0;
             };
             WebRtcMedia.prototype.getVideoSize = function () {
@@ -21167,6 +22444,9 @@ function makeMediaStream() {
             };
             WebRtcMedia.prototype.removeOnAudioLevel = function (value) {
                 icelink.ArrayExtensions.remove(this._onAudioLevelValues, value);
+                if (this._onAudioLevelValues.length == 0) { // destroy audio context, if there is one
+                    this.destroyAudioContext();
+                }
             };
             WebRtcMedia.prototype.removeOnVideoSize = function (value) {
                 icelink.ArrayExtensions.remove(this._onVideoSizeValues, value);
@@ -21179,11 +22459,53 @@ function makeMediaStream() {
                 if (this._audioSink.getTrack()) {
                     this._audioSink.setVolume(value);
                 }
-                else if (this._videoSink.getTrack()) {
-                    this._videoSink.setVolume(value);
+            };
+            WebRtcMedia.prototype.initializeAudioContext = function () {
+                var _this = this;
+                if (this._audioMediaStream && !this._audioContext && this._onAudioLevelValues.length > 0) {
+                    try {
+                        var audioTracks = this._audioMediaStream.getAudioTracks();
+                        if (audioTracks && audioTracks.length > 0) {
+                            if (this._audioContext == null && typeof AudioContext !== 'undefined') {
+                                this._audioContext = new AudioContext();
+                            }
+                            if (this._audioContext == null && typeof window.webkitAudioContext !== 'undefined') {
+                                this._audioContext = new window.webkitAudioContext();
+                            }
+                            if (this._audioContext != null) {
+                                this._audioMicrophone = this._audioContext.createMediaStreamSource(this._audioMediaStream);
+                                this._audioAnalyser = this._audioContext.createAnalyser();
+                                this._audioScriptNode = this._audioContext.createScriptProcessor(2048, 1, 1);
+                                this._audioMicrophone.connect(this._audioAnalyser);
+                                this._audioAnalyser.connect(this._audioScriptNode);
+                                this._audioScriptNode.connect(this._audioContext.destination);
+                                this._audioScriptNode.onaudioprocess = function (event) {
+                                    var input = event.inputBuffer.getChannelData(0);
+                                    var sum = 0.0;
+                                    for (var i = 0; i < input.length; i++) {
+                                        sum += input[i] * input[i];
+                                    }
+                                    var level = Math.sqrt(sum / input.length);
+                                    for (var _i = 0, _a = _this._onAudioLevelValues; _i < _a.length; _i++) {
+                                        var onAudioLevelValue = _a[_i];
+                                        onAudioLevelValue(level);
+                                    }
+                                };
+                            }
+                            for (var _i = 0, audioTracks_1 = audioTracks; _i < audioTracks_1.length; _i++) {
+                                var audioTrack = audioTracks_1[_i];
+                                audioTrack.onended = function (event) {
+                                    _this.destroyAudioContext(); // destroy audio context (even if events are present)
+                                };
+                            }
+                        }
+                    }
+                    catch (ex) {
+                        icelink.Log.error('Could not initialize AudioContext.', ex);
+                    }
                 }
             };
-            WebRtcMedia.prototype.cleanupAudioContext = function () {
+            WebRtcMedia.prototype.destroyAudioContext = function () {
                 try {
                     if (this._audioContext) {
                         if (this._audioMicrophone) {
@@ -21244,6 +22566,7 @@ function makeMediaStream() {
                     var external_1 = __arguments[0];
                     _this = _super.call(this, external_1) || this;
                     _this.__stateLock = new Object();
+                    _this.setState(fm.icelink.LocalMediaState.New);
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -21471,6 +22794,11 @@ function makeMediaStream() {
 (function (fm) {
     var icelink;
     (function (icelink) {
+        var WebRtcGetUserMediaResult = /** @class */ (function () {
+            function WebRtcGetUserMediaResult() {
+            }
+            return WebRtcGetUserMediaResult;
+        }());
         var WebRtcLocalMedia = /** @class */ (function (_super) {
             __extends(WebRtcLocalMedia, _super);
             function WebRtcLocalMedia(external, audio, video, screen) {
@@ -21611,11 +22939,11 @@ function makeMediaStream() {
                                     if (!id) {
                                         id = 'audio-' + index;
                                     }
-                                    var name_4 = mediaDeviceInfo.label;
-                                    if (!name_4) {
-                                        name_4 = id;
+                                    var name_3 = mediaDeviceInfo.label;
+                                    if (!name_3) {
+                                        name_3 = id;
                                     }
-                                    inputs.push(new icelink.SourceInput(id, name_4));
+                                    inputs.push(new icelink.SourceInput(id, name_3));
                                 }
                             }
                             promise.resolve(inputs);
@@ -21640,11 +22968,11 @@ function makeMediaStream() {
                                     if (!id) {
                                         id = 'audio-' + index;
                                     }
-                                    var name_5 = source.label;
-                                    if (!name_5) {
-                                        name_5 = id;
+                                    var name_4 = source.label;
+                                    if (!name_4) {
+                                        name_4 = id;
                                     }
-                                    inputs.push(new icelink.SourceInput(id, name_5));
+                                    inputs.push(new icelink.SourceInput(id, name_4));
                                 }
                             }
                             promise.resolve(inputs);
@@ -21676,46 +23004,6 @@ function makeMediaStream() {
                     throw new icelink.Exception("Cannot set video source input while the local media is started. Use 'changeVideoSourceInput' instead or stop the local media first.");
                 }
                 this._videoInput = videoInput;
-            };
-            WebRtcLocalMedia.prototype.changeAudioSourceInput = function (audioInput) {
-                var _this = this;
-                var promise = new icelink.Promise();
-                if (audioInput == this.getAudioSourceInput()) {
-                    icelink.ManagedThread.dispatch(function () {
-                        promise.resolve(null);
-                    });
-                }
-                else if (this.getState() == icelink.LocalMediaState.Started) {
-                    //TODO: replace track
-                    promise.reject(new icelink.Exception('Cannot change audio source input while local media is started. Stop the local media first.'));
-                }
-                else {
-                    icelink.ManagedThread.dispatch(function () {
-                        _this.setAudioSourceInput(audioInput);
-                        promise.resolve(null);
-                    });
-                }
-                return promise;
-            };
-            WebRtcLocalMedia.prototype.changeVideoSourceInput = function (videoInput) {
-                var _this = this;
-                var promise = new icelink.Promise();
-                if (videoInput == this.getVideoSourceInput()) {
-                    icelink.ManagedThread.dispatch(function () {
-                        promise.resolve(null);
-                    });
-                }
-                else if (this.getState() == icelink.LocalMediaState.Started) {
-                    //TODO: replace track
-                    promise.reject(new icelink.Exception('Cannot change video source input while local media is started. Stop the local media first.'));
-                }
-                else {
-                    icelink.ManagedThread.dispatch(function () {
-                        _this.setVideoSourceInput(videoInput);
-                        promise.resolve(null);
-                    });
-                }
-                return promise;
             };
             WebRtcLocalMedia.prototype.getAudio = function () {
                 return this._audio;
@@ -21795,6 +23083,62 @@ function makeMediaStream() {
                 }
                 return promise;
             };
+            WebRtcLocalMedia.prototype.changeAudioSourceInput = function (audioInput) {
+                var _this = this;
+                var promise = new icelink.Promise();
+                if (audioInput == this.getAudioSourceInput()) {
+                    icelink.ManagedThread.dispatch(function () {
+                        promise.resolve(null);
+                    });
+                }
+                else if (this.getState() == icelink.LocalMediaState.Started) {
+                    this.doStopAudio();
+                    this._audioInput = audioInput;
+                    this.doGetUserMedia(this.getAudio(), null).then(function (result) {
+                        _this._audioConstraints = result.audioConstraints;
+                        _this._setAudioMediaStream(result.audioMediaStream);
+                        //TODO: replaceTrack on WebRtcConnection.RtpSender...
+                        promise.resolve(null);
+                    }, function (ex) {
+                        promise.reject(ex);
+                    });
+                }
+                else {
+                    icelink.ManagedThread.dispatch(function () {
+                        _this.setAudioSourceInput(audioInput);
+                        promise.resolve(null);
+                    });
+                }
+                return promise;
+            };
+            WebRtcLocalMedia.prototype.changeVideoSourceInput = function (videoInput) {
+                var _this = this;
+                var promise = new icelink.Promise();
+                if (videoInput == this.getVideoSourceInput()) {
+                    icelink.ManagedThread.dispatch(function () {
+                        promise.resolve(null);
+                    });
+                }
+                else if (this.getState() == icelink.LocalMediaState.Started) {
+                    this.doStopVideo();
+                    this._videoInput = videoInput;
+                    this.doGetUserMedia(null, this.getVideo()).then(function (result) {
+                        _this._videoConstraints = result.videoConstraints;
+                        _this._setVideoMediaStream(result.videoMediaStream);
+                        //TODO: replaceTrack on WebRtcConnection.RtpSender...
+                        promise.resolve(null);
+                    }, function (ex) {
+                        promise.reject(ex);
+                    });
+                }
+                else {
+                    icelink.ManagedThread.dispatch(function () {
+                        _this.setVideoSourceInput(videoInput);
+                        promise.resolve(null);
+                    });
+                }
+                return promise;
+            };
             WebRtcLocalMedia.prototype.doStart = function () {
                 var _this = this;
                 var promise = new icelink.Promise();
@@ -21861,203 +23205,394 @@ function makeMediaStream() {
                 });
                 return promise;
             };
-            WebRtcLocalMedia.prototype.doStartInternal = function (promise, deprecated) {
+            WebRtcLocalMedia.prototype.doStartInternal = function (promise) {
                 var _this = this;
-                if (arguments.length == 1) {
+                this.doGetUserMedia(this.getAudio(), this.getVideo()).then(function (result) {
+                    _this._audioConstraints = result.audioConstraints;
+                    _this._videoConstraints = result.videoConstraints;
+                    _this._setMediaStreams(result.audioMediaStream, result.videoMediaStream);
+                    promise.resolve(_this);
+                }, function (ex) {
+                    promise.reject(ex);
+                });
+            };
+            /** @internal */
+            WebRtcLocalMedia.prototype.doGetUserMedia = function (audio, video, deprecated) {
+                var _this = this;
+                if (arguments.length == 2) {
                     try {
                         // try with new API, unless the new API isn't available or we're screen-sharing in Chrome
                         deprecated = (!!(this.getScreen() && this._chromeScreenStreamId) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia);
-                        this.doStartInternal(promise, deprecated);
+                        return this.doGetUserMedia(audio, video, deprecated);
                     }
                     catch (error) {
                         // fall back to deprecated API
-                        this.doStartInternal(promise, !deprecated);
+                        return this.doGetUserMedia(audio, video, !deprecated);
                     }
-                    return;
                 }
-                var audio = this.getAudio();
-                var video = this.getVideo();
-                var audioIsMediaStream = audio && (typeof audio.getAudioTracks !== 'undefined');
-                var videoIsMediaStream = video && (typeof video.getVideoTracks !== 'undefined');
-                var getUserMediaSuccess = function (nativeMediaStream) {
-                    var audioMediaStream = nativeMediaStream;
-                    if (audioIsMediaStream) {
-                        audioMediaStream = audio;
-                    }
-                    var videoMediaStream = nativeMediaStream;
-                    if (videoIsMediaStream) {
-                        videoMediaStream = video;
-                    }
-                    _this._setMediaStreams(audioMediaStream, videoMediaStream);
-                    promise.resolve(_this);
-                };
-                var getUserMediaFailure = function (error) {
-                    if (_this.getScreen()) {
-                        if (document.location.protocol == 'https:') {
-                            icelink.Log.error('Local screen access denied.', error);
+                var promise = new icelink.Promise();
+                try {
+                    var result_1 = new WebRtcGetUserMediaResult();
+                    var audioIsMediaStream_1 = audio && (typeof audio.getAudioTracks !== 'undefined');
+                    var videoIsMediaStream_1 = video && (typeof video.getVideoTracks !== 'undefined');
+                    var getUserMediaSuccess_1 = function (nativeMediaStream) {
+                        if (audioIsMediaStream_1) {
+                            result_1.audioMediaStream = audio;
                         }
                         else {
-                            icelink.Log.error('Local screen access denied. (The page may need to be loaded using HTTPS.)', error);
+                            result_1.audioMediaStream = nativeMediaStream;
                         }
-                    }
-                    else {
-                        if (document.location.protocol == 'file:') {
-                            icelink.Log.error('Local media access denied. (The media source may be unavailable/locked or you may need to access this page through a webserver instead of the file system.)', error);
+                        if (videoIsMediaStream_1) {
+                            result_1.videoMediaStream = video;
                         }
                         else {
-                            icelink.Log.error('Local media access denied. (The media source may be unavailable/locked.)', error);
+                            result_1.videoMediaStream = nativeMediaStream;
                         }
-                    }
-                    promise.reject(error);
-                };
-                var constraints = {};
-                if (audio && !audioIsMediaStream) {
-                    var audioInput = this.getAudioSourceInput();
-                    if (deprecated) {
-                        var audioConstraints = {
-                            optional: [],
-                            mandatory: {}
-                        };
-                        if (this.getScreen()) {
-                            if (this._chromeScreenStreamId) {
-                                audioConstraints.mandatory.chromeMediaSource = 'desktop';
-                                audioConstraints.mandatory.chromeMediaSourceId = this._chromeScreenStreamId;
-                            }
-                        }
-                        if (audioInput) {
-                            audioConstraints.optional.push({ sourceId: audioInput.getId() });
-                        }
-                        if (icelink.Util.isPlainObject(audio)) {
-                            if (audio.mandatory) {
-                                for (var key in audio.mandatory) {
-                                    audioConstraints.mandatory[key] = audio.mandatory[key];
-                                }
-                            }
-                            if (audio.optional) {
-                                for (var _i = 0, _a = audio.optional; _i < _a.length; _i++) {
-                                    var value = _a[_i];
-                                    audioConstraints.optional.push(value);
-                                }
-                            }
-                        }
-                        constraints.audio = audioConstraints;
-                    }
-                    else {
-                        var audioConstraints = {
-                            echoCancellation: true
-                        };
-                        if (this.getScreen()) {
-                            if (this._chromeScreenStreamId) {
-                                audioConstraints.chromeMediaSource = 'desktop';
-                                audioConstraints.chromeMediaSourceId = this._chromeScreenStreamId;
-                                /*
-                                // Temasys makes it look like there's a new API, but there isn't.
-                                (audioConstraints as any).mandatory = {};
-                                (audioConstraints as any).mandatory.chromeMediaSource = 'desktop';
-                                (audioConstraints as any).mandatory.chromeMediaSourceId = this._chromeScreenStreamId;*/
-                            }
-                        }
-                        if (audioInput) {
-                            audioConstraints.deviceId = { exact: audioInput.getId() };
-                        }
-                        if (icelink.Util.isPlainObject(audio)) {
-                            for (var key in audio) {
-                                if (key !== 'mandatory' && key !== 'optional') {
-                                    audioConstraints[key] = audio[key];
-                                }
-                            }
-                        }
-                        constraints.audio = audioConstraints;
-                    }
-                }
-                if (video && !videoIsMediaStream) {
-                    var videoInput = this.getVideoSourceInput();
-                    if (deprecated) {
-                        var videoConstraints = {
-                            optional: [],
-                            mandatory: {}
-                        };
-                        if (video.getTypeString) {
-                            var videoConfig = video;
-                            videoConstraints.mandatory.maxWidth = videoConfig.getWidth();
-                            videoConstraints.mandatory.maxHeight = videoConfig.getHeight();
-                            videoConstraints.mandatory.maxFrameRate = videoConfig.getFrameRate();
-                        }
-                        if (this.getScreen()) {
-                            if (this._chromeScreenStreamId) {
-                                videoConstraints.mandatory.chromeMediaSource = 'desktop';
-                                videoConstraints.mandatory.chromeMediaSourceId = this._chromeScreenStreamId;
+                        promise.resolve(result_1);
+                    };
+                    var getUserMediaFailure_1 = function (error) {
+                        if (_this.getScreen()) {
+                            if (document.location.protocol == 'https:') {
+                                icelink.Log.error('Local screen access denied.', error);
                             }
                             else {
-                                videoConstraints.mandatory.mediaSource = 'screen';
+                                icelink.Log.error('Local screen access denied. (The page may need to be loaded using HTTPS.)', error);
                             }
                         }
-                        if (videoInput) {
-                            videoConstraints.optional.push({ sourceId: videoInput.getId() });
-                        }
-                        if (icelink.Util.isPlainObject(video)) {
-                            if (video.mandatory) {
-                                for (var key in video.mandatory) {
-                                    videoConstraints.mandatory[key] = video.mandatory[key];
-                                }
-                            }
-                            if (video.optional) {
-                                for (var _b = 0, _c = video.optional; _b < _c.length; _b++) {
-                                    var value = _c[_b];
-                                    videoConstraints.optional.push(value);
-                                }
-                            }
-                        }
-                        constraints.video = videoConstraints;
-                    }
-                    else {
-                        var videoConstraints = {};
-                        if (video.getTypeString) {
-                            var videoConfig = video;
-                            videoConstraints.width = videoConfig.getWidth();
-                            videoConstraints.height = videoConfig.getHeight();
-                            videoConstraints.frameRate = videoConfig.getFrameRate();
-                            // removed because it interferes with 'facingMode' in Safari
-                            //videoConstraints.aspectRatio = videoConfig.getWidth() / videoConfig.getHeight();
-                        }
-                        if (this.getScreen()) {
-                            if (this._chromeScreenStreamId) {
-                                videoConstraints.chromeMediaSource = 'desktop';
-                                videoConstraints.chromeMediaSourceId = this._chromeScreenStreamId;
-                                /*
-                                // Temasys makes it look like there's a new API, but there isn't.
-                                (videoConstraints as any).mandatory = {};
-                                (videoConstraints as any).mandatory.chromeMediaSource = 'desktop';
-                                (videoConstraints as any).mandatory.chromeMediaSourceId = this._chromeScreenStreamId;*/
+                        else {
+                            if (document.location.protocol == 'file:') {
+                                icelink.Log.error('Local media access denied. (The media source may be unavailable/locked or you may need to access this page through a webserver instead of the file system.)', error);
                             }
                             else {
-                                videoConstraints.mediaSource = 'screen';
+                                icelink.Log.error('Local media access denied. (The media source may be unavailable/locked.)', error);
                             }
                         }
-                        if (videoInput) {
-                            videoConstraints.deviceId = { exact: videoInput.getId() };
-                        }
-                        if (icelink.Util.isPlainObject(video)) {
-                            for (var key in video) {
-                                if (key !== 'mandatory' && key !== 'optional') {
-                                    videoConstraints[key] = video[key];
+                        promise.reject(error);
+                    };
+                    var audioConstraintsFuture = null;
+                    if (audio && !audioIsMediaStream_1) {
+                        audioConstraintsFuture = this.createAudioConstraints(audio, deprecated, true);
+                    }
+                    else {
+                        var audioConstraintsPromise = new icelink.Promise();
+                        audioConstraintsPromise.resolve(null);
+                        audioConstraintsFuture = audioConstraintsPromise;
+                    }
+                    var videoConstraintsFuture_1 = null;
+                    if (video && !videoIsMediaStream_1) {
+                        videoConstraintsFuture_1 = this.createVideoConstraints(video, deprecated, true);
+                    }
+                    else {
+                        var videoConstraintsPromise = new icelink.Promise();
+                        videoConstraintsPromise.resolve(null);
+                        videoConstraintsFuture_1 = videoConstraintsPromise;
+                    }
+                    audioConstraintsFuture.then(function (audioConstraints) {
+                        result_1.audioConstraints = audioConstraints;
+                        videoConstraintsFuture_1.then(function (videoConstraints) {
+                            result_1.videoConstraints = videoConstraints;
+                            if (result_1.audioConstraints || result_1.videoConstraints) {
+                                var getUserMediaArgs = {};
+                                if (result_1.audioConstraints) {
+                                    getUserMediaArgs.audio = result_1.audioConstraints;
                                 }
+                                if (result_1.videoConstraints) {
+                                    getUserMediaArgs.video = result_1.videoConstraints;
+                                }
+                                navigator.fmGetUserMedia(getUserMediaArgs, function (nativeMediaStream) {
+                                    // now that we have permission, we have non-anonymized names,
+                                    // so if an audio or video source input exists, we need to
+                                    // update the name(s) with the unveiled information
+                                    _this.updateAudioSourceInputName().then(function () {
+                                        _this.updateVideoSourceInputName().then(function () {
+                                            // we can also now properly update the facing mode,
+                                            // which currently depends on a best guess using
+                                            // the name on a mobile device
+                                            _this.updateFacingMode(videoConstraints);
+                                            // ready to go
+                                            getUserMediaSuccess_1(nativeMediaStream);
+                                        }, function (ex) {
+                                            // we tried
+                                            getUserMediaSuccess_1(nativeMediaStream);
+                                        });
+                                    }, function (ex) {
+                                        // we tried
+                                        getUserMediaSuccess_1(nativeMediaStream);
+                                    });
+                                }, getUserMediaFailure_1);
                             }
-                        }
-                        if (!videoConstraints.facingMode) {
-                            videoConstraints.facingMode = 'user';
-                        }
-                        constraints.video = videoConstraints;
+                            else {
+                                getUserMediaSuccess_1(null);
+                            }
+                        }, function (ex) {
+                            promise.reject(ex);
+                        });
+                    }, function (ex) {
+                        promise.reject(ex);
+                    });
+                }
+                catch (ex) {
+                    promise.reject(ex);
+                }
+                return promise;
+            };
+            /** @internal */
+            WebRtcLocalMedia.prototype.updateAudioSourceInputName = function () {
+                var promise = new icelink.Promise();
+                try {
+                    var audioSourceInput_1 = this.getAudioSourceInput();
+                    if (audioSourceInput_1 == null) {
+                        promise.resolve(null);
+                    }
+                    else {
+                        this.getAudioSourceInputs().then(function (audioSourceInputs) {
+                            try {
+                                for (var _i = 0, audioSourceInputs_1 = audioSourceInputs; _i < audioSourceInputs_1.length; _i++) {
+                                    var asi = audioSourceInputs_1[_i];
+                                    if (asi.getId() == audioSourceInput_1.getId()) {
+                                        audioSourceInput_1.setName(asi.getName());
+                                    }
+                                }
+                                promise.resolve(null);
+                            }
+                            catch (ex) {
+                                promise.reject(ex);
+                            }
+                        }, function (ex) {
+                            promise.reject(ex);
+                        });
                     }
                 }
-                this._audioConstraints = constraints.audio;
-                this._videoConstraints = constraints.video;
-                if (constraints.audio || constraints.video) {
-                    navigator.fmGetUserMedia(constraints, getUserMediaSuccess, getUserMediaFailure);
+                catch (ex) {
+                    promise.reject(ex);
                 }
-                else {
-                    getUserMediaSuccess(null);
+                return promise;
+            };
+            /** @internal */
+            WebRtcLocalMedia.prototype.updateVideoSourceInputName = function () {
+                var promise = new icelink.Promise();
+                try {
+                    var videoSourceInput_1 = this.getVideoSourceInput();
+                    if (videoSourceInput_1 == null) {
+                        promise.resolve(null);
+                    }
+                    else {
+                        this.getVideoSourceInputs().then(function (videoSourceInputs) {
+                            try {
+                                for (var _i = 0, videoSourceInputs_1 = videoSourceInputs; _i < videoSourceInputs_1.length; _i++) {
+                                    var asi = videoSourceInputs_1[_i];
+                                    if (asi.getId() == videoSourceInput_1.getId()) {
+                                        videoSourceInput_1.setName(asi.getName());
+                                    }
+                                }
+                                promise.resolve(null);
+                            }
+                            catch (ex) {
+                                promise.reject(ex);
+                            }
+                        }, function (ex) {
+                            promise.reject(ex);
+                        });
+                    }
                 }
+                catch (ex) {
+                    promise.reject(ex);
+                }
+                return promise;
+            };
+            /** @internal */
+            WebRtcLocalMedia.prototype.updateFacingMode = function (videoConstraints) {
+                var videoSourceInput = this.getVideoSourceInput();
+                // facingMode helps us set up mirroring correctly for the local preview
+                if (!videoConstraints.facingMode) {
+                    videoConstraints.facingMode = 'user';
+                }
+                if (videoConstraints.deviceId && videoSourceInput != null) {
+                    var name_5 = videoSourceInput.getName();
+                    // would be better if MediaDevices.enumerateDevices told us facing details...
+                    if (icelink.StringExtensions.startsWith(name_5, 'back', icelink.StringComparison.InvariantCultureIgnoreCase) ||
+                        icelink.StringExtensions.endsWith(name_5, 'back', icelink.StringComparison.InvariantCultureIgnoreCase) ||
+                        icelink.StringExtensions.startsWith(name_5, 'rear', icelink.StringComparison.InvariantCultureIgnoreCase) ||
+                        icelink.StringExtensions.endsWith(name_5, 'rear', icelink.StringComparison.InvariantCultureIgnoreCase) ||
+                        icelink.StringExtensions.startsWith(name_5, 'environment', icelink.StringComparison.InvariantCultureIgnoreCase) ||
+                        icelink.StringExtensions.endsWith(name_5, 'environment', icelink.StringComparison.InvariantCultureIgnoreCase)) {
+                        videoConstraints.facingMode = 'environment';
+                    }
+                }
+            };
+            /** @internal */
+            WebRtcLocalMedia.prototype.createAudioConstraints = function (audio, deprecated, getSourceInputs) {
+                var _this = this;
+                var promise = new icelink.Promise();
+                try {
+                    var audioSourceInput = this.getAudioSourceInput();
+                    if (audioSourceInput == null && getSourceInputs) {
+                        this.getAudioSourceInputs().then(function (audioSourceInputs) {
+                            if (audioSourceInputs.length > 0) {
+                                _this.setAudioSourceInput(audioSourceInputs[0]);
+                            }
+                            _this.createAudioConstraints(audio, deprecated, false).then(function (constraints) {
+                                promise.resolve(constraints);
+                            }, function (ex) {
+                                promise.reject(ex);
+                            });
+                        });
+                    }
+                    else {
+                        if (deprecated) {
+                            var audioConstraints = {
+                                optional: [],
+                                mandatory: {}
+                            };
+                            if (this.getScreen()) {
+                                if (this._chromeScreenStreamId) {
+                                    audioConstraints.mandatory.chromeMediaSource = 'desktop';
+                                    audioConstraints.mandatory.chromeMediaSourceId = this._chromeScreenStreamId;
+                                }
+                            }
+                            if (audioSourceInput) {
+                                audioConstraints.optional.push({ sourceId: audioSourceInput.getId() });
+                            }
+                            if (icelink.Util.isPlainObject(audio)) {
+                                if (audio.mandatory) {
+                                    for (var key in audio.mandatory) {
+                                        audioConstraints.mandatory[key] = audio.mandatory[key];
+                                    }
+                                }
+                                if (audio.optional) {
+                                    for (var _i = 0, _a = audio.optional; _i < _a.length; _i++) {
+                                        var value = _a[_i];
+                                        audioConstraints.optional.push(value);
+                                    }
+                                }
+                            }
+                            promise.resolve(audioConstraints);
+                        }
+                        else {
+                            var audioConstraints = {
+                                echoCancellation: true
+                            };
+                            if (this.getScreen()) {
+                                if (this._chromeScreenStreamId) {
+                                    audioConstraints.chromeMediaSource = 'desktop';
+                                    audioConstraints.chromeMediaSourceId = this._chromeScreenStreamId;
+                                }
+                            }
+                            if (audioSourceInput) {
+                                audioConstraints.deviceId = { exact: audioSourceInput.getId() };
+                            }
+                            if (icelink.Util.isPlainObject(audio)) {
+                                for (var key in audio) {
+                                    if (key !== 'mandatory' && key !== 'optional') {
+                                        audioConstraints[key] = audio[key];
+                                    }
+                                }
+                            }
+                            promise.resolve(audioConstraints);
+                        }
+                    }
+                }
+                catch (ex) {
+                    promise.reject(ex);
+                }
+                return promise;
+            };
+            /** @internal */
+            WebRtcLocalMedia.prototype.createVideoConstraints = function (video, deprecated, getSourceInputs) {
+                var _this = this;
+                var promise = new icelink.Promise();
+                try {
+                    var videoSourceInput = this.getVideoSourceInput();
+                    if (videoSourceInput == null && getSourceInputs && !this.getScreen()) {
+                        this.getVideoSourceInputs().then(function (videoSourceInputs) {
+                            if (videoSourceInputs.length > 0) {
+                                _this.setVideoSourceInput(videoSourceInputs[0]);
+                            }
+                            _this.createVideoConstraints(video, deprecated, false).then(function (constraints) {
+                                promise.resolve(constraints);
+                            }, function (ex) {
+                                promise.reject(ex);
+                            });
+                        });
+                    }
+                    else {
+                        if (deprecated) {
+                            var videoConstraints = {
+                                optional: [],
+                                mandatory: {}
+                            };
+                            if (video.getTypeString) {
+                                var videoConfig = video;
+                                videoConstraints.mandatory.maxWidth = videoConfig.getWidth();
+                                videoConstraints.mandatory.maxHeight = videoConfig.getHeight();
+                                videoConstraints.mandatory.maxFrameRate = videoConfig.getFrameRate();
+                            }
+                            if (this.getScreen()) {
+                                if (this._chromeScreenStreamId) {
+                                    videoConstraints.mandatory.chromeMediaSource = 'desktop';
+                                    videoConstraints.mandatory.chromeMediaSourceId = this._chromeScreenStreamId;
+                                }
+                                else {
+                                    videoConstraints.mandatory.mediaSource = 'screen';
+                                }
+                            }
+                            else if (videoSourceInput) {
+                                videoConstraints.optional.push({ sourceId: videoSourceInput.getId() });
+                            }
+                            if (icelink.Util.isPlainObject(video)) {
+                                if (video.mandatory) {
+                                    for (var key in video.mandatory) {
+                                        videoConstraints.mandatory[key] = video.mandatory[key];
+                                    }
+                                }
+                                if (video.optional) {
+                                    for (var _i = 0, _a = video.optional; _i < _a.length; _i++) {
+                                        var value = _a[_i];
+                                        videoConstraints.optional.push(value);
+                                    }
+                                }
+                            }
+                            promise.resolve(videoConstraints);
+                        }
+                        else {
+                            var videoConstraints = {};
+                            if (video.getTypeString) {
+                                var videoConfig = video;
+                                videoConstraints.width = videoConfig.getWidth();
+                                videoConstraints.height = videoConfig.getHeight();
+                                videoConstraints.frameRate = videoConfig.getFrameRate();
+                                // removed because it interferes with 'facingMode'
+                                //videoConstraints.aspectRatio = videoConfig.getWidth() / videoConfig.getHeight();
+                            }
+                            if (this.getScreen()) {
+                                if (this._chromeScreenStreamId) {
+                                    videoConstraints.chromeMediaSource = 'desktop';
+                                    videoConstraints.chromeMediaSourceId = this._chromeScreenStreamId;
+                                }
+                                else {
+                                    videoConstraints.mediaSource = 'screen';
+                                }
+                            }
+                            else if (videoSourceInput) {
+                                videoConstraints.deviceId = { exact: videoSourceInput.getId() };
+                            }
+                            if (icelink.Util.isPlainObject(video)) {
+                                for (var key in video) {
+                                    if (key !== 'mandatory' && key !== 'optional') {
+                                        videoConstraints[key] = video[key];
+                                    }
+                                }
+                            }
+                            // best effort
+                            this.updateFacingMode(videoConstraints);
+                            promise.resolve(videoConstraints);
+                        }
+                    }
+                }
+                catch (ex) {
+                    promise.reject(ex);
+                }
+                return promise;
             };
             WebRtcLocalMedia.prototype.doStop = function () {
                 var _this = this;
@@ -22074,31 +23609,8 @@ function makeMediaStream() {
                                 type: 'cancelChooseDesktopMedia'
                             }, '*');
                         }
-                        try {
-                            for (var _i = 0, _a = _this.getAudioTracks(); _i < _a.length; _i++) {
-                                var audioTrack = _a[_i];
-                                audioTrack.stop();
-                            }
-                            for (var _b = 0, _c = _this.getVideoTracks(); _b < _c.length; _b++) {
-                                var videoTrack = _c[_b];
-                                videoTrack.stop();
-                            }
-                        }
-                        catch (error) {
-                            try {
-                                // try deprecated API
-                                var audioMediaStream = _this._getAudioMediaStream();
-                                if (audioMediaStream) {
-                                    audioMediaStream.stop();
-                                }
-                                var videoMediaStream = _this._getVideoMediaStream();
-                                if (videoMediaStream) {
-                                    videoMediaStream.stop();
-                                }
-                            }
-                            catch (error) { }
-                        }
-                        _this.cleanupAudioContext();
+                        _this.doStopAudio();
+                        _this.doStopVideo();
                         promise.resolve(_this);
                     }
                     catch (error) {
@@ -22106,6 +23618,45 @@ function makeMediaStream() {
                     }
                 });
                 return promise;
+            };
+            /** @internal */
+            WebRtcLocalMedia.prototype.doStopAudio = function () {
+                try {
+                    for (var _i = 0, _a = this.getAudioTracks(); _i < _a.length; _i++) {
+                        var audioTrack = _a[_i];
+                        audioTrack.stop();
+                    }
+                }
+                catch (error) {
+                    try {
+                        // try deprecated API
+                        var audioMediaStream = this._getAudioMediaStream();
+                        if (audioMediaStream) {
+                            audioMediaStream.stop();
+                        }
+                    }
+                    catch (error) { }
+                }
+                this.destroyAudioContext();
+            };
+            /** @internal */
+            WebRtcLocalMedia.prototype.doStopVideo = function () {
+                try {
+                    for (var _i = 0, _a = this.getVideoTracks(); _i < _a.length; _i++) {
+                        var videoTrack = _a[_i];
+                        videoTrack.stop();
+                    }
+                }
+                catch (error) {
+                    try {
+                        // try deprecated API
+                        var videoMediaStream = this._getVideoMediaStream();
+                        if (videoMediaStream) {
+                            videoMediaStream.stop();
+                        }
+                    }
+                    catch (error) { }
+                }
             };
             /** @internal */
             WebRtcLocalMedia.webRtcLocalMediaInitialize = function () {
@@ -22380,7 +23931,9 @@ function makeMediaStream() {
             };
             WebRtcVideoTrack.prototype.changeSinkOutput = function (sinkOutput) {
                 if (this.isLocal()) {
-                    throw new icelink.Exception('Cannot call VideoTrack.changeSinkOutput on a local track.');
+                    var promise = new icelink.Promise();
+                    promise.reject(new icelink.Exception('Cannot call VideoTrack.changeSinkOutput on a local track.'));
+                    return promise;
                 }
                 return this.getMedia().changeVideoSinkOutput(sinkOutput);
             };
@@ -22392,7 +23945,9 @@ function makeMediaStream() {
             };
             WebRtcVideoTrack.prototype.getSinkOutputs = function () {
                 if (this.isLocal()) {
-                    throw new icelink.Exception('Cannot call VideoTrack.getSinkOutputs on a local track.');
+                    var promise = new icelink.Promise();
+                    promise.reject(new icelink.Exception('Cannot call VideoTrack.getSinkOutputs on a local track.'));
+                    return promise;
                 }
                 return this.getMedia().getVideoSinkOutputs();
             };
@@ -22404,7 +23959,9 @@ function makeMediaStream() {
             };
             WebRtcVideoTrack.prototype.changeSourceInput = function (sourceInput) {
                 if (!this.isLocal()) {
-                    throw new icelink.Exception('Cannot call VideoTrack.changeSourceInput on a remote track.');
+                    var promise = new icelink.Promise();
+                    promise.reject(new icelink.Exception('Cannot call VideoTrack.changeSourceInput on a remote track.'));
+                    return promise;
                 }
                 return this.getMedia().changeVideoSourceInput(sourceInput);
             };
@@ -22416,7 +23973,9 @@ function makeMediaStream() {
             };
             WebRtcVideoTrack.prototype.getSourceInputs = function () {
                 if (!this.isLocal()) {
-                    throw new icelink.Exception('Cannot call VideoTrack.getSourceInputs on a remote track.');
+                    var promise = new icelink.Promise();
+                    promise.reject(new icelink.Exception('Cannot call VideoTrack.getSourceInputs on a remote track.'));
+                    return promise;
                 }
                 return this.getMedia().getVideoSourceInputs();
             };
@@ -22475,6 +24034,16 @@ function makeMediaStream() {
             @type {fm.icelink.AddressType}
             */
             AddressType[AddressType["IPv6"] = 2] = "IPv6";
+            /** <span id='prop-fm.icelink.AddressType-Unknown'>&nbsp;</span> **/
+            /**
+             <div>
+             Indicates an unknown address type.
+             </div>
+    
+            @field Unknown
+            @type {fm.icelink.AddressType}
+            */
+            AddressType[AddressType["Unknown"] = 3] = "Unknown";
         })(AddressType = icelink.AddressType || (icelink.AddressType = {}));
     })(icelink = fm.icelink || (fm.icelink = {}));
 })(fm || (fm = {}));
@@ -25892,6 +27461,101 @@ function makeMediaStream() {
     (function (icelink) {
         /**
          <div>
+         The state of a stream.
+         </div>
+    
+        */
+        var StreamState;
+        (function (StreamState) {
+            /** <span id='prop-fm.icelink.StreamState-New'>&nbsp;</span> **/
+            /**
+             <div>
+             Indicates that the stream is new and has not been started.
+             </div>
+    
+            @field New
+            @type {fm.icelink.StreamState}
+            */
+            StreamState[StreamState["New"] = 1] = "New";
+            /** <span id='prop-fm.icelink.StreamState-Initializing'>&nbsp;</span> **/
+            /**
+             <div>
+             Indicates that the stream is being initialized but no connecting attempts have been made.
+             </div>
+    
+            @field Initializing
+            @type {fm.icelink.StreamState}
+            */
+            StreamState[StreamState["Initializing"] = 2] = "Initializing";
+            /** <span id='prop-fm.icelink.StreamState-Connecting'>&nbsp;</span> **/
+            /**
+             <div>
+             Indicates that the stream is currently connecting.
+             </div>
+    
+            @field Connecting
+            @type {fm.icelink.StreamState}
+            */
+            StreamState[StreamState["Connecting"] = 3] = "Connecting";
+            /** <span id='prop-fm.icelink.StreamState-Connected'>&nbsp;</span> **/
+            /**
+             <div>
+             Indicates that the stream is currently connected.
+             </div>
+    
+            @field Connected
+            @type {fm.icelink.StreamState}
+            */
+            StreamState[StreamState["Connected"] = 4] = "Connected";
+            /** <span id='prop-fm.icelink.StreamState-Failing'>&nbsp;</span> **/
+            /**
+             <div>
+             Indicates that the stream has encountered an error and is cleaning up.
+             </div>
+    
+            @field Failing
+            @type {fm.icelink.StreamState}
+            */
+            StreamState[StreamState["Failing"] = 5] = "Failing";
+            /** <span id='prop-fm.icelink.StreamState-Failed'>&nbsp;</span> **/
+            /**
+             <div>
+             Indicates that the stream has encountered an error and has cleaned up.
+             </div>
+    
+            @field Failed
+            @type {fm.icelink.StreamState}
+            */
+            StreamState[StreamState["Failed"] = 6] = "Failed";
+            /** <span id='prop-fm.icelink.StreamState-Closing'>&nbsp;</span> **/
+            /**
+             <div>
+             Indicates that the stream has been instructed to close and is cleaning up.
+             </div>
+    
+            @field Closing
+            @type {fm.icelink.StreamState}
+            */
+            StreamState[StreamState["Closing"] = 7] = "Closing";
+            /** <span id='prop-fm.icelink.StreamState-Closed'>&nbsp;</span> **/
+            /**
+             <div>
+             Indicates that the stream has been instructed to close and has cleaned up.
+             </div>
+    
+            @field Closed
+            @type {fm.icelink.StreamState}
+            */
+            StreamState[StreamState["Closed"] = 8] = "Closed";
+        })(StreamState = icelink.StreamState || (icelink.StreamState = {}));
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
+
+(function (fm) {
+    var icelink;
+    (function (icelink) {
+        /**
+         <div>
          A stream type.
          </div>
     
@@ -26059,6 +27723,8 @@ function makeMediaStream() {
                         return 'IPv4';
                     if (this._value == fm.icelink.AddressType.IPv6)
                         return 'IPv6';
+                    if (this._value == fm.icelink.AddressType.Unknown)
+                        return 'Unknown';
                     return '';
                 }
                 else {
@@ -26268,15 +27934,159 @@ function makeMediaStream() {
             Binary.prototype.getTypeString = function () {
                 return '[fm.icelink.Binary]';
             };
+            Binary.bitStringToBytes = function () {
+                if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isBoolean(arguments[1]))) {
+                    var bitString = arguments[0];
+                    var padLeft = arguments[1];
+                    var numberOfUnusedBits = 0;
+                    var _var0 = new fm.icelink.Holder(numberOfUnusedBits);
+                    var _var1 = fm.icelink.Binary.bitStringToBytes(bitString, padLeft, _var0);
+                    numberOfUnusedBits = _var0.getValue();
+                    return _var1;
+                }
+                else if (arguments.length == 3) {
+                    var bitString = arguments[0];
+                    var padLeft = arguments[1];
+                    var numberOfUnusedBits = arguments[2];
+                    var num = (bitString.length % 8);
+                    numberOfUnusedBits.setValue(0);
+                    if ((num > 0)) {
+                        numberOfUnusedBits.setValue((8 - num));
+                        for (var j = 0; (j < numberOfUnusedBits.getValue()); j++) {
+                            if (padLeft) {
+                                bitString = fm.icelink.StringExtensions.concat("0", bitString);
+                            }
+                            else {
+                                bitString = fm.icelink.StringExtensions.concat(bitString, "0");
+                            }
+                        }
+                    }
+                    var buffer = new Uint8Array(icelink.MathAssistant.floor(bitString.length / 8));
+                    var index = 0;
+                    for (var i = 0; (index < buffer.length); i = (i + 8)) {
+                        var flag = (!fm.icelink.Global.equals(bitString.charCodeAt(i), 48));
+                        var flag2 = (!fm.icelink.Global.equals(bitString.charCodeAt((i + 1)), 48));
+                        var flag3 = (!fm.icelink.Global.equals(bitString.charCodeAt((i + 2)), 48));
+                        var flag4 = (!fm.icelink.Global.equals(bitString.charCodeAt((i + 3)), 48));
+                        var flag5 = (!fm.icelink.Global.equals(bitString.charCodeAt((i + 4)), 48));
+                        var flag6 = (!fm.icelink.Global.equals(bitString.charCodeAt((i + 5)), 48));
+                        var flag7 = (!fm.icelink.Global.equals(bitString.charCodeAt((i + 6)), 48));
+                        var flag8 = (!fm.icelink.Global.equals(bitString.charCodeAt((i + 7)), 48));
+                        var num5 = 0;
+                        if (flag) {
+                            num5 = (num5 + 128);
+                        }
+                        if (flag2) {
+                            num5 = (num5 + 64);
+                        }
+                        if (flag3) {
+                            num5 = (num5 + 32);
+                        }
+                        if (flag4) {
+                            num5 = (num5 + 16);
+                        }
+                        if (flag5) {
+                            num5 = (num5 + 8);
+                        }
+                        if (flag6) {
+                            num5 = (num5 + 4);
+                        }
+                        if (flag7) {
+                            num5 = (num5 + 2);
+                        }
+                        if (flag8) {
+                            num5++;
+                        }
+                        buffer[index] = fm.icelink.BitAssistant.castByte(num5);
+                        index++;
+                    }
+                    return buffer;
+                }
+                else if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isObjectType(arguments[1], '[fm.icelink.Holder<number>]'))) {
+                    var bitString = arguments[0];
+                    var numberOfUnusedBits = arguments[1];
+                    var _var0 = fm.icelink.Binary.bitStringToBytes(bitString, false, numberOfUnusedBits);
+                    return _var0;
+                }
+                else if (arguments.length == 1) {
+                    var bitString = arguments[0];
+                    var numberOfUnusedBits = 0;
+                    var _var0 = new fm.icelink.Holder(numberOfUnusedBits);
+                    var _var1 = fm.icelink.Binary.bitStringToBytes(bitString, _var0);
+                    numberOfUnusedBits = _var0.getValue();
+                    return _var1;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.bytesToBitString = function () {
+                if (arguments.length == 4) {
+                    var bytes = arguments[0];
+                    var offset = arguments[1];
+                    var length_7 = arguments[2];
+                    var numberOfUnusedBits = arguments[3];
+                    return fm.icelink.Binary.bytesToBitString(bytes, offset, length_7, numberOfUnusedBits, false);
+                }
+                else if (arguments.length == 5) {
+                    var bytes = arguments[0];
+                    var offset = arguments[1];
+                    var length_8 = arguments[2];
+                    var numberOfUnusedBits = arguments[3];
+                    var trimLeft = arguments[4];
+                    var str = "";
+                    for (var i = offset; (i < (offset + length_8)); i++) {
+                        var num2 = bytes[i];
+                        var flag = (fm.icelink.Global.equals((num2 & 128), 128));
+                        var flag2 = (fm.icelink.Global.equals((num2 & 64), 64));
+                        var flag3 = (fm.icelink.Global.equals((num2 & 32), 32));
+                        var flag4 = (fm.icelink.Global.equals((num2 & 16), 16));
+                        var flag5 = (fm.icelink.Global.equals((num2 & 8), 8));
+                        var flag6 = (fm.icelink.Global.equals((num2 & 4), 4));
+                        var flag7 = (fm.icelink.Global.equals((num2 & 2), 2));
+                        var flag8 = (fm.icelink.Global.equals((num2 & 1), 1));
+                        str = fm.icelink.StringExtensions.concat(str, fm.icelink.StringExtensions.format("{0}{1}{2}{3}{4}{5}{6}{7}", [(flag ? "1" : "0"), (flag2 ? "1" : "0"), (flag3 ? "1" : "0"), (flag4 ? "1" : "0"), (flag5 ? "1" : "0"), (flag6 ? "1" : "0"), (flag7 ? "1" : "0"), (flag8 ? "1" : "0")]));
+                    }
+                    if (trimLeft) {
+                        return fm.icelink.StringExtensions.substring(str, numberOfUnusedBits, (str.length - numberOfUnusedBits));
+                    }
+                    return fm.icelink.StringExtensions.substring(str, 0, (str.length - numberOfUnusedBits));
+                }
+                else if (arguments.length == 3) {
+                    var bytes = arguments[0];
+                    var offset = arguments[1];
+                    var length_9 = arguments[2];
+                    return fm.icelink.Binary.bytesToBitString(bytes, offset, length_9, 0);
+                }
+                else if (arguments.length == 1) {
+                    var bytes = arguments[0];
+                    return fm.icelink.Binary.bytesToBitString(bytes, 0, bytes.length);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             Binary.deinterleave = function () {
-                if (arguments.length == 5) {
+                if (arguments.length == 2) {
+                    var inputFrame = arguments[0];
+                    var outputFrame = arguments[1];
+                    fm.icelink.Binary.deinterleave(inputFrame, outputFrame, 0, inputFrame.length, false);
+                }
+                else if (arguments.length == 4) {
                     var inputFrame = arguments[0];
                     var outputFrame = arguments[1];
                     var start = arguments[2];
-                    var length_7 = arguments[3];
+                    var length_10 = arguments[3];
+                    fm.icelink.Binary.deinterleave(inputFrame, outputFrame, start, length_10, false);
+                }
+                else if (arguments.length == 5) {
+                    var inputFrame = arguments[0];
+                    var outputFrame = arguments[1];
+                    var start = arguments[2];
+                    var length_11 = arguments[3];
                     var reversePlanes = arguments[4];
-                    var num = (start + length_7);
-                    var num2 = (length_7 / 2);
+                    var num = (start + length_11);
+                    var num2 = icelink.MathAssistant.floor(length_11 / 2);
                     if ((num > outputFrame.length)) {
                         fm.icelink.Log.error("start + length greater than outputFrame length");
                     }
@@ -26297,18 +28107,6 @@ function makeMediaStream() {
                         }
                     }
                 }
-                else if (arguments.length == 4) {
-                    var inputFrame = arguments[0];
-                    var outputFrame = arguments[1];
-                    var start = arguments[2];
-                    var length_8 = arguments[3];
-                    fm.icelink.Binary.deinterleave(inputFrame, outputFrame, start, length_8, false);
-                }
-                else if (arguments.length == 2) {
-                    var inputFrame = arguments[0];
-                    var outputFrame = arguments[1];
-                    fm.icelink.Binary.deinterleave(inputFrame, outputFrame, 0, inputFrame.length, false);
-                }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
@@ -26324,9 +28122,9 @@ function makeMediaStream() {
                     var start = arguments[6];
                     var reversePlanes = arguments[7];
                     var num = (width * height);
-                    var length_9 = (num * 2);
+                    var length_12 = (num * 2);
                     var num3 = (stride - width);
-                    var num4 = (start + length_9);
+                    var num4 = (start + length_12);
                     if ((num4 > outputFrame.length)) {
                         fm.icelink.Log.error("start + length greater than outputFrame length");
                     }
@@ -26373,17 +28171,26 @@ function makeMediaStream() {
                             }
                             else {
                                 if ((fm.icelink.Global.equals(rotation, 180))) {
-                                    for (num9 = ((start + length_9) - 1); (num9 >= start); num9 = (num9 - 2)) {
+                                    for (num9 = ((start + length_12) - 1); (num9 >= start); num9 = (num9 - 2)) {
                                         outputFrame[num5++] = inputFrame[(num9 - 1)];
                                         outputFrame[num6++] = inputFrame[num9];
                                     }
                                 }
                                 else {
-                                    fm.icelink.Binary.deinterleave(inputFrame, outputFrame, start, length_9, reversePlanes);
+                                    fm.icelink.Binary.deinterleave(inputFrame, outputFrame, start, length_12, reversePlanes);
                                 }
                             }
                         }
                     }
+                }
+                else if (arguments.length == 6) {
+                    var inputFrame = arguments[0];
+                    var outputFrame = arguments[1];
+                    var width = arguments[2];
+                    var height = arguments[3];
+                    var stride = arguments[4];
+                    var rotation = arguments[5];
+                    fm.icelink.Binary.deinterleaveTransform(inputFrame, outputFrame, width, height, stride, rotation, 0, false);
                 }
                 else if (arguments.length == 7) {
                     var inputFrame = arguments[0];
@@ -26394,15 +28201,6 @@ function makeMediaStream() {
                     var rotation = arguments[5];
                     var start = arguments[6];
                     fm.icelink.Binary.deinterleaveTransform(inputFrame, outputFrame, width, height, stride, rotation, start, false);
-                }
-                else if (arguments.length == 6) {
-                    var inputFrame = arguments[0];
-                    var outputFrame = arguments[1];
-                    var width = arguments[2];
-                    var height = arguments[3];
-                    var stride = arguments[4];
-                    var rotation = arguments[5];
-                    fm.icelink.Binary.deinterleaveTransform(inputFrame, outputFrame, width, height, stride, rotation, 0, false);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -26427,6 +28225,64 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.Binary-fromBytes10'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 10-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @return {number} The value.
+            */
+            Binary.fromBytes10 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 7)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (14 - bitOffset)) & 1023);
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes16(input, inputIndex, false), (6 - bitOffset)) & 1023);
+                        }
+                    }
+                    throw new fm.icelink.Exception("Input data is not large enough to read 10 bits.");
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-fromBytes11'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 11-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @return {number} The value.
+            */
+            Binary.fromBytes11 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 6)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (13 - bitOffset)) & 2047);
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes16(input, inputIndex, false), (5 - bitOffset)) & 2047);
+                        }
+                    }
+                    throw new fm.icelink.Exception("Input data is not large enough to read 11 bits.");
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.Binary-fromBytes12'>&nbsp;</span>**/
             /**
              <div>
@@ -26436,12 +28292,21 @@ function makeMediaStream() {
             @param {Uint8Array} input The input byte array.
             @param {number} inputIndex The index to start reading.
             @param {number} bitOffset The offset of the value within the byte.
-            @param {boolean} littleEndian Whether to use little-endian format
             @return {number} The value.
             */
-            Binary.fromBytes12 = function (input, inputIndex, bitOffset, littleEndian) {
-                if (arguments.length == 4) {
-                    return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes16(input, inputIndex, littleEndian), (1 - bitOffset)) & 4095);
+            Binary.fromBytes12 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 5)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (12 - bitOffset)) & 4095);
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes16(input, inputIndex, false), (4 - bitOffset)) & 4095);
+                        }
+                    }
+                    throw new fm.icelink.Exception("Input data is not large enough to read 12 bits.");
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -26456,15 +28321,50 @@ function makeMediaStream() {
             @param {Uint8Array} input The input byte array.
             @param {number} inputIndex The index to start reading.
             @param {number} bitOffset The offset of the value within the byte.
-            @param {boolean} littleEndian Whether to use little-endian format
             @return {number} The value.
             */
-            Binary.fromBytes13 = function (input, inputIndex, bitOffset, littleEndian) {
-                if (arguments.length == 4) {
-                    if (littleEndian) {
-                        throw new fm.icelink.Exception("When littleEndian=true, reading partial bytes is unsupported. Use FromBytes16() and shift as needed.");
+            Binary.fromBytes13 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 4)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (11 - bitOffset)) & 8191);
+                        }
                     }
-                    return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes16(input, inputIndex, littleEndian), (1 - bitOffset)) & 8191);
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes16(input, inputIndex, false), (3 - bitOffset)) & 8191);
+                        }
+                    }
+                    throw new fm.icelink.Exception("Input data is not large enough to read 13 bits.");
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-fromBytes14'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 14-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @return {number} The value.
+            */
+            Binary.fromBytes14 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 3)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (10 - bitOffset)) & 16383);
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes16(input, inputIndex, false), (2 - bitOffset)) & 16383);
+                        }
+                    }
+                    throw new fm.icelink.Exception("Input data is not large enough to read 14 bits.");
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -26479,18 +28379,21 @@ function makeMediaStream() {
             @param {Uint8Array} input The input byte array.
             @param {number} inputIndex The index to start reading.
             @param {number} bitOffset The offset of the value within the byte.
-            @param {boolean} littleEndian Whether to use little-endian format
             @return {number} The value.
             */
-            Binary.fromBytes15 = function (input, inputIndex, bitOffset, littleEndian) {
-                if (arguments.length == 4) {
-                    if (littleEndian) {
-                        throw new fm.icelink.Exception("When littleEndian=true, reading partial bytes is unsupported. Use FromBytes16() and shift as needed.");
+            Binary.fromBytes15 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 2)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (9 - bitOffset)) & 32767);
+                        }
                     }
-                    if (((!fm.icelink.Global.equals(bitOffset, 0)) && (!fm.icelink.Global.equals(bitOffset, 1)))) {
-                        throw new fm.icelink.Exception("FromBytes15 does not support crossing the byte boundary.");
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes16(input, inputIndex, false), (1 - bitOffset)) & 32767);
+                        }
                     }
-                    return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes16(input, inputIndex, littleEndian), (1 - bitOffset)) & 32767);
+                    throw new fm.icelink.Exception("Input data is not large enough to read 15 bits.");
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -26521,6 +28424,25 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.Binary-fromBytes17'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads an 17-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @return {number} The value.
+            */
+            Binary.fromBytes17 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (7 - bitOffset)) & 131071);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.Binary-fromBytes18'>&nbsp;</span>**/
             /**
              <div>
@@ -26530,18 +28452,50 @@ function makeMediaStream() {
             @param {Uint8Array} input The input byte array.
             @param {number} inputIndex The index to start reading.
             @param {number} bitOffset The offset of the value within the byte.
-            @param {boolean} littleEndian Whether to use little-endian format.
             @return {number} The value.
             */
-            Binary.fromBytes18 = function (input, inputIndex, bitOffset, littleEndian) {
-                if (arguments.length == 4) {
-                    if (littleEndian) {
-                        throw new fm.icelink.Exception("When littleEndian=true, reading partial bytes is unsupported. Use FromBytes24() and shift as needed.");
+            Binary.fromBytes18 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 7)) {
+                        if (((inputIndex + 3) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftLong(fm.icelink.Binary.fromBytes32(input, inputIndex, false), (14 - bitOffset)) & 262143);
+                        }
                     }
-                    if (((bitOffset < 0) || (bitOffset > 6))) {
-                        throw new fm.icelink.Exception("FromBytes18 does not support crossing the byte boundary.");
+                    else {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (6 - bitOffset)) & 262143);
+                        }
                     }
-                    return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, littleEndian), (6 - bitOffset)) & 262143);
+                    throw new fm.icelink.Exception("Input data is not large enough to read 18 bits.");
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-fromBytes19'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads an 19-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @return {number} The value.
+            */
+            Binary.fromBytes19 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 6)) {
+                        if (((inputIndex + 3) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftLong(fm.icelink.Binary.fromBytes32(input, inputIndex, false), (13 - bitOffset)) & 524287);
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (5 - bitOffset)) & 524287);
+                        }
+                    }
+                    throw new fm.icelink.Exception("Input data is not large enough to read 19 bits.");
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -26561,6 +28515,122 @@ function makeMediaStream() {
             Binary.fromBytes2 = function (input, inputIndex, bitOffset) {
                 if (arguments.length == 3) {
                     return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes8(input, inputIndex), (6 - bitOffset)) & 3);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-fromBytes20'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads an 20-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @return {number} The value.
+            */
+            Binary.fromBytes20 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 5)) {
+                        if (((inputIndex + 3) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftLong(fm.icelink.Binary.fromBytes32(input, inputIndex, false), (12 - bitOffset)) & 1048575);
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (4 - bitOffset)) & 1048575);
+                        }
+                    }
+                    throw new fm.icelink.Exception("Input data is not large enough to read 20 bits.");
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-fromBytes21'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads an 21-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @return {number} The value.
+            */
+            Binary.fromBytes21 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 4)) {
+                        if (((inputIndex + 3) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftLong(fm.icelink.Binary.fromBytes32(input, inputIndex, false), (11 - bitOffset)) & 2097151);
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (3 - bitOffset)) & 2097151);
+                        }
+                    }
+                    throw new fm.icelink.Exception("Input data is not large enough to read 21 bits.");
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-fromBytes22'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads an 22-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @return {number} The value.
+            */
+            Binary.fromBytes22 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 3)) {
+                        if (((inputIndex + 3) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftLong(fm.icelink.Binary.fromBytes32(input, inputIndex, false), (10 - bitOffset)) & 4194303);
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (2 - bitOffset)) & 4194303);
+                        }
+                    }
+                    throw new fm.icelink.Exception("Input data is not large enough to read 22 bits.");
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-fromBytes23'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads an 23-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @return {number} The value.
+            */
+            Binary.fromBytes23 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if ((bitOffset >= 2)) {
+                        if (((inputIndex + 3) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftLong(fm.icelink.Binary.fromBytes32(input, inputIndex, false), (9 - bitOffset)) & 8388607);
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 2) < input.length)) {
+                            return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes24(input, inputIndex, false), (1 - bitOffset)) & 8388607);
+                        }
+                    }
+                    throw new fm.icelink.Exception("Input data is not large enough to read 23 bits.");
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -26871,15 +28941,44 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.Binary-fromBytes9'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 9-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @return {number} The value.
+            */
+            Binary.fromBytes9 = function (input, inputIndex, bitOffset) {
+                if (arguments.length == 3) {
+                    if (((inputIndex + 1) >= input.length)) {
+                        throw new fm.icelink.Exception("Input data is not large enough to read 9 bits.");
+                    }
+                    return (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fromBytes16(input, inputIndex, false), (7 - bitOffset)) & 511);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             Binary.interleave = function () {
-                if (arguments.length == 5) {
+                if (arguments.length == 4) {
                     var inputFrame = arguments[0];
                     var outputFrame = arguments[1];
                     var start = arguments[2];
-                    var length_10 = arguments[3];
+                    var length_13 = arguments[3];
+                    fm.icelink.Binary.interleave(inputFrame, outputFrame, start, length_13, false);
+                }
+                else if (arguments.length == 5) {
+                    var inputFrame = arguments[0];
+                    var outputFrame = arguments[1];
+                    var start = arguments[2];
+                    var length_14 = arguments[3];
                     var reversePlanes = arguments[4];
-                    var num = (start + length_10);
-                    var num2 = (length_10 / 2);
+                    var num = (start + length_14);
+                    var num2 = icelink.MathAssistant.floor(length_14 / 2);
                     if ((num > outputFrame.length)) {
                         fm.icelink.Log.error("start + length greater than outputFrame length");
                     }
@@ -26900,13 +28999,6 @@ function makeMediaStream() {
                             outputFrame[num5++] = inputFrame[(num4 + i)];
                         }
                     }
-                }
-                else if (arguments.length == 4) {
-                    var inputFrame = arguments[0];
-                    var outputFrame = arguments[1];
-                    var start = arguments[2];
-                    var length_11 = arguments[3];
-                    fm.icelink.Binary.interleave(inputFrame, outputFrame, start, length_11, false);
                 }
                 else if (arguments.length == 2) {
                     var inputFrame = arguments[0];
@@ -27010,25 +29102,153 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**
+            @internal
+    
+            */
+            Binary.roundUp = function (value, multiple) {
+                if (arguments.length == 2) {
+                    if ((fm.icelink.Global.equals(multiple, 0))) {
+                        return value;
+                    }
+                    var num = (value % multiple);
+                    if ((fm.icelink.Global.equals(num, 0))) {
+                        return value;
+                    }
+                    return ((value + multiple) - num);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            Binary.toBytes = function (value, bitOffset, littleEndian, output, outputIndex, bitCount) {
+                if (arguments.length == 6) {
+                    var num4 = void 0;
+                    var num5 = void 0;
+                    if ((bitOffset >= 8)) {
+                        return fm.icelink.Binary.toBytes(value, (bitOffset % 8), littleEndian, output, (outputIndex + icelink.MathAssistant.floor(bitOffset / 8)), bitCount);
+                    }
+                    var num = fm.icelink.Binary.roundUp((bitCount + bitOffset), 8);
+                    var num2 = icelink.MathAssistant.floor(num / 8);
+                    if (((outputIndex + num2) > output.length)) {
+                        throw new fm.icelink.Exception(fm.icelink.StringExtensions.format("Output data is not large enough to write {0} bits.", fm.icelink.IntExtensions.toString(bitCount)));
+                    }
+                    if (littleEndian) {
+                        throw new fm.icelink.Exception("Little-endian bit-level serialization is not supported.");
+                    }
+                    var num3 = fm.icelink.BitAssistant.leftShiftInteger(value, ((num - bitCount) - bitOffset));
+                    if ((num2 > 0)) {
+                        num4 = (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fm_icelink_Binary___bitmasks[(bitCount - 1)][0], bitOffset) & 255);
+                        num5 = (num - 8);
+                        output[outputIndex] = ((output[outputIndex] & num4) | fm.icelink.BitAssistant.rightShiftInteger((num3 & fm.icelink.BitAssistant.leftShiftInteger(~num4, num5)), num5));
+                        outputIndex++;
+                    }
+                    if ((num2 > 1)) {
+                        num4 = (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fm_icelink_Binary___bitmasks[(bitCount - 1)][1], bitOffset) & 255);
+                        num5 = (num - 16);
+                        output[outputIndex] = ((output[outputIndex] & num4) | fm.icelink.BitAssistant.rightShiftInteger((num3 & fm.icelink.BitAssistant.leftShiftInteger(~num4, num5)), num5));
+                        outputIndex++;
+                    }
+                    if ((num2 > 2)) {
+                        num4 = (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fm_icelink_Binary___bitmasks[(bitCount - 1)][2], bitOffset) & 255);
+                        num5 = (num - 24);
+                        output[outputIndex] = ((output[outputIndex] & num4) | fm.icelink.BitAssistant.rightShiftInteger((num3 & fm.icelink.BitAssistant.leftShiftInteger(~num4, num5)), num5));
+                        outputIndex++;
+                    }
+                    if ((num2 > 3)) {
+                        num4 = (fm.icelink.BitAssistant.rightShiftInteger(fm.icelink.Binary.fm_icelink_Binary___bitmasks[(bitCount - 1)][3], bitOffset) & 255);
+                        num5 = (num - 32);
+                        output[outputIndex] = ((output[outputIndex] & num4) | fm.icelink.BitAssistant.rightShiftInteger((num3 & fm.icelink.BitAssistant.leftShiftInteger(~num4, num5)), num5));
+                        outputIndex++;
+                    }
+                    return output;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             Binary.toBytes1 = function () {
                 if (arguments.length == 2) {
                     var value = arguments[0];
                     var bitOffset = arguments[1];
-                    var output = new Uint8Array(1);
-                    fm.icelink.Binary.toBytes1(value, bitOffset, output, 0);
-                    return output;
+                    return fm.icelink.Binary.toBytes1(value, bitOffset, new Uint8Array(1), 0);
                 }
                 else if (arguments.length == 4) {
                     var value = arguments[0];
                     var bitOffset = arguments[1];
                     var output = arguments[2];
                     var outputIndex = arguments[3];
-                    if ((outputIndex < output.length)) {
-                        var num = fm.icelink.Binary.fromBytes8(output, outputIndex);
-                        output[outputIndex] = (num ^ (((value ? -1 : 0) ^ num) & fm.icelink.BitAssistant.leftShiftInteger(1, (7 - bitOffset))));
-                        return output;
+                    return fm.icelink.Binary.toBytes((value ? 1 : 0), bitOffset, false, output, outputIndex, 1);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes10 = function () {
+                if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    if ((bitOffset >= 7)) {
+                        return fm.icelink.Binary.toBytes10(value, bitOffset, littleEndian, new Uint8Array(3), 0);
                     }
-                    return null;
+                    return fm.icelink.Binary.toBytes10(value, bitOffset, littleEndian, new Uint8Array(2), 0);
+                }
+                else if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 10);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes11 = function () {
+                if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    if ((bitOffset >= 6)) {
+                        return fm.icelink.Binary.toBytes11(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                    }
+                    return fm.icelink.Binary.toBytes11(value, bitOffset, littleEndian, new Uint8Array(2), 0);
+                }
+                else if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 11);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes12 = function () {
+                if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    if ((bitOffset >= 5)) {
+                        return fm.icelink.Binary.toBytes12(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                    }
+                    return fm.icelink.Binary.toBytes12(value, bitOffset, littleEndian, new Uint8Array(2), 0);
+                }
+                else if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 12);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -27041,19 +29261,60 @@ function makeMediaStream() {
                     var littleEndian = arguments[2];
                     var output = arguments[3];
                     var outputIndex = arguments[4];
-                    if ((outputIndex < output.length)) {
-                        output[outputIndex] = ((fm.icelink.Binary.fromBytes16(output, outputIndex, littleEndian) & ~fm.icelink.BitAssistant.leftShiftInteger(8191, (1 - bitOffset))) | fm.icelink.BitAssistant.leftShiftInteger((value & 8191), (1 - bitOffset)));
-                        return output;
-                    }
-                    return null;
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 13);
                 }
                 else if (arguments.length == 3) {
                     var value = arguments[0];
                     var bitOffset = arguments[1];
                     var littleEndian = arguments[2];
-                    var output = new Uint8Array(2);
-                    fm.icelink.Binary.toBytes13(value, bitOffset, littleEndian, output, 0);
-                    return output;
+                    if ((bitOffset >= 4)) {
+                        return fm.icelink.Binary.toBytes13(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                    }
+                    return fm.icelink.Binary.toBytes13(value, bitOffset, littleEndian, new Uint8Array(2), 0);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes14 = function () {
+                if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    if ((bitOffset >= 3)) {
+                        return fm.icelink.Binary.toBytes14(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                    }
+                    return fm.icelink.Binary.toBytes14(value, bitOffset, littleEndian, new Uint8Array(2), 0);
+                }
+                else if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 14);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes15 = function () {
+                if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    if ((bitOffset >= 2)) {
+                        return fm.icelink.Binary.toBytes15(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                    }
+                    return fm.icelink.Binary.toBytes15(value, bitOffset, littleEndian, new Uint8Array(2), 0);
+                }
+                else if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 15);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -27063,9 +29324,7 @@ function makeMediaStream() {
                 if (arguments.length == 2) {
                     var value = arguments[0];
                     var littleEndian = arguments[1];
-                    var output = new Uint8Array(2);
-                    fm.icelink.Binary.toBytes16(value, littleEndian, output, 0);
-                    return output;
+                    return fm.icelink.Binary.toBytes16(value, littleEndian, new Uint8Array(2), 0);
                 }
                 else if (arguments.length == 4) {
                     var value = arguments[0];
@@ -27088,35 +29347,64 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            /**<span id='method-fm.icelink.Binary-toBytes18'>&nbsp;</span>**/
-            /**
-             <div>
-             Writes an 18-bit value to a byte array.
-             </div>
-    
-            @param {number} value The value to write.
-            @param {number} bitOffset The offset of the value within the byte.
-            @param {boolean} littleEndian Whether to use little-endian format.
-            @param {Uint8Array} output The output byte array.
-            @param {number} outputIndex The index to start writing.
-            @return {Uint8Array} The output byte array.
-            */
-            Binary.toBytes18 = function (value, bitOffset, littleEndian, output, outputIndex) {
+            Binary.toBytes17 = function () {
+                if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    return fm.icelink.Binary.toBytes17(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                }
+                else if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 17);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes18 = function () {
                 if (arguments.length == 5) {
-                    if (((outputIndex + 2) < output.length)) {
-                        var num = ((fm.icelink.Binary.fromBytes24(output, outputIndex, littleEndian) & ~fm.icelink.BitAssistant.leftShiftInteger(262143, (6 - bitOffset))) | fm.icelink.BitAssistant.leftShiftInteger((value & 262143), (6 - bitOffset)));
-                        if (littleEndian) {
-                            output[outputIndex++] = fm.icelink.BitAssistant.rightShiftInteger((num & 255), 0);
-                            output[outputIndex++] = fm.icelink.BitAssistant.rightShiftInteger((num & 65280), 8);
-                            output[outputIndex++] = fm.icelink.BitAssistant.rightShiftInteger((num & 16711680), 16);
-                            return output;
-                        }
-                        output[outputIndex++] = fm.icelink.BitAssistant.rightShiftInteger((num & 16711680), 16);
-                        output[outputIndex++] = fm.icelink.BitAssistant.rightShiftInteger((num & 65280), 8);
-                        output[outputIndex++] = fm.icelink.BitAssistant.rightShiftInteger((num & 255), 0);
-                        return output;
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 18);
+                }
+                else if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    if ((bitOffset >= 7)) {
+                        return fm.icelink.Binary.toBytes18(value, bitOffset, littleEndian, new Uint8Array(4), 0);
                     }
-                    return null;
+                    return fm.icelink.Binary.toBytes18(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes19 = function () {
+                if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    if ((bitOffset >= 6)) {
+                        return fm.icelink.Binary.toBytes19(value, bitOffset, littleEndian, new Uint8Array(4), 0);
+                    }
+                    return fm.icelink.Binary.toBytes19(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                }
+                else if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 19);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -27128,32 +29416,107 @@ function makeMediaStream() {
                     var bitOffset = arguments[1];
                     var output = arguments[2];
                     var outputIndex = arguments[3];
-                    if ((outputIndex < output.length)) {
-                        output[outputIndex] = ((fm.icelink.Binary.fromBytes8(output, outputIndex) & ~fm.icelink.BitAssistant.leftShiftInteger(3, (6 - bitOffset))) | fm.icelink.BitAssistant.leftShiftInteger((value & 3), (6 - bitOffset)));
-                        return output;
-                    }
-                    return null;
+                    return fm.icelink.Binary.toBytes(value, bitOffset, false, output, outputIndex, 2);
                 }
                 else if (arguments.length == 2) {
                     var value = arguments[0];
                     var bitOffset = arguments[1];
-                    var output = new Uint8Array(1);
-                    fm.icelink.Binary.toBytes2(value, bitOffset, output, 0);
-                    return output;
+                    return fm.icelink.Binary.toBytes2(value, bitOffset, new Uint8Array(1), 0);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes20 = function () {
+                if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 20);
+                }
+                else if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    if ((bitOffset >= 5)) {
+                        return fm.icelink.Binary.toBytes20(value, bitOffset, littleEndian, new Uint8Array(4), 0);
+                    }
+                    return fm.icelink.Binary.toBytes20(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes21 = function () {
+                if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    if ((bitOffset >= 4)) {
+                        return fm.icelink.Binary.toBytes21(value, bitOffset, littleEndian, new Uint8Array(4), 0);
+                    }
+                    return fm.icelink.Binary.toBytes21(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                }
+                else if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 21);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes22 = function () {
+                if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, false, output, outputIndex, 22);
+                }
+                else if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    if ((bitOffset >= 3)) {
+                        return fm.icelink.Binary.toBytes22(value, bitOffset, littleEndian, new Uint8Array(4), 0);
+                    }
+                    return fm.icelink.Binary.toBytes22(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes23 = function () {
+                if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    if ((bitOffset >= 2)) {
+                        return fm.icelink.Binary.toBytes23(value, bitOffset, littleEndian, new Uint8Array(4), 0);
+                    }
+                    return fm.icelink.Binary.toBytes23(value, bitOffset, littleEndian, new Uint8Array(3), 0);
+                }
+                else if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 23);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             Binary.toBytes24 = function () {
-                if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var littleEndian = arguments[1];
-                    var output = new Uint8Array(3);
-                    fm.icelink.Binary.toBytes24(value, littleEndian, output, 0);
-                    return output;
-                }
-                else if (arguments.length == 4) {
+                if (arguments.length == 4) {
                     var value = arguments[0];
                     var littleEndian = arguments[1];
                     var output = arguments[2];
@@ -27172,28 +29535,27 @@ function makeMediaStream() {
                     }
                     return null;
                 }
+                else if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var littleEndian = arguments[1];
+                    return fm.icelink.Binary.toBytes24(value, littleEndian, new Uint8Array(3), 0);
+                }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             Binary.toBytes3 = function () {
-                if (arguments.length == 4) {
+                if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    return fm.icelink.Binary.toBytes3(value, bitOffset, new Uint8Array(1), 0);
+                }
+                else if (arguments.length == 4) {
                     var value = arguments[0];
                     var bitOffset = arguments[1];
                     var output = arguments[2];
                     var outputIndex = arguments[3];
-                    if ((outputIndex < output.length)) {
-                        output[outputIndex] = ((fm.icelink.Binary.fromBytes8(output, outputIndex) & ~fm.icelink.BitAssistant.leftShiftInteger(7, (5 - bitOffset))) | fm.icelink.BitAssistant.leftShiftInteger((value & 7), (5 - bitOffset)));
-                        return output;
-                    }
-                    return null;
-                }
-                else if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var bitOffset = arguments[1];
-                    var output = new Uint8Array(1);
-                    fm.icelink.Binary.toBytes3(value, bitOffset, output, 0);
-                    return output;
+                    return fm.icelink.Binary.toBytes(value, bitOffset, false, output, outputIndex, 3);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -27203,9 +29565,7 @@ function makeMediaStream() {
                 if (arguments.length == 2) {
                     var value = arguments[0];
                     var littleEndian = arguments[1];
-                    var output = new Uint8Array(4);
-                    fm.icelink.Binary.toBytes32(value, littleEndian, output, 0);
-                    return output;
+                    return fm.icelink.Binary.toBytes32(value, littleEndian, new Uint8Array(4), 0);
                 }
                 else if (arguments.length == 4) {
                     var value = arguments[0];
@@ -27233,23 +29593,17 @@ function makeMediaStream() {
                 }
             };
             Binary.toBytes4 = function () {
-                if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var bitOffset = arguments[1];
-                    var output = new Uint8Array(1);
-                    fm.icelink.Binary.toBytes4(value, bitOffset, output, 0);
-                    return output;
-                }
-                else if (arguments.length == 4) {
+                if (arguments.length == 4) {
                     var value = arguments[0];
                     var bitOffset = arguments[1];
                     var output = arguments[2];
                     var outputIndex = arguments[3];
-                    if ((outputIndex < output.length)) {
-                        output[outputIndex] = ((fm.icelink.Binary.fromBytes8(output, outputIndex) & ~fm.icelink.BitAssistant.leftShiftInteger(15, (4 - bitOffset))) | fm.icelink.BitAssistant.leftShiftInteger((value & 15), (4 - bitOffset)));
-                        return output;
-                    }
-                    return null;
+                    return fm.icelink.Binary.toBytes(value, bitOffset, false, output, outputIndex, 4);
+                }
+                else if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    return fm.icelink.Binary.toBytes4(value, bitOffset, new Uint8Array(1), 0);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -27259,9 +29613,7 @@ function makeMediaStream() {
                 if (arguments.length == 2) {
                     var value = arguments[0];
                     var littleEndian = arguments[1];
-                    var output = new Uint8Array(5);
-                    fm.icelink.Binary.toBytes40(value, littleEndian, output, 0);
-                    return output;
+                    return fm.icelink.Binary.toBytes40(value, littleEndian, new Uint8Array(5), 0);
                 }
                 else if (arguments.length == 4) {
                     var value = arguments[0];
@@ -27291,7 +29643,12 @@ function makeMediaStream() {
                 }
             };
             Binary.toBytes48 = function () {
-                if (arguments.length == 4) {
+                if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var littleEndian = arguments[1];
+                    return fm.icelink.Binary.toBytes48(value, littleEndian, new Uint8Array(6), 0);
+                }
+                else if (arguments.length == 4) {
                     var value = arguments[0];
                     var littleEndian = arguments[1];
                     var output = arguments[2];
@@ -27316,13 +29673,6 @@ function makeMediaStream() {
                     }
                     return null;
                 }
-                else if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var littleEndian = arguments[1];
-                    var output = new Uint8Array(6);
-                    fm.icelink.Binary.toBytes48(value, littleEndian, output, 0);
-                    return output;
-                }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
@@ -27333,25 +29683,24 @@ function makeMediaStream() {
                     var bitOffset = arguments[1];
                     var output = arguments[2];
                     var outputIndex = arguments[3];
-                    if ((outputIndex < output.length)) {
-                        output[outputIndex] = ((fm.icelink.Binary.fromBytes8(output, outputIndex) & ~fm.icelink.BitAssistant.leftShiftInteger(31, (3 - bitOffset))) | fm.icelink.BitAssistant.leftShiftInteger((value & 31), (3 - bitOffset)));
-                        return output;
-                    }
-                    return null;
+                    return fm.icelink.Binary.toBytes(value, bitOffset, false, output, outputIndex, 5);
                 }
                 else if (arguments.length == 2) {
                     var value = arguments[0];
                     var bitOffset = arguments[1];
-                    var output = new Uint8Array(1);
-                    fm.icelink.Binary.toBytes5(value, bitOffset, output, 0);
-                    return output;
+                    return fm.icelink.Binary.toBytes5(value, bitOffset, new Uint8Array(1), 0);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             Binary.toBytes56 = function () {
-                if (arguments.length == 4) {
+                if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var littleEndian = arguments[1];
+                    return fm.icelink.Binary.toBytes56(value, littleEndian, new Uint8Array(7), 0);
+                }
+                else if (arguments.length == 4) {
                     var value = arguments[0];
                     var littleEndian = arguments[1];
                     var output = arguments[2];
@@ -27378,42 +29727,34 @@ function makeMediaStream() {
                     }
                     return null;
                 }
-                else if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var littleEndian = arguments[1];
-                    var output = new Uint8Array(7);
-                    fm.icelink.Binary.toBytes56(value, littleEndian, output, 0);
-                    return output;
-                }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             Binary.toBytes6 = function () {
-                if (arguments.length == 4) {
+                if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    return fm.icelink.Binary.toBytes6(value, bitOffset, new Uint8Array(1), 0);
+                }
+                else if (arguments.length == 4) {
                     var value = arguments[0];
                     var bitOffset = arguments[1];
                     var output = arguments[2];
                     var outputIndex = arguments[3];
-                    if ((outputIndex < output.length)) {
-                        output[outputIndex] = ((fm.icelink.Binary.fromBytes8(output, outputIndex) & ~fm.icelink.BitAssistant.leftShiftInteger(63, (2 - bitOffset))) | fm.icelink.BitAssistant.leftShiftInteger((value & 63), (2 - bitOffset)));
-                        return output;
-                    }
-                    return null;
-                }
-                else if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var bitOffset = arguments[1];
-                    var output = new Uint8Array(1);
-                    fm.icelink.Binary.toBytes6(value, bitOffset, output, 0);
-                    return output;
+                    return fm.icelink.Binary.toBytes(value, bitOffset, false, output, outputIndex, 6);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             Binary.toBytes64 = function () {
-                if (arguments.length == 4) {
+                if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var littleEndian = arguments[1];
+                    return fm.icelink.Binary.toBytes64(value, littleEndian, new Uint8Array(8), 0);
+                }
+                else if (arguments.length == 4) {
                     var value = arguments[0];
                     var littleEndian = arguments[1];
                     var output = arguments[2];
@@ -27442,56 +29783,60 @@ function makeMediaStream() {
                     }
                     return null;
                 }
-                else if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var littleEndian = arguments[1];
-                    var output = new Uint8Array(8);
-                    fm.icelink.Binary.toBytes64(value, littleEndian, output, 0);
-                    return output;
-                }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             Binary.toBytes7 = function () {
-                if (arguments.length == 4) {
+                if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    return fm.icelink.Binary.toBytes7(value, bitOffset, new Uint8Array(1), 0);
+                }
+                else if (arguments.length == 4) {
                     var value = arguments[0];
                     var bitOffset = arguments[1];
                     var output = arguments[2];
                     var outputIndex = arguments[3];
-                    if ((outputIndex < output.length)) {
-                        output[outputIndex] = ((fm.icelink.Binary.fromBytes8(output, outputIndex) & ~fm.icelink.BitAssistant.leftShiftInteger(127, (1 - bitOffset))) | fm.icelink.BitAssistant.leftShiftInteger((value & 127), (1 - bitOffset)));
-                        return output;
-                    }
-                    return null;
-                }
-                else if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var bitOffset = arguments[1];
-                    var output = new Uint8Array(1);
-                    fm.icelink.Binary.toBytes7(value, bitOffset, output, 0);
-                    return output;
+                    return fm.icelink.Binary.toBytes(value, bitOffset, false, output, outputIndex, 7);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             Binary.toBytes8 = function () {
-                if (arguments.length == 1) {
-                    var value = arguments[0];
-                    var output = new Uint8Array(1);
-                    fm.icelink.Binary.toBytes8(value, output, 0);
-                    return output;
-                }
-                else if (arguments.length == 3) {
+                if (arguments.length == 3) {
                     var value = arguments[0];
                     var output = arguments[1];
                     var outputIndex = arguments[2];
-                    if ((outputIndex < output.length)) {
-                        output[outputIndex] = fm.icelink.BitAssistant.rightShiftInteger((value & 255), 0);
-                        return output;
+                    if ((outputIndex >= output.length)) {
+                        throw new fm.icelink.Exception("Output data is not large enough to write 8 bits.");
                     }
-                    return null;
+                    output[outputIndex] = fm.icelink.BitAssistant.rightShiftInteger((value & 255), 0);
+                    return output;
+                }
+                else if (arguments.length == 1) {
+                    var value = arguments[0];
+                    return fm.icelink.Binary.toBytes8(value, new Uint8Array(1), 0);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            Binary.toBytes9 = function () {
+                if (arguments.length == 3) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    return fm.icelink.Binary.toBytes9(value, bitOffset, littleEndian, new Uint8Array(2), 0);
+                }
+                else if (arguments.length == 5) {
+                    var value = arguments[0];
+                    var bitOffset = arguments[1];
+                    var littleEndian = arguments[2];
+                    var output = arguments[3];
+                    var outputIndex = arguments[4];
+                    return fm.icelink.Binary.toBytes(value, bitOffset, littleEndian, output, outputIndex, 9);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -27509,7 +29854,7 @@ function makeMediaStream() {
                     var outputStart = arguments[7];
                     var chunkLength = arguments[8];
                     var num = ((width * height) * chunkLength);
-                    var length_12 = ((stride > 0) ? ((stride * height) * chunkLength) : num);
+                    var length_15 = ((stride > 0) ? ((stride * height) * chunkLength) : num);
                     var num3 = ((outputStart > 0) ? outputStart : inputStart);
                     var num4 = ((stride > 0) ? ((stride - width) * chunkLength) : 0);
                     var num5 = (outputStart + num);
@@ -27554,7 +29899,7 @@ function makeMediaStream() {
                             else {
                                 if ((fm.icelink.Global.equals(rotation, 180))) {
                                     var num11 = 0;
-                                    for (num8 = (((inputStart + length_12) - num4) - 1); (num8 >= inputStart); num8 = (num8 - chunkLength)) {
+                                    for (num8 = (((inputStart + length_15) - num4) - 1); (num8 >= inputStart); num8 = (num8 - chunkLength)) {
                                         if ((((fm.icelink.Global.equals(num4, 0)) || (fm.icelink.Global.equals(num11, 0))) || (!fm.icelink.Global.equals((num11 % num7), 0)))) {
                                             for (num10 = (chunkLength - 1); (num10 >= 0); num10--) {
                                                 outputFrame[num3++] = inputFrame[(num8 - num10)];
@@ -27569,7 +29914,7 @@ function makeMediaStream() {
                                 }
                                 else {
                                     if ((fm.icelink.Global.equals(num4, 0))) {
-                                        fm.icelink.BitAssistant.copy(inputFrame, inputStart, outputFrame, outputStart, length_12);
+                                        fm.icelink.BitAssistant.copy(inputFrame, inputStart, outputFrame, outputStart, length_15);
                                     }
                                     else {
                                         for (num8 = 0; (num8 < height); num8++) {
@@ -27590,16 +29935,6 @@ function makeMediaStream() {
                     var rotation = arguments[5];
                     fm.icelink.Binary.transform(inputFrame, outputFrame, width, height, stride, rotation, 0, 0);
                 }
-                else if (arguments.length == 7) {
-                    var inputFrame = arguments[0];
-                    var outputFrame = arguments[1];
-                    var width = arguments[2];
-                    var height = arguments[3];
-                    var stride = arguments[4];
-                    var rotation = arguments[5];
-                    var start = arguments[6];
-                    fm.icelink.Binary.transform(inputFrame, outputFrame, width, height, stride, rotation, start, start);
-                }
                 else if (arguments.length == 8) {
                     var inputFrame = arguments[0];
                     var outputFrame = arguments[1];
@@ -27610,6 +29945,16 @@ function makeMediaStream() {
                     var inputStart = arguments[6];
                     var outputStart = arguments[7];
                     fm.icelink.Binary.transform(inputFrame, outputFrame, width, height, stride, rotation, inputStart, outputStart, 1);
+                }
+                else if (arguments.length == 7) {
+                    var inputFrame = arguments[0];
+                    var outputFrame = arguments[1];
+                    var width = arguments[2];
+                    var height = arguments[3];
+                    var stride = arguments[4];
+                    var rotation = arguments[5];
+                    var start = arguments[6];
+                    fm.icelink.Binary.transform(inputFrame, outputFrame, width, height, stride, rotation, start, start);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -27640,6 +29985,72 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.Binary-tryFromBytes10'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 10-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean} true if the index is valid and the value was read; otherwise, false
+            */
+            Binary.tryFromBytes10 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((bitOffset >= 7)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes10(input, inputIndex, bitOffset));
+                            return true;
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes10(input, inputIndex, bitOffset));
+                            return true;
+                        }
+                    }
+                    value.setValue(0);
+                    return false;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-tryFromBytes11'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 11-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean} true if the index is valid and the value was read; otherwise, false
+            */
+            Binary.tryFromBytes11 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((bitOffset >= 6)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes11(input, inputIndex, bitOffset));
+                            return true;
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes11(input, inputIndex, bitOffset));
+                            return true;
+                        }
+                    }
+                    value.setValue(0);
+                    return false;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.Binary-tryFromBytes12'>&nbsp;</span>**/
             /**
              <div>
@@ -27649,15 +30060,22 @@ function makeMediaStream() {
             @param {Uint8Array} input The input byte array.
             @param {number} inputIndex The index to start reading.
             @param {number} bitOffset The offset of the value within the byte.
-            @param {boolean} littleEndian Whether to use little-endian format
             @param {fm.icelink.Holder<number>} value The value.
             @return {boolean} true if the index is valid and the value was read; otherwise, false
             */
-            Binary.tryFromBytes12 = function (input, inputIndex, bitOffset, littleEndian, value) {
-                if (arguments.length == 5) {
-                    if ((inputIndex < input.length)) {
-                        value.setValue(fm.icelink.Binary.fromBytes12(input, inputIndex, bitOffset, littleEndian));
-                        return true;
+            Binary.tryFromBytes12 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((bitOffset >= 5)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes12(input, inputIndex, bitOffset));
+                            return true;
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes12(input, inputIndex, bitOffset));
+                            return true;
+                        }
                     }
                     value.setValue(0);
                     return false;
@@ -27675,18 +30093,55 @@ function makeMediaStream() {
             @param {Uint8Array} input The input byte array.
             @param {number} inputIndex The index to start reading.
             @param {number} bitOffset The offset of the value within the byte.
-            @param {boolean} littleEndian Whether to use little-endian format
             @param {fm.icelink.Holder<number>} value The value.
             @return {boolean} true if the index is valid and the value was read; otherwise, false
             */
-            Binary.tryFromBytes13 = function (input, inputIndex, bitOffset, littleEndian, value) {
-                if (arguments.length == 5) {
-                    if (littleEndian) {
-                        throw new fm.icelink.Exception("When littleEndian=true, reading partial bytes is unsupported. Use FromBytes16() and shift as needed.");
+            Binary.tryFromBytes13 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((bitOffset >= 4)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes13(input, inputIndex, bitOffset));
+                            return true;
+                        }
                     }
-                    if ((inputIndex < input.length)) {
-                        value.setValue(fm.icelink.Binary.fromBytes13(input, inputIndex, bitOffset, littleEndian));
-                        return true;
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes13(input, inputIndex, bitOffset));
+                            return true;
+                        }
+                    }
+                    value.setValue(0);
+                    return false;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-tryFromBytes14'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 14-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean} true if the index is valid and the value was read; otherwise, false
+            */
+            Binary.tryFromBytes14 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((bitOffset >= 3)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes14(input, inputIndex, bitOffset));
+                            return true;
+                        }
+                    }
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes14(input, inputIndex, bitOffset));
+                            return true;
+                        }
                     }
                     value.setValue(0);
                     return false;
@@ -27704,18 +30159,22 @@ function makeMediaStream() {
             @param {Uint8Array} input The input byte array.
             @param {number} inputIndex The index to start reading.
             @param {number} bitOffset The offset of the value within the byte.
-            @param {boolean} littleEndian Whether to use little-endian format.
             @param {fm.icelink.Holder<number>} value The value.
             @return {boolean} true if the index is valid and the value was read; otherwise, false
             */
-            Binary.tryFromBytes15 = function (input, inputIndex, bitOffset, littleEndian, value) {
-                if (arguments.length == 5) {
-                    if (littleEndian) {
-                        throw new fm.icelink.Exception("When littleEndian=true, reading partial bytes is unsupported. Use FromBytes16() and shift as needed.");
+            Binary.tryFromBytes15 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((bitOffset >= 2)) {
+                        if (((inputIndex + 2) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes15(input, inputIndex, bitOffset));
+                            return true;
+                        }
                     }
-                    if ((inputIndex < input.length)) {
-                        value.setValue(fm.icelink.Binary.fromBytes15(input, inputIndex, bitOffset, littleEndian));
-                        return true;
+                    else {
+                        if (((inputIndex + 1) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes15(input, inputIndex, bitOffset));
+                            return true;
+                        }
                     }
                     value.setValue(0);
                     return false;
@@ -27749,6 +30208,31 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.Binary-tryFromBytes17'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 17-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean} true if the index is valid and the value was read; otherwise, false
+            */
+            Binary.tryFromBytes17 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((inputIndex < input.length)) {
+                        value.setValue(fm.icelink.Binary.fromBytes17(input, inputIndex, bitOffset));
+                        return true;
+                    }
+                    value.setValue(0);
+                    return false;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.Binary-tryFromBytes18'>&nbsp;</span>**/
             /**
              <div>
@@ -27758,17 +30242,46 @@ function makeMediaStream() {
             @param {Uint8Array} input The input byte array.
             @param {number} inputIndex The index to start reading.
             @param {number} bitOffset The offset of the value within the byte.
-            @param {boolean} littleEndian Whether to use little-endian format.
             @param {fm.icelink.Holder<number>} value The value.
             @return {boolean} true if the index is valid and the value was read; otherwise, false
             */
-            Binary.tryFromBytes18 = function (input, inputIndex, bitOffset, littleEndian, value) {
-                if (arguments.length == 5) {
-                    if (littleEndian) {
-                        throw new fm.icelink.Exception("When littleEndian=true, reading partial bytes is unsupported. Use FromBytes24() and shift as needed.");
+            Binary.tryFromBytes18 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((bitOffset >= 7)) {
+                        if (((inputIndex + 3) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes18(input, inputIndex, bitOffset));
+                            return true;
+                        }
                     }
+                    else {
+                        if (((inputIndex + 2) < input.length)) {
+                            value.setValue(fm.icelink.Binary.fromBytes18(input, inputIndex, bitOffset));
+                            return true;
+                        }
+                    }
+                    value.setValue(0);
+                    return false;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-tryFromBytes19'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 19-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean} true if the index is valid and the value was read; otherwise, false
+            */
+            Binary.tryFromBytes19 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
                     if ((inputIndex < input.length)) {
-                        value.setValue(fm.icelink.Binary.fromBytes18(input, inputIndex, bitOffset, littleEndian));
+                        value.setValue(fm.icelink.Binary.fromBytes19(input, inputIndex, bitOffset));
                         return true;
                     }
                     value.setValue(0);
@@ -27794,6 +30307,106 @@ function makeMediaStream() {
                 if (arguments.length == 4) {
                     if ((inputIndex < input.length)) {
                         value.setValue(fm.icelink.Binary.fromBytes2(input, inputIndex, bitOffset));
+                        return true;
+                    }
+                    value.setValue(0);
+                    return false;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-tryFromBytes20'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 20-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean} true if the index is valid and the value was read; otherwise, false
+            */
+            Binary.tryFromBytes20 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((inputIndex < input.length)) {
+                        value.setValue(fm.icelink.Binary.fromBytes20(input, inputIndex, bitOffset));
+                        return true;
+                    }
+                    value.setValue(0);
+                    return false;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-tryFromBytes21'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 21-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean} true if the index is valid and the value was read; otherwise, false
+            */
+            Binary.tryFromBytes21 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((inputIndex < input.length)) {
+                        value.setValue(fm.icelink.Binary.fromBytes21(input, inputIndex, bitOffset));
+                        return true;
+                    }
+                    value.setValue(0);
+                    return false;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-tryFromBytes22'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 22-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean} true if the index is valid and the value was read; otherwise, false
+            */
+            Binary.tryFromBytes22 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((inputIndex < input.length)) {
+                        value.setValue(fm.icelink.Binary.fromBytes22(input, inputIndex, bitOffset));
+                        return true;
+                    }
+                    value.setValue(0);
+                    return false;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Binary-tryFromBytes23'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 23-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean} true if the index is valid and the value was read; otherwise, false
+            */
+            Binary.tryFromBytes23 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if ((inputIndex < input.length)) {
+                        value.setValue(fm.icelink.Binary.fromBytes23(input, inputIndex, bitOffset));
                         return true;
                     }
                     value.setValue(0);
@@ -28102,6 +30715,71 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.Binary-tryFromBytes9'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 9-bit value from a byte array.
+             </div>
+    
+            @param {Uint8Array} input The input byte array.
+            @param {number} inputIndex The index to start reading.
+            @param {number} bitOffset The offset of the value within the byte.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean} true if the index is valid and the value was read; otherwise, false
+            */
+            Binary.tryFromBytes9 = function (input, inputIndex, bitOffset, value) {
+                if (arguments.length == 4) {
+                    if (((inputIndex + 1) < input.length)) {
+                        value.setValue(fm.icelink.Binary.fromBytes9(input, inputIndex, bitOffset));
+                        return true;
+                    }
+                    value.setValue(0);
+                    return false;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /** @internal */
+            Binary.fmicelinkBinaryInitialize = function () {
+                if (!fm.icelink.Binary.__fmicelinkBinaryInitialized) {
+                    var numArray = new Array(24);
+                    numArray[0] = [65407, 32767];
+                    numArray[1] = [65343, 16383];
+                    numArray[2] = [65311, 8191];
+                    numArray[3] = [65295, 4095];
+                    numArray[4] = [65287, 2047];
+                    numArray[5] = [65283, 1023];
+                    numArray[6] = [65281, 511];
+                    numArray[7] = [65280, 255];
+                    numArray[8] = [65280, 127, 32767];
+                    numArray[9] = [65280, 63, 16383];
+                    numArray[10] = [65280, 31, 8191];
+                    numArray[11] = [65280, 15, 4095];
+                    numArray[12] = [65280, 7, 2047];
+                    numArray[13] = [65280, 3, 1023];
+                    numArray[14] = [65280, 1, 511];
+                    var numArray2 = new Array(3);
+                    numArray2[0] = 65280;
+                    numArray2[2] = 255;
+                    numArray[15] = numArray2;
+                    numArray[16] = [65280, 0, 127, 32767];
+                    numArray[17] = [65280, 0, 63, 16383];
+                    numArray[18] = [65280, 0, 31, 8191];
+                    numArray[19] = [65280, 0, 15, 4095];
+                    numArray[20] = [65280, 0, 7, 2047];
+                    numArray[21] = [65280, 0, 3, 1023];
+                    numArray[22] = [65280, 0, 1, 511];
+                    numArray2 = new Array(4);
+                    numArray2[0] = 65280;
+                    numArray2[3] = 255;
+                    numArray[23] = numArray2;
+                    fm.icelink.Binary.fm_icelink_Binary___bitmasks = numArray;
+                }
+                fm.icelink.Binary.__fmicelinkBinaryInitialized = true;
+            };
+            /** @internal */
+            Binary.__fmicelinkBinaryInitialized = false;
             return Binary;
         }());
         icelink.Binary = Binary;
@@ -28125,10 +30803,12 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkBooleanHolderInit();
                 }
                 else if (__arguments.length == 1) {
                     var value = __arguments[0];
                     //super();
+                    this.fmicelinkBooleanHolderInit();
                     this.setValue(value);
                 }
                 else {
@@ -28137,6 +30817,9 @@ function makeMediaStream() {
             }
             BooleanHolder.prototype.getTypeString = function () {
                 return '[fm.icelink.BooleanHolder]';
+            };
+            BooleanHolder.prototype.fmicelinkBooleanHolderInit = function () {
+                this._value = false;
             };
             /**<span id='method-fm.icelink.BooleanHolder-getValue'>&nbsp;</span>**/
             /**
@@ -28235,7 +30918,7 @@ function makeMediaStream() {
             */
             Build.getDay = function () {
                 if (arguments.length == 0) {
-                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.substring("2018-03-06", 8, 2));
+                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.substring("2018-06-14", 8, 2));
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -28252,7 +30935,7 @@ function makeMediaStream() {
             */
             Build.getMajorVersion = function () {
                 if (arguments.length == 0) {
-                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.split("3.2.1.456", [46])[0]);
+                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.split("3.2.3.684", [46])[0]);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -28269,7 +30952,7 @@ function makeMediaStream() {
             */
             Build.getMinorVersion = function () {
                 if (arguments.length == 0) {
-                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.split("3.2.1.456", [46])[1]);
+                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.split("3.2.3.684", [46])[1]);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -28286,7 +30969,7 @@ function makeMediaStream() {
             */
             Build.getMonth = function () {
                 if (arguments.length == 0) {
-                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.substring("2018-03-06", 5, 2));
+                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.substring("2018-06-14", 5, 2));
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -28303,7 +30986,7 @@ function makeMediaStream() {
             */
             Build.getPatchVersion = function () {
                 if (arguments.length == 0) {
-                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.split("3.2.1.456", [46])[2]);
+                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.split("3.2.3.684", [46])[2]);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -28320,7 +31003,7 @@ function makeMediaStream() {
             */
             Build.getRevisionVersion = function () {
                 if (arguments.length == 0) {
-                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.split("3.2.1.456", [46])[3]);
+                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.split("3.2.3.684", [46])[3]);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -28337,7 +31020,7 @@ function makeMediaStream() {
             */
             Build.getVersion = function () {
                 if (arguments.length == 0) {
-                    return "3.2.1.456";
+                    return "3.2.3.684";
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -28354,7 +31037,7 @@ function makeMediaStream() {
             */
             Build.getYear = function () {
                 if (arguments.length == 0) {
-                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.substring("2018-03-06", 0, 4));
+                    return fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.substring("2018-06-14", 0, 4));
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -28363,7 +31046,7 @@ function makeMediaStream() {
             /** @internal */
             Build.fmicelinkBuildInitialize = function () {
                 if (!fm.icelink.Build.__fmicelinkBuildInitialized) {
-                    Build.fm_icelink_Build__versionConstant = "3.2.1.456";
+                    Build.fm_icelink_Build__versionConstant = "3.2.3.684";
                 }
                 fm.icelink.Build.__fmicelinkBuildInitialized = true;
             };
@@ -28392,10 +31075,12 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkByteHolderInit();
                 }
                 else if (__arguments.length == 1) {
                     var value = __arguments[0];
                     //super();
+                    this.fmicelinkByteHolderInit();
                     this.setValue(value);
                 }
                 else {
@@ -28404,6 +31089,9 @@ function makeMediaStream() {
             }
             ByteHolder.prototype.getTypeString = function () {
                 return '[fm.icelink.ByteHolder]';
+            };
+            ByteHolder.prototype.fmicelinkByteHolderInit = function () {
+                this._value = 0;
             };
             /**<span id='method-fm.icelink.ByteHolder-getValue'>&nbsp;</span>**/
             /**
@@ -28463,10 +31151,12 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkCharacterHolderInit();
                 }
                 else if (__arguments.length == 1) {
                     var value = __arguments[0];
                     //super();
+                    this.fmicelinkCharacterHolderInit();
                     this.setValue(value);
                 }
                 else {
@@ -28475,6 +31165,9 @@ function makeMediaStream() {
             }
             CharacterHolder.prototype.getTypeString = function () {
                 return '[fm.icelink.CharacterHolder]';
+            };
+            CharacterHolder.prototype.fmicelinkCharacterHolderInit = function () {
+                this._value = 0;
             };
             /**<span id='method-fm.icelink.CharacterHolder-getValue'>&nbsp;</span>**/
             /**
@@ -28533,38 +31226,40 @@ function makeMediaStream() {
                     __arguments[__argumentIndex] = arguments[__argumentIndex];
                 }
                 if (__arguments.length == 3) {
-                    var length_13 = __arguments[0];
+                    var length_16 = __arguments[0];
                     var latency = __arguments[1];
                     var littleEndian = __arguments[2];
                     //super();
+                    this.fmicelinkCircularBufferInit();
                     this.__allowRead = false;
-                    if ((length_13 <= 0)) {
+                    if ((length_16 <= 0)) {
                         throw new fm.icelink.Exception("Cannot create a circular buffer with no length.");
                     }
-                    this.__buffer = fm.icelink.DataBuffer.allocate(length_13, littleEndian);
+                    this.__buffer = fm.icelink.DataBuffer.allocate(length_16, littleEndian);
                     this.setReadOffset(0);
                     this.setWriteOffset(this.getLatency());
                     this.setLatency(latency);
                     this.setLittleEndian(littleEndian);
                 }
                 else if (__arguments.length == 2) {
-                    var length_14 = __arguments[0];
+                    var length_17 = __arguments[0];
                     var latency = __arguments[1];
                     // chained constructor: CircularBuffer.call(this, length, latency, false);
                     __arguments = new Array(3);
-                    __arguments[0] = length_14;
+                    __arguments[0] = length_17;
                     __arguments[1] = latency;
                     __arguments[2] = false;
                     {
-                        var length_15 = __arguments[0];
+                        var length_18 = __arguments[0];
                         var latency_1 = __arguments[1];
                         var littleEndian = __arguments[2];
                         //super();
+                        this.fmicelinkCircularBufferInit();
                         this.__allowRead = false;
-                        if ((length_15 <= 0)) {
+                        if ((length_18 <= 0)) {
                             throw new fm.icelink.Exception("Cannot create a circular buffer with no length.");
                         }
-                        this.__buffer = fm.icelink.DataBuffer.allocate(length_15, littleEndian);
+                        this.__buffer = fm.icelink.DataBuffer.allocate(length_18, littleEndian);
                         this.setReadOffset(0);
                         this.setWriteOffset(this.getLatency());
                         this.setLatency(latency_1);
@@ -28577,6 +31272,13 @@ function makeMediaStream() {
             }
             CircularBuffer.prototype.getTypeString = function () {
                 return '[fm.icelink.CircularBuffer]';
+            };
+            CircularBuffer.prototype.fmicelinkCircularBufferInit = function () {
+                this.__allowRead = false;
+                this._latency = 0;
+                this._littleEndian = false;
+                this._readOffset = 0;
+                this._writeOffset = 0;
             };
             /**<span id='method-fm.icelink.CircularBuffer-getAvailable'>&nbsp;</span>**/
             /**
@@ -28775,17 +31477,17 @@ function makeMediaStream() {
             */
             CircularBuffer.prototype.write = function (buffer) {
                 if (arguments.length == 1) {
-                    var length_16;
-                    for (var i = 0; (i < buffer.getLength()); i = (i + length_16)) {
-                        length_16 = 0;
-                        if (((buffer.getLength() - i) < (this.getWriteOffset() + this.getLength()))) {
-                            length_16 = buffer.getLength();
+                    var num2 = void 0;
+                    for (var i = 0; (i < buffer.getLength()); i = (i + num2)) {
+                        num2 = 0;
+                        if (((buffer.getLength() - i) < (this.getLength() - this.getWriteOffset()))) {
+                            num2 = (buffer.getLength() - i);
                         }
                         else {
-                            length_16 = (this.getLength() - this.getWriteOffset());
+                            num2 = (this.getLength() - this.getWriteOffset());
                         }
-                        this.__buffer.write(buffer.subset(i, length_16), this.getWriteOffset());
-                        this.setWriteOffset(((this.getWriteOffset() + length_16) % this.getLength()));
+                        this.__buffer.write(buffer.subset(i, num2), this.getWriteOffset());
+                        this.setWriteOffset(((this.getWriteOffset() + num2) % this.getLength()));
                     }
                     if ((!this.__allowRead && (this.getWriteOffset() >= (this.getReadOffset() + this.getLatency())))) {
                         this.__allowRead = true;
@@ -28798,6 +31500,215 @@ function makeMediaStream() {
             return CircularBuffer;
         }());
         icelink.CircularBuffer = CircularBuffer;
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
+
+(function (fm) {
+    var icelink;
+    (function (icelink) {
+        /**
+         <div>
+         A record that calculates the min, max, and average from integer samples.
+         </div>
+    
+        */
+        var DiagnosticSampler = /** @class */ (function () {
+            function DiagnosticSampler() {
+                var __arguments = new Array(arguments.length);
+                for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
+                    __arguments[__argumentIndex] = arguments[__argumentIndex];
+                }
+                if (__arguments.length == 0) {
+                    // chained constructor: DiagnosticSampler.call(this, 100);
+                    __arguments = new Array(1);
+                    __arguments[0] = 100;
+                    {
+                        var averageSampleCount = __arguments[0];
+                        //super();
+                        this.fmicelinkDiagnosticSamplerInit();
+                        this.setLastValue(0);
+                        this.__min = new fm.icelink.AtomicLong();
+                        this.__max = new fm.icelink.AtomicLong();
+                        this.__count = new fm.icelink.AtomicLong();
+                        this.__arrayPointer = new fm.icelink.AtomicInteger();
+                        this.__samples = new Array(averageSampleCount);
+                    }
+                }
+                else if (__arguments.length == 1) {
+                    var averageSampleCount = __arguments[0];
+                    //super();
+                    this.fmicelinkDiagnosticSamplerInit();
+                    this.setLastValue(0);
+                    this.__min = new fm.icelink.AtomicLong();
+                    this.__max = new fm.icelink.AtomicLong();
+                    this.__count = new fm.icelink.AtomicLong();
+                    this.__arrayPointer = new fm.icelink.AtomicInteger();
+                    this.__samples = new Array(averageSampleCount);
+                }
+                else {
+                    throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
+                }
+            }
+            DiagnosticSampler.prototype.getTypeString = function () {
+                return '[fm.icelink.DiagnosticSampler]';
+            };
+            DiagnosticSampler.prototype.fmicelinkDiagnosticSamplerInit = function () {
+                this._lastValue = 0;
+            };
+            /**<span id='method-fm.icelink.DiagnosticSampler-addSample'>&nbsp;</span>**/
+            /**
+             <div>
+             Adds a new sample to the calculation.
+             </div>
+    
+            @param {number} longSample The sample to add.
+            @return {void}
+            */
+            DiagnosticSampler.prototype.addSample = function (longSample) {
+                if (arguments.length == 1) {
+                    this.setLastValue(longSample);
+                    this.__count.increment();
+                    var index = (this.__arrayPointer.increment() % this.__samples.length);
+                    this.__samples[index] = longSample;
+                    if ((this.__min.getValue() > longSample)) {
+                        var num2 = this.__min.getValue();
+                        for (var i = fm.icelink.MathAssistant.min(num2, longSample); (!fm.icelink.Global.equals(this.__min.compareAndSwap(num2, i), num2)); i = fm.icelink.MathAssistant.min(num2, longSample)) {
+                            num2 = this.__min.getValue();
+                        }
+                    }
+                    if ((this.__max.getValue() < longSample)) {
+                        var num4 = this.__max.getValue();
+                        for (var j = fm.icelink.MathAssistant.max(num4, longSample); (!fm.icelink.Global.equals(this.__max.compareAndSwap(num4, j), num4)); j = fm.icelink.MathAssistant.max(num4, longSample)) {
+                            num4 = this.__max.getValue();
+                        }
+                    }
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DiagnosticSampler-getAverage'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the average of all samples.
+             </div>
+    
+    
+            @return {number}
+            */
+            DiagnosticSampler.prototype.getAverage = function () {
+                if (arguments.length == 0) {
+                    var num = fm.icelink.MathAssistant.min(this.__samples.length, this.getCount());
+                    var num2 = 0;
+                    for (var i = 0; (i < num); i++) {
+                        num2 = (num2 + this.__samples[i]);
+                    }
+                    return (num2 / num);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DiagnosticSampler-getCount'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets how many samples this record has used.
+             </div>
+    
+    
+            @return {number}
+            */
+            DiagnosticSampler.prototype.getCount = function () {
+                if (arguments.length == 0) {
+                    return this.__count.getValue();
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DiagnosticSampler-getLastValue'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the value of the last sample recorded.
+             </div>
+    
+    
+            @return {number}
+            */
+            DiagnosticSampler.prototype.getLastValue = function () {
+                if (arguments.length == 0) {
+                    return this._lastValue;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DiagnosticSampler-getMax'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the maximum sample ever recorded.
+             </div>
+    
+    
+            @return {number}
+            */
+            DiagnosticSampler.prototype.getMax = function () {
+                if (arguments.length == 0) {
+                    return this.__max.getValue();
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DiagnosticSampler-getMin'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the minimum sample ever recorded.
+             </div>
+    
+    
+            @return {number}
+            */
+            DiagnosticSampler.prototype.getMin = function () {
+                if (arguments.length == 0) {
+                    return this.__min.getValue();
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DiagnosticSampler-getSamplesInAverage'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets how many samples are included in the average.
+             </div>
+    
+    
+            @return {number}
+            */
+            DiagnosticSampler.prototype.getSamplesInAverage = function () {
+                if (arguments.length == 0) {
+                    return this.__samples.length;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            DiagnosticSampler.prototype.setLastValue = function (value) {
+                if (arguments.length == 1) {
+                    this._lastValue = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            return DiagnosticSampler;
+        }());
+        icelink.DiagnosticSampler = DiagnosticSampler;
     })(icelink = fm.icelink || (fm.icelink = {}));
 })(fm || (fm = {}));
 
@@ -28846,6 +31757,121 @@ function makeMediaStream() {
             return JsonCheckerModeWrapper;
         }());
         icelink.JsonCheckerModeWrapper = JsonCheckerModeWrapper;
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
+
+(function (fm) {
+    var icelink;
+    (function (icelink) {
+        /**
+         <div>
+         A countdown latch that will signal when the counter reaches zero.
+         </div>
+    
+        */
+        var ManagedCountdownLatch = /** @class */ (function () {
+            function ManagedCountdownLatch() {
+                var __arguments = new Array(arguments.length);
+                for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
+                    __arguments[__argumentIndex] = arguments[__argumentIndex];
+                }
+                if (__arguments.length == 1) {
+                    var initialCount = __arguments[0];
+                    //super();
+                    this.__counter = new fm.icelink.AtomicInteger(initialCount);
+                    this.__waitPromise = new fm.icelink.Promise();
+                }
+                else if (__arguments.length == 0) {
+                    //super();
+                    this.__counter = new fm.icelink.AtomicInteger();
+                    this.__waitPromise = new fm.icelink.Promise();
+                }
+                else {
+                    throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
+                }
+            }
+            ManagedCountdownLatch.prototype.getTypeString = function () {
+                return '[fm.icelink.ManagedCountdownLatch]';
+            };
+            /**<span id='method-fm.icelink.ManagedCountdownLatch-decrement'>&nbsp;</span>**/
+            /**
+             <div>
+             Decrements the counter by one and signals if it reaches zero.
+             </div>
+    
+    
+            @return {void}
+            */
+            ManagedCountdownLatch.prototype.decrement = function () {
+                if (arguments.length == 0) {
+                    if ((fm.icelink.Global.equals(this.__counter.decrement(), 0))) {
+                        this.__waitPromise.resolveAsync(null);
+                    }
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.ManagedCountdownLatch-getCount'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the current count on the latch.
+             </div>
+    
+    
+            @return {number}
+            */
+            ManagedCountdownLatch.prototype.getCount = function () {
+                if (arguments.length == 0) {
+                    return this.__counter.getValue();
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.ManagedCountdownLatch-setCount'>&nbsp;</span>**/
+            /**
+             <div>
+             Sets the counter for the latch.
+             This brings the count back up into positive numbers.
+             </div>
+    
+    
+            @param {number} count
+            @return {void}
+            */
+            ManagedCountdownLatch.prototype.setCount = function (count) {
+                if (arguments.length == 1) {
+                    if ((fm.icelink.Global.equals(this.__counter.add(count), 0))) {
+                        this.__waitPromise.resolveAsync(null);
+                    }
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.ManagedCountdownLatch-waitAsync'>&nbsp;</span>**/
+            /**
+             <div>
+             Returns a promise that resolves once the counter reaches zero.
+             </div>
+    
+            @return {fm.icelink.Future<Object>}
+            */
+            ManagedCountdownLatch.prototype.waitAsync = function () {
+                if (arguments.length == 0) {
+                    if ((this.__counter.getValue() <= 0)) {
+                        return fm.icelink.PromiseBase.resolveNow(null);
+                    }
+                    return this.__waitPromise;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            return ManagedCountdownLatch;
+        }());
+        icelink.ManagedCountdownLatch = ManagedCountdownLatch;
     })(icelink = fm.icelink || (fm.icelink = {}));
 })(fm || (fm = {}));
 
@@ -28979,6 +32005,7 @@ function makeMediaStream() {
                         var minSize_1 = __arguments[1];
                         var maxSize = __arguments[2];
                         //super();
+                        this.fmicelinkPoolInit();
                         if ((fm.icelink.Global.equals(createObject_1, null))) {
                             throw new fm.icelink.Exception("Cannot initialize pool without a function to create objects.");
                         }
@@ -29007,6 +32034,7 @@ function makeMediaStream() {
                     var minSize = __arguments[1];
                     var maxSize = __arguments[2];
                     //super();
+                    this.fmicelinkPoolInit();
                     if ((fm.icelink.Global.equals(createObject, null))) {
                         throw new fm.icelink.Exception("Cannot initialize pool without a function to create objects.");
                     }
@@ -29048,6 +32076,7 @@ function makeMediaStream() {
                             var minSize_2 = __arguments[1];
                             var maxSize = __arguments[2];
                             //super();
+                            this.fmicelinkPoolInit();
                             if ((fm.icelink.Global.equals(createObject_3, null))) {
                                 throw new fm.icelink.Exception("Cannot initialize pool without a function to create objects.");
                             }
@@ -29078,6 +32107,10 @@ function makeMediaStream() {
             }
             Pool.prototype.getTypeString = function () {
                 return '[fm.icelink.Pool]';
+            };
+            Pool.prototype.fmicelinkPoolInit = function () {
+                this._maxSize = 0;
+                this._minSize = 0;
             };
             /**<span id='method-fm.icelink.Pool-get'>&nbsp;</span>**/
             /**
@@ -31097,6 +34130,268 @@ function makeMediaStream() {
     var icelink;
     (function (icelink) {
         /**
+         <div>
+         A simple state machine.
+         </div>
+    
+        */
+        var StateMachine = /** @class */ (function () {
+            /**<span id='method-fm.icelink.StateMachine-constructor'>&nbsp;</span>**/
+            /**
+             <div>
+             Initializes a new instance of the `fm.icelink.stateMachine` class.
+             </div>
+    
+            @param {T} initialState The initial state.
+            @return {}
+            */
+            function StateMachine(initialState) {
+                var __arguments = new Array(arguments.length);
+                for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
+                    __arguments[__argumentIndex] = arguments[__argumentIndex];
+                }
+                if (__arguments.length == 1) {
+                    var initialState_1 = __arguments[0];
+                    //super();
+                    this.fmicelinkStateMachineInit();
+                    this.__transitions = {};
+                    this.__transitionsLock = new Object();
+                    this.setSystemTimestamp(-1);
+                    this.setLastStateTicks(-1);
+                    this.setStateValue(this.stateToValue(initialState_1));
+                }
+                else {
+                    throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
+                }
+            }
+            StateMachine.prototype.getTypeString = function () {
+                return '[fm.icelink.StateMachine]';
+            };
+            StateMachine.prototype.fmicelinkStateMachineInit = function () {
+                this.__stateValue = 0;
+                this._lastStateTicks = 0;
+                this._systemTimestamp = 0;
+            };
+            /**<span id='method-fm.icelink.StateMachine-addTransition'>&nbsp;</span>**/
+            /**
+             <div>
+             Adds an allowed transition.
+             </div>
+    
+            @param {T} fromState The "from" state.
+            @param {T} toState The "to" state.
+            @return {void}
+            */
+            StateMachine.prototype.addTransition = function (fromState, toState) {
+                if (arguments.length == 2) {
+                    var key = fm.icelink.IntExtensions.toString(this.stateToValue(fromState));
+                    var item = fm.icelink.IntExtensions.toString(this.stateToValue(toState));
+                    var list = null;
+                    var _var0 = new fm.icelink.Holder(list);
+                    var _var1 = fm.icelink.HashExtensions.tryGetValue(this.__transitions, key, _var0);
+                    list = _var0.getValue();
+                    if (!_var1) {
+                        this.__transitions[key] = list = new Array();
+                    }
+                    if (!fm.icelink.ArrayExtensions.contains(list, item)) {
+                        fm.icelink.ArrayExtensions.add(list, item);
+                    }
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.StateMachine-canTransition'>&nbsp;</span>**/
+            /**
+             <div>
+             Determines whether a transition to the specified state is allowed.
+             </div>
+    
+            @param {T} toState The "to" state.
+            @return {boolean} true if a transition to the specified state is allowed; otherwise, false.
+     
+            */
+            StateMachine.prototype.canTransition = function (toState) {
+                if (arguments.length == 1) {
+                    var item = fm.icelink.IntExtensions.toString(this.stateToValue(toState));
+                    var list = null;
+                    var _var0 = new fm.icelink.Holder(list);
+                    var _var1 = fm.icelink.HashExtensions.tryGetValue(this.__transitions, fm.icelink.IntExtensions.toString(this.getStateValue()), _var0);
+                    list = _var0.getValue();
+                    if (!_var1) {
+                        return false;
+                    }
+                    return fm.icelink.ArrayExtensions.contains(list, item);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.StateMachine-getLastStateMillis'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the length of time spent in the last state,
+             in milliseconds.
+             </div>
+    
+    
+            @return {number}
+            */
+            StateMachine.prototype.getLastStateMillis = function () {
+                if (arguments.length == 0) {
+                    var lastStateTicks = this.getLastStateTicks();
+                    if ((fm.icelink.Global.equals(lastStateTicks, -1))) {
+                        return -1;
+                    }
+                    return icelink.MathAssistant.floor(lastStateTicks / fm.icelink.Constants.getTicksPerMillisecond());
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.StateMachine-getLastStateTicks'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the length of time spent in the last state,
+             in ticks.
+             </div>
+    
+    
+            @return {number}
+            */
+            StateMachine.prototype.getLastStateTicks = function () {
+                if (arguments.length == 0) {
+                    return this._lastStateTicks;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.StateMachine-getState'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the state.
+             </div>
+    
+    
+            @return {T}
+            */
+            StateMachine.prototype.getState = function () {
+                if (arguments.length == 0) {
+                    return this.valueToState(this.__stateValue);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.StateMachine-getStateValue'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the state value.
+             </div>
+    
+    
+            @return {number}
+            */
+            StateMachine.prototype.getStateValue = function () {
+                if (arguments.length == 0) {
+                    return this.__stateValue;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.StateMachine-getSystemTimestamp'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the system timestamp of the last
+             state transition.
+             </div>
+    
+    
+            @return {number}
+            */
+            StateMachine.prototype.getSystemTimestamp = function () {
+                if (arguments.length == 0) {
+                    return this._systemTimestamp;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            StateMachine.prototype.setLastStateTicks = function (value) {
+                if (arguments.length == 1) {
+                    this._lastStateTicks = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            StateMachine.prototype.setStateValue = function (value) {
+                if (arguments.length == 1) {
+                    var timestamp = fm.icelink.ManagedStopwatch.getTimestamp();
+                    if ((!fm.icelink.Global.equals(this.getSystemTimestamp(), -1))) {
+                        this.setLastStateTicks((timestamp - this.getSystemTimestamp()));
+                    }
+                    this.setSystemTimestamp(timestamp);
+                    this.__stateValue = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            StateMachine.prototype.setSystemTimestamp = function (value) {
+                if (arguments.length == 1) {
+                    this._systemTimestamp = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.StateMachine-transition'>&nbsp;</span>**/
+            /**
+             <div>
+             Transitions to the specified state.
+             </div>
+    
+            @param {T} toState The "to" state.
+            @return {boolean} true if a transition to the specified state is allowed; otherwise, false.
+     
+            */
+            StateMachine.prototype.transition = function (toState) {
+                if (arguments.length == 1) {
+                    if (!this.canTransition(toState)) {
+                        return false;
+                    }
+                    this.setStateValue(this.stateToValue(toState));
+                    return true;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            return StateMachine;
+        }());
+        icelink.StateMachine = StateMachine;
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
+
+(function (fm) {
+    var icelink;
+    (function (icelink) {
+        /**
         @internal
         */
         var StringTypeWrapper = /** @class */ (function () {
@@ -31293,6 +34588,7 @@ function makeMediaStream() {
                 if (__arguments.length == 1) {
                     var root_1 = __arguments[0];
                     //super();
+                    this.fmicelinkLinkedListEnumeratorInit();
                     this.__root = root_1;
                 }
                 else {
@@ -31301,6 +34597,9 @@ function makeMediaStream() {
             }
             LinkedListEnumerator.prototype.getTypeString = function () {
                 return '[fm.icelink.LinkedListEnumerator]';
+            };
+            LinkedListEnumerator.prototype.fmicelinkLinkedListEnumeratorInit = function () {
+                this.__started = false;
             };
             /**<span id='method-fm.icelink.LinkedListEnumerator-getCurrent'>&nbsp;</span>**/
             /**
@@ -31570,7 +34869,12 @@ function makeMediaStream() {
                 if (__arguments.length == 1) {
                     var hashCallback = __arguments[0];
                     //super();
-                    this.__dictionary = new fm.icelink.InternalConcurrentDictionary(hashCallback);
+                    if ((fm.icelink.Global.equals(hashCallback, null))) {
+                        this.__dictionary = new fm.icelink.InternalConcurrentDictionary(this.hash.bind(this));
+                    }
+                    else {
+                        this.__dictionary = new fm.icelink.InternalConcurrentDictionary(hashCallback);
+                    }
                 }
                 else if (__arguments.length == 0) {
                     // chained constructor: ManagedConcurrentDictionary.call(this, null);
@@ -31579,7 +34883,12 @@ function makeMediaStream() {
                     {
                         var hashCallback = __arguments[0];
                         //super();
-                        this.__dictionary = new fm.icelink.InternalConcurrentDictionary(hashCallback);
+                        if ((fm.icelink.Global.equals(hashCallback, null))) {
+                            this.__dictionary = new fm.icelink.InternalConcurrentDictionary(this.hash.bind(this));
+                        }
+                        else {
+                            this.__dictionary = new fm.icelink.InternalConcurrentDictionary(hashCallback);
+                        }
                     }
                 }
                 else {
@@ -31727,6 +35036,18 @@ function makeMediaStream() {
             ManagedConcurrentDictionary.prototype.getValues = function () {
                 if (arguments.length == 0) {
                     return this.__dictionary.getValues();
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            ManagedConcurrentDictionary.prototype.hash = function (key) {
+                if (arguments.length == 1) {
+                    return key.toString();
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -32283,6 +35604,126 @@ function makeMediaStream() {
     (function (icelink) {
         /**
          <div>
+         A 2-tuple.
+         </div><typeparam name="T1">First type the tuple holds.</typeparam><typeparam name="T2">Second type the tuple holds.</typeparam>
+    
+        */
+        var Pair = /** @class */ (function () {
+            /**<span id='method-fm.icelink.Pair-constructor'>&nbsp;</span>**/
+            /**
+             <div>
+             Initializes a new instance of the `fm.icelink.pair` class.
+             </div>
+    
+            @param {T1} item1 First item the tuple holds.
+            @param {T2} item2 Second item the tuple holds.
+            @return {}
+            */
+            function Pair(item1, item2) {
+                var __arguments = new Array(arguments.length);
+                for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
+                    __arguments[__argumentIndex] = arguments[__argumentIndex];
+                }
+                if (__arguments.length == 2) {
+                    var item1_2 = __arguments[0];
+                    var item2_2 = __arguments[1];
+                    //super();
+                    this.setItem1(item1_2);
+                    this.setItem2(item2_2);
+                }
+                else {
+                    throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
+                }
+            }
+            Pair.prototype.getTypeString = function () {
+                return '[fm.icelink.Pair]';
+            };
+            /**<span id='method-fm.icelink.Pair-getHashCode'>&nbsp;</span>**/
+            /**
+             <div>
+             Calculates the hashcode for this pair.
+             </div>
+    
+    
+            @return {number}
+            */
+            Pair.prototype.getHashCode = function () {
+                if (arguments.length == 0) {
+                    return (fm.icelink.ObjectExtensions.getHashCode(this.getItem1()) + fm.icelink.ObjectExtensions.getHashCode(this.getItem2()));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Pair-getItem1'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the first item in the tuple.
+             </div>
+    
+    
+            @return {T1}
+            */
+            Pair.prototype.getItem1 = function () {
+                if (arguments.length == 0) {
+                    return this._item1;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.Pair-getItem2'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the second item in the tuple.
+             </div>
+    
+    
+            @return {T2}
+            */
+            Pair.prototype.getItem2 = function () {
+                if (arguments.length == 0) {
+                    return this._item2;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            Pair.prototype.setItem1 = function (value) {
+                if (arguments.length == 1) {
+                    this._item1 = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            Pair.prototype.setItem2 = function (value) {
+                if (arguments.length == 1) {
+                    this._item2 = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            return Pair;
+        }());
+        icelink.Pair = Pair;
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
+
+(function (fm) {
+    var icelink;
+    (function (icelink) {
+        /**
+         <div>
          A 3-tuple.
          </div><typeparam name="T1">First type the tuple holds.</typeparam><typeparam name="T2">Second type the tuple holds.</typeparam><typeparam name="T3">Third type the tuple holds.</typeparam>
     
@@ -32305,12 +35746,12 @@ function makeMediaStream() {
                     __arguments[__argumentIndex] = arguments[__argumentIndex];
                 }
                 if (__arguments.length == 3) {
-                    var item1_2 = __arguments[0];
-                    var item2_2 = __arguments[1];
+                    var item1_3 = __arguments[0];
+                    var item2_3 = __arguments[1];
                     var item3_1 = __arguments[2];
                     //super();
-                    this.setItem1(item1_2);
-                    this.setItem2(item2_2);
+                    this.setItem1(item1_3);
+                    this.setItem2(item2_3);
                     this.setItem3(item3_1);
                 }
                 else {
@@ -32669,6 +36110,23 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.Constants-getNanosecondsPerTick'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the number of nanoseconds in one tick.
+             </div>
+    
+    
+            @return {number}
+            */
+            Constants.getNanosecondsPerTick = function () {
+                if (arguments.length == 0) {
+                    return fm.icelink.Constants.fm_icelink_Constants___nanosecondsPerTick;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.Constants-getSecondsPerDay'>&nbsp;</span>**/
             /**
              <div>
@@ -32808,6 +36266,23 @@ function makeMediaStream() {
             /** @internal */
             Constants.fmicelinkConstantsInitialize = function () {
                 if (!fm.icelink.Constants.__fmicelinkConstantsInitialized) {
+                    Constants.fm_icelink_Constants___hoursPerDay = 0;
+                    Constants.fm_icelink_Constants___millisecondsPerDay = 0;
+                    Constants.fm_icelink_Constants___millisecondsPerHour = 0;
+                    Constants.fm_icelink_Constants___millisecondsPerMinute = 0;
+                    Constants.fm_icelink_Constants___millisecondsPerSecond = 0;
+                    Constants.fm_icelink_Constants___minutesPerDay = 0;
+                    Constants.fm_icelink_Constants___minutesPerHour = 0;
+                    Constants.fm_icelink_Constants___nanosecondsPerTick = 0;
+                    Constants.fm_icelink_Constants___secondsPerDay = 0;
+                    Constants.fm_icelink_Constants___secondsPerHour = 0;
+                    Constants.fm_icelink_Constants___secondsPerMinute = 0;
+                    Constants.fm_icelink_Constants___ticksPerDay = 0;
+                    Constants.fm_icelink_Constants___ticksPerHour = 0;
+                    Constants.fm_icelink_Constants___ticksPerMillisecond = 0;
+                    Constants.fm_icelink_Constants___ticksPerMinute = 0;
+                    Constants.fm_icelink_Constants___ticksPerSecond = 0;
+                    fm.icelink.Constants.fm_icelink_Constants___nanosecondsPerTick = 100;
                     fm.icelink.Constants.fm_icelink_Constants___ticksPerMillisecond = 10000;
                     fm.icelink.Constants.fm_icelink_Constants___millisecondsPerSecond = 1000;
                     fm.icelink.Constants.fm_icelink_Constants___secondsPerMinute = 60;
@@ -32864,6 +36339,7 @@ function makeMediaStream() {
                         {
                             var buffer = __arguments[0];
                             //super();
+                            this.fmicelinkDataBufferStreamInit();
                             this.__buffer = buffer;
                         }
                     }
@@ -32877,12 +36353,14 @@ function makeMediaStream() {
                     {
                         var buffer = __arguments[0];
                         //super();
+                        this.fmicelinkDataBufferStreamInit();
                         this.__buffer = buffer;
                     }
                 }
                 else if (__arguments.length == 1 && (icelink.Util.isNullOrUndefined(arguments[0]) || icelink.Util.isObjectType(arguments[0], '[fm.icelink.DataBuffer]'))) {
                     var buffer = __arguments[0];
                     //super();
+                    this.fmicelinkDataBufferStreamInit();
                     this.__buffer = buffer;
                 }
                 else {
@@ -32891,6 +36369,10 @@ function makeMediaStream() {
             }
             DataBufferStream.prototype.getTypeString = function () {
                 return '[fm.icelink.DataBufferStream]';
+            };
+            DataBufferStream.prototype.fmicelinkDataBufferStreamInit = function () {
+                this.__bitPosition = 0;
+                this.__position = 0;
             };
             /**<span id='method-fm.icelink.DataBufferStream-getAvailable'>&nbsp;</span>**/
             /**
@@ -33497,12 +36979,12 @@ function makeMediaStream() {
                 else if (arguments.length == 3) {
                     var data = arguments[0];
                     var index = arguments[1];
-                    var length_17 = arguments[2];
-                    if ((this.getAvailable() < length_17)) {
-                        this.getBuffer().resize((this.getBuffer().getLength() + length_17));
+                    var length_19 = arguments[2];
+                    if ((this.getAvailable() < length_19)) {
+                        this.getBuffer().resize((this.getBuffer().getLength() + length_19));
                     }
-                    this.__buffer.writeBytes(data, index, length_17, this.__position);
-                    this.__position = (this.__position + length_17);
+                    this.__buffer.writeBytes(data, index, length_19, this.__position);
+                    this.__position = (this.__position + length_19);
                     return this;
                 }
                 else {
@@ -33530,19 +37012,21 @@ function makeMediaStream() {
                 for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
                     __arguments[__argumentIndex] = arguments[__argumentIndex];
                 }
-                if (__arguments.length == 4) {
+                if (__arguments.length == 0) {
+                    //super();
+                    this.fmicelinkDataBufferInit();
+                }
+                else if (__arguments.length == 4) {
                     var data = __arguments[0];
                     var index = __arguments[1];
-                    var length_18 = __arguments[2];
+                    var length_20 = __arguments[2];
                     var littleEndian = __arguments[3];
                     //super();
+                    this.fmicelinkDataBufferInit();
                     this.setInnerData(data);
                     this.setIndex(index);
-                    this.setLength(length_18);
+                    this.setLength(length_20);
                     this.setLittleEndian(littleEndian);
-                }
-                else if (__arguments.length == 0) {
-                    //super();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -33550,6 +37034,11 @@ function makeMediaStream() {
             }
             DataBuffer.prototype.getTypeString = function () {
                 return '[fm.icelink.DataBuffer]';
+            };
+            DataBuffer.prototype.fmicelinkDataBufferInit = function () {
+                this._index = 0;
+                this._length = 0;
+                this._littleEndian = false;
             };
             DataBuffer.allocate = function () {
                 if (arguments.length == 3) {
@@ -33752,10 +37241,25 @@ function makeMediaStream() {
                 }
             };
             DataBuffer.wrap = function () {
-                if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isNumber(arguments[1]))) {
+                if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isBoolean(arguments[1]))) {
+                    var data = arguments[0];
+                    var littleEndian = arguments[1];
+                    return fm.icelink.DataBuffer.wrap(data, 0, -1, littleEndian);
+                }
+                else if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isNumber(arguments[1]))) {
                     var data = arguments[0];
                     var index = arguments[1];
                     return fm.icelink.DataBuffer.wrap(data, index, -1, false);
+                }
+                else if (arguments.length == 1) {
+                    var data = arguments[0];
+                    return fm.icelink.DataBuffer.wrap(data, 0, -1, false);
+                }
+                else if (arguments.length == 3 && (icelink.Util.isNullOrUndefined(arguments[2]) || icelink.Util.isNumber(arguments[2]))) {
+                    var data = arguments[0];
+                    var index = arguments[1];
+                    var length_21 = arguments[2];
+                    return fm.icelink.DataBuffer.wrap(data, index, length_21, false);
                 }
                 else if (arguments.length == 3 && (icelink.Util.isNullOrUndefined(arguments[2]) || icelink.Util.isBoolean(arguments[2]))) {
                     var data = arguments[0];
@@ -33763,21 +37267,10 @@ function makeMediaStream() {
                     var littleEndian = arguments[2];
                     return fm.icelink.DataBuffer.wrap(data, index, -1, littleEndian);
                 }
-                else if (arguments.length == 3 && (icelink.Util.isNullOrUndefined(arguments[2]) || icelink.Util.isNumber(arguments[2]))) {
-                    var data = arguments[0];
-                    var index = arguments[1];
-                    var length_19 = arguments[2];
-                    return fm.icelink.DataBuffer.wrap(data, index, length_19, false);
-                }
-                else if (arguments.length == 2 && (icelink.Util.isNullOrUndefined(arguments[1]) || icelink.Util.isBoolean(arguments[1]))) {
-                    var data = arguments[0];
-                    var littleEndian = arguments[1];
-                    return fm.icelink.DataBuffer.wrap(data, 0, -1, littleEndian);
-                }
                 else if (arguments.length == 4) {
                     var data = arguments[0];
                     var index = arguments[1];
-                    var length_20 = arguments[2];
+                    var length_22 = arguments[2];
                     var littleEndian = arguments[3];
                     if ((fm.icelink.Global.equals(data, null))) {
                         return null;
@@ -33785,14 +37278,10 @@ function makeMediaStream() {
                     if ((index < 0)) {
                         return null;
                     }
-                    if ((length_20 < 0)) {
-                        length_20 = (data.length - index);
+                    if ((length_22 < 0)) {
+                        length_22 = (data.length - index);
                     }
-                    return new fm.icelink.DataBuffer(data, index, length_20, littleEndian);
-                }
-                else if (arguments.length == 1) {
-                    var data = arguments[0];
-                    return fm.icelink.DataBuffer.wrap(data, 0, -1, false);
+                    return new fm.icelink.DataBuffer(data, index, length_22, littleEndian);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -33820,14 +37309,14 @@ function makeMediaStream() {
                 if (arguments.length == 1 && (icelink.Util.isNullOrUndefined(arguments[0]) || (icelink.Util.isArray(arguments[0]) && (arguments[0].length == 0 || (icelink.Util.isNullOrUndefined(arguments[0][0]) || icelink.Util.isObjectType(arguments[0][0], '[fm.icelink.DataBuffer]')))))) {
                     var buffers = arguments[0];
                     if (((!fm.icelink.Global.equals(buffers, null)) && (buffers.length > 0))) {
-                        var length_21 = this.getLength();
+                        var length_23 = this.getLength();
                         for (var _i = 0, buffers_1 = buffers; _i < buffers_1.length; _i++) {
                             var buffer = buffers_1[_i];
-                            length_21 = (length_21 + buffer.getLength());
+                            length_23 = (length_23 + buffer.getLength());
                         }
-                        if ((length_21 > this.getLength())) {
+                        if ((length_23 > this.getLength())) {
                             var offset = this.getLength();
-                            this.resize(length_21);
+                            this.resize(length_23);
                             for (var _a = 0, buffers_2 = buffers; _a < buffers_2.length; _a++) {
                                 var buffer = buffers_2[_a];
                                 this.write(buffer, offset);
@@ -33842,10 +37331,10 @@ function makeMediaStream() {
                     if (((!fm.icelink.Global.equals(buffer, null)) && (buffer.getLength() > 0))) {
                         var newLength = (this.getLength() + buffer.getLength());
                         if ((newLength > this.getLength())) {
-                            var length_22 = this.getLength();
+                            var length_24 = this.getLength();
                             this.resize(newLength);
-                            this.write(buffer, length_22);
-                            length_22 = (length_22 + buffer.getLength());
+                            this.write(buffer, length_24);
+                            length_24 = (length_24 + buffer.getLength());
                         }
                     }
                     return this;
@@ -33866,6 +37355,22 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.DataBuffer-copy'>&nbsp;</span>**/
+            /**
+             <div>
+             Copies of this instance.
+             </div>
+    
+            @return {fm.icelink.DataBuffer}
+            */
+            DataBuffer.prototype.copy = function () {
+                if (arguments.length == 0) {
+                    return fm.icelink.DataBuffer.wrap(this.toArray());
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.DataBuffer-free'>&nbsp;</span>**/
             /**
              <div>
@@ -33873,10 +37378,11 @@ function makeMediaStream() {
              </div>
     
     
-            @return {void}
+            @return {fm.icelink.DataBuffer}
             */
             DataBuffer.prototype.free = function () {
                 if (arguments.length == 0) {
+                    return this;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34042,13 +37548,13 @@ function makeMediaStream() {
             DataBuffer.prototype.prepend = function () {
                 if (arguments.length == 1 && (icelink.Util.isNullOrUndefined(arguments[0]) || icelink.Util.isObjectType(arguments[0], '[fm.icelink.DataBuffer]'))) {
                     var buffer = arguments[0];
-                    var length_23 = buffer.getLength();
-                    if ((length_23 <= this.getIndex())) {
-                        this.setIndex((this.getIndex() - length_23));
-                        this.setLength((this.getLength() + length_23));
+                    var length_25 = buffer.getLength();
+                    if ((length_25 <= this.getIndex())) {
+                        this.setIndex((this.getIndex() - length_25));
+                        this.setLength((this.getLength() + length_25));
                     }
                     else {
-                        this.resize((this.getLength() + length_23), 0);
+                        this.resize((this.getLength() + length_25), 0);
                     }
                     var offset = 0;
                     this.write(buffer, offset);
@@ -34100,6 +37606,86 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.DataBuffer-read10'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 10-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bitoffset.
+            @return {number}
+            */
+            DataBuffer.prototype.read10 = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    return fm.icelink.Binary.fromBytes10(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read10Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 10-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read10Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read10(offset, bitOffset);
+                    if ((num > 511)) {
+                        num = (num - 1023);
+                    }
+                    return num;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read11'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 11-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bitoffset.
+            @return {number}
+            */
+            DataBuffer.prototype.read11 = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    return fm.icelink.Binary.fromBytes11(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read11Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 11-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read11Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read11(offset, bitOffset);
+                    if ((num > 1023)) {
+                        num = (num - 2047);
+                    }
+                    return num;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.DataBuffer-read12'>&nbsp;</span>**/
             /**
              <div>
@@ -34112,7 +37698,29 @@ function makeMediaStream() {
             */
             DataBuffer.prototype.read12 = function (offset, bitOffset) {
                 if (arguments.length == 2) {
-                    return fm.icelink.Binary.fromBytes12(this.getData(), (this.getIndex() + offset), bitOffset, this.getLittleEndian());
+                    return fm.icelink.Binary.fromBytes12(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read12Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 12-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read12Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read12(offset, bitOffset);
+                    if ((num > 2047)) {
+                        num = (num - 4095);
+                    }
+                    return num;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34130,7 +37738,7 @@ function makeMediaStream() {
             */
             DataBuffer.prototype.read13 = function (offset, bitOffset) {
                 if (arguments.length == 2) {
-                    return fm.icelink.Binary.fromBytes13(this.getData(), (this.getIndex() + offset), bitOffset, this.getLittleEndian());
+                    return fm.icelink.Binary.fromBytes13(this.getData(), (this.getIndex() + offset), bitOffset);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34158,6 +37766,46 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.DataBuffer-read14'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 14-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read14 = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    return fm.icelink.Binary.fromBytes14(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read14Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 14-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read14Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read14(offset, bitOffset);
+                    if ((num > 8191)) {
+                        num = (num - 16383);
+                    }
+                    return num;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.DataBuffer-read15'>&nbsp;</span>**/
             /**
              <div>
@@ -34170,7 +37818,29 @@ function makeMediaStream() {
             */
             DataBuffer.prototype.read15 = function (offset, bitOffset) {
                 if (arguments.length == 2) {
-                    return fm.icelink.Binary.fromBytes15(this.getData(), (this.getIndex() + offset), bitOffset, this.getLittleEndian());
+                    return fm.icelink.Binary.fromBytes15(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read15Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 15-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read15Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read15(offset, bitOffset);
+                    if ((num > 16383)) {
+                        num = (num - 32767);
+                    }
+                    return num;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34210,6 +37880,46 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.DataBuffer-read17'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 17-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read17 = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    return fm.icelink.Binary.fromBytes17(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read17Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 17-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read17Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read17(offset, bitOffset);
+                    if ((num > 65535)) {
+                        num = (num - 131071);
+                    }
+                    return num;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.DataBuffer-read18'>&nbsp;</span>**/
             /**
              <div>
@@ -34222,7 +37932,69 @@ function makeMediaStream() {
             */
             DataBuffer.prototype.read18 = function (offset, bitOffset) {
                 if (arguments.length == 2) {
-                    return fm.icelink.Binary.fromBytes18(this.getData(), (this.getIndex() + offset), bitOffset, this.getLittleEndian());
+                    return fm.icelink.Binary.fromBytes18(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read18Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads an 18-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read18Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read18(offset, bitOffset);
+                    if ((num > 131071)) {
+                        num = (num - 262143);
+                    }
+                    return num;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read19'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 19-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read19 = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    return fm.icelink.Binary.fromBytes19(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read19Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 19-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read19Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read19(offset, bitOffset);
+                    if ((num > 262143)) {
+                        num = (num - 524287);
+                    }
+                    return num;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34246,35 +38018,195 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            DataBuffer.prototype.read24 = function () {
+            /**<span id='method-fm.icelink.DataBuffer-read20'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 20-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read20 = function (offset, bitOffset) {
                 if (arguments.length == 2) {
+                    return fm.icelink.Binary.fromBytes20(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read20Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 20-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read20Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read20(offset, bitOffset);
+                    if ((num > 524287)) {
+                        num = (num - 1048575);
+                    }
+                    return num;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read21'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 21-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read21 = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    return fm.icelink.Binary.fromBytes21(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read21Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 21-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read21Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read21(offset, bitOffset);
+                    if ((num > 1048575)) {
+                        num = (num - 2097151);
+                    }
+                    return num;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read22'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 22-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read22 = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    return fm.icelink.Binary.fromBytes22(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read22Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 22-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read22Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read22(offset, bitOffset);
+                    if ((num > 2097151)) {
+                        num = (num - 4194303);
+                    }
+                    return num;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read23'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 23-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read23 = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    return fm.icelink.Binary.fromBytes23(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read23Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 23-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read23Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read22(offset, bitOffset);
+                    if ((num > 4194303)) {
+                        num = (num - 8388607);
+                    }
+                    return num;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            DataBuffer.prototype.read24 = function () {
+                if (arguments.length == 1) {
+                    var offset = arguments[0];
+                    return fm.icelink.Binary.fromBytes24(this.getData(), (this.getIndex() + offset), this.getLittleEndian());
+                }
+                else if (arguments.length == 2) {
                     var offset = arguments[0];
                     var offsetPlus = arguments[1];
                     offsetPlus.setValue((offset + 3));
                     return this.read24(offset);
-                }
-                else if (arguments.length == 1) {
-                    var offset = arguments[0];
-                    return fm.icelink.Binary.fromBytes24(this.getData(), (this.getIndex() + offset), this.getLittleEndian());
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             DataBuffer.prototype.read24Signed = function () {
-                if (arguments.length == 2) {
-                    var offset = arguments[0];
-                    var offsetPlus = arguments[1];
-                    offsetPlus.setValue((offset + 3));
-                    return this.read24Signed(offset);
-                }
-                else if (arguments.length == 1) {
+                if (arguments.length == 1) {
                     var offset = arguments[0];
                     var num = this.read24(offset);
                     if ((num > 8388607)) {
                         num = (num - 16777215);
                     }
                     return num;
+                }
+                else if (arguments.length == 2) {
+                    var offset = arguments[0];
+                    var offsetPlus = arguments[1];
+                    offsetPlus.setValue((offset + 3));
+                    return this.read24Signed(offset);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34321,34 +38253,34 @@ function makeMediaStream() {
                 }
             };
             DataBuffer.prototype.read32 = function () {
-                if (arguments.length == 1) {
-                    var offset = arguments[0];
-                    return fm.icelink.Binary.fromBytes32(this.getData(), (this.getIndex() + offset), this.getLittleEndian());
-                }
-                else if (arguments.length == 2) {
+                if (arguments.length == 2) {
                     var offset = arguments[0];
                     var offsetPlus = arguments[1];
                     offsetPlus.setValue((offset + 4));
                     return this.read32(offset);
+                }
+                else if (arguments.length == 1) {
+                    var offset = arguments[0];
+                    return fm.icelink.Binary.fromBytes32(this.getData(), (this.getIndex() + offset), this.getLittleEndian());
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             DataBuffer.prototype.read32Signed = function () {
-                if (arguments.length == 2) {
-                    var offset = arguments[0];
-                    var offsetPlus = arguments[1];
-                    offsetPlus.setValue((offset + 4));
-                    return this.read32Signed(offset);
-                }
-                else if (arguments.length == 1) {
+                if (arguments.length == 1) {
                     var offset = arguments[0];
                     var num = this.read32(offset);
                     if ((num > 2147483647)) {
                         num = (num - 4294967295);
                     }
                     return num;
+                }
+                else if (arguments.length == 2) {
+                    var offset = arguments[0];
+                    var offsetPlus = arguments[1];
+                    offsetPlus.setValue((offset + 4));
+                    return this.read32Signed(offset);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34410,13 +38342,7 @@ function makeMediaStream() {
                 }
             };
             DataBuffer.prototype.read40Signed = function () {
-                if (arguments.length == 2) {
-                    var offset = arguments[0];
-                    var offsetPlus = arguments[1];
-                    offsetPlus.setValue((offset + 5));
-                    return this.read40Signed(offset);
-                }
-                else if (arguments.length == 1) {
+                if (arguments.length == 1) {
                     var offset = arguments[0];
                     var num = this.read40(offset);
                     if ((num > 549755813887)) {
@@ -34424,39 +38350,45 @@ function makeMediaStream() {
                     }
                     return num;
                 }
+                else if (arguments.length == 2) {
+                    var offset = arguments[0];
+                    var offsetPlus = arguments[1];
+                    offsetPlus.setValue((offset + 5));
+                    return this.read40Signed(offset);
+                }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             DataBuffer.prototype.read48 = function () {
-                if (arguments.length == 2) {
+                if (arguments.length == 1) {
+                    var offset = arguments[0];
+                    return fm.icelink.Binary.fromBytes48(this.getData(), (this.getIndex() + offset), this.getLittleEndian());
+                }
+                else if (arguments.length == 2) {
                     var offset = arguments[0];
                     var offsetPlus = arguments[1];
                     offsetPlus.setValue((offset + 6));
                     return this.read48(offset);
-                }
-                else if (arguments.length == 1) {
-                    var offset = arguments[0];
-                    return fm.icelink.Binary.fromBytes48(this.getData(), (this.getIndex() + offset), this.getLittleEndian());
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             DataBuffer.prototype.read48Signed = function () {
-                if (arguments.length == 1) {
+                if (arguments.length == 2) {
+                    var offset = arguments[0];
+                    var offsetPlus = arguments[1];
+                    offsetPlus.setValue((offset + 6));
+                    return this.read48Signed(offset);
+                }
+                else if (arguments.length == 1) {
                     var offset = arguments[0];
                     var num = this.read48(offset);
                     if ((num > 140737488355327)) {
                         num = (num - 281474976710655);
                     }
                     return num;
-                }
-                else if (arguments.length == 2) {
-                    var offset = arguments[0];
-                    var offsetPlus = arguments[1];
-                    offsetPlus.setValue((offset + 6));
-                    return this.read48Signed(offset);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34503,34 +38435,34 @@ function makeMediaStream() {
                 }
             };
             DataBuffer.prototype.read56 = function () {
-                if (arguments.length == 2) {
+                if (arguments.length == 1) {
+                    var offset = arguments[0];
+                    return fm.icelink.Binary.fromBytes56(this.getData(), (this.getIndex() + offset), this.getLittleEndian());
+                }
+                else if (arguments.length == 2) {
                     var offset = arguments[0];
                     var offsetPlus = arguments[1];
                     offsetPlus.setValue((offset + 7));
                     return this.read56(offset);
-                }
-                else if (arguments.length == 1) {
-                    var offset = arguments[0];
-                    return fm.icelink.Binary.fromBytes56(this.getData(), (this.getIndex() + offset), this.getLittleEndian());
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
             DataBuffer.prototype.read56Signed = function () {
-                if (arguments.length == 1) {
+                if (arguments.length == 2) {
+                    var offset = arguments[0];
+                    var offsetPlus = arguments[1];
+                    offsetPlus.setValue((offset + 7));
+                    return this.read56Signed(offset);
+                }
+                else if (arguments.length == 1) {
                     var offset = arguments[0];
                     var num = this.read56(offset);
                     if ((num > 36028797018963967)) {
                         num = (num - 72057594037927935);
                     }
                     return num;
-                }
-                else if (arguments.length == 2) {
-                    var offset = arguments[0];
-                    var offsetPlus = arguments[1];
-                    offsetPlus.setValue((offset + 7));
-                    return this.read56Signed(offset);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34592,15 +38524,15 @@ function makeMediaStream() {
                 }
             };
             DataBuffer.prototype.read64Signed = function () {
-                if (arguments.length == 1) {
-                    var offset = arguments[0];
-                    return this.read64(offset);
-                }
-                else if (arguments.length == 2) {
+                if (arguments.length == 2) {
                     var offset = arguments[0];
                     var offsetPlus = arguments[1];
                     offsetPlus.setValue((offset + 8));
                     return this.read64Signed(offset);
+                }
+                else if (arguments.length == 1) {
+                    var offset = arguments[0];
+                    return this.read64(offset);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34684,17 +38616,57 @@ function makeMediaStream() {
                 }
             };
             DataBuffer.prototype.read8Signed = function () {
-                if (arguments.length == 2) {
+                if (arguments.length == 1) {
+                    var offset = arguments[0];
+                    var num = this.read8(offset);
+                    if ((num > 127)) {
+                        num = (num - 255);
+                    }
+                    return num;
+                }
+                else if (arguments.length == 2) {
                     var offset = arguments[0];
                     var offsetPlus = arguments[1];
                     offsetPlus.setValue((offset + 1));
                     return this.read8Signed(offset);
                 }
-                else if (arguments.length == 1) {
-                    var offset = arguments[0];
-                    var num = this.read8(offset);
-                    if ((num > 127)) {
-                        num = (num - 255);
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read9'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 9-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bitoffset.
+            @return {number}
+            */
+            DataBuffer.prototype.read9 = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    return fm.icelink.Binary.fromBytes9(this.getData(), (this.getIndex() + offset), bitOffset);
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-read9Signed'>&nbsp;</span>**/
+            /**
+             <div>
+             Reads a 9-bit signed value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {number}
+            */
+            DataBuffer.prototype.read9Signed = function (offset, bitOffset) {
+                if (arguments.length == 2) {
+                    var num = this.read9(offset, bitOffset);
+                    if ((num > 255)) {
+                        num = (num - 511);
                     }
                     return num;
                 }
@@ -34705,8 +38677,8 @@ function makeMediaStream() {
             DataBuffer.prototype.readUtf8String = function () {
                 if (arguments.length == 2) {
                     var offset = arguments[0];
-                    var length_24 = arguments[1];
-                    return fm.icelink.Encoding.getUtf8().getString(this.getData(), (this.getIndex() + offset), length_24);
+                    var length_26 = arguments[1];
+                    return fm.icelink.Encoding.getUtf8().getString(this.getData(), (this.getIndex() + offset), length_26);
                 }
                 else if (arguments.length == 1) {
                     var offset = arguments[0];
@@ -34717,44 +38689,40 @@ function makeMediaStream() {
                 }
             };
             DataBuffer.prototype.resize = function () {
-                if (arguments.length == 1) {
-                    var newLength = arguments[0];
-                    this.resize(newLength, -1);
-                }
-                else if (arguments.length == 3) {
+                if (arguments.length == 3) {
                     var newLength = arguments[0];
                     var offset = arguments[1];
                     var setZero = arguments[2];
-                    var length_25 = (newLength - this.getLength());
-                    if ((length_25 < 0)) {
-                        length_25 = -length_25;
+                    var length_27 = (newLength - this.getLength());
+                    if ((length_27 < 0)) {
+                        length_27 = -length_27;
                         if ((offset < 0)) {
                             if (setZero) {
-                                fm.icelink.BitAssistant.set(this.getData(), newLength, length_25, 0);
+                                fm.icelink.BitAssistant.set(this.getData(), newLength, length_27, 0);
                             }
                         }
                         else {
                             if ((offset <= this.getIndex())) {
                                 if (setZero) {
-                                    fm.icelink.BitAssistant.set(this.getData(), this.getIndex(), length_25, 0);
+                                    fm.icelink.BitAssistant.set(this.getData(), this.getIndex(), length_27, 0);
                                 }
-                                this.setIndex((this.getIndex() + length_25));
+                                this.setIndex((this.getIndex() + length_27));
                             }
                             else {
                                 if ((offset >= this.getIndex())) {
                                     var num2 = (offset - this.getIndex());
-                                    var num3 = ((this.getLength() - offset) - length_25);
+                                    var num3 = ((this.getLength() - offset) - length_27);
                                     if ((num2 < num3)) {
-                                        fm.icelink.BitAssistant.copy(this.getData(), this.getIndex(), this.getData(), (this.getIndex() + length_25), num2);
+                                        fm.icelink.BitAssistant.copy(this.getData(), this.getIndex(), this.getData(), (this.getIndex() + length_27), num2);
                                         if (setZero) {
-                                            fm.icelink.BitAssistant.set(this.getData(), this.getIndex(), length_25, 0);
+                                            fm.icelink.BitAssistant.set(this.getData(), this.getIndex(), length_27, 0);
                                         }
-                                        this.setIndex((this.getIndex() + length_25));
+                                        this.setIndex((this.getIndex() + length_27));
                                     }
                                     else {
                                         fm.icelink.BitAssistant.copy(this.getData(), (this.getLength() - num3), this.getData(), (this.getIndex() + num2), num3);
                                         if (setZero) {
-                                            fm.icelink.BitAssistant.set(this.getData(), newLength, length_25, 0);
+                                            fm.icelink.BitAssistant.set(this.getData(), newLength, length_27, 0);
                                         }
                                     }
                                 }
@@ -34762,18 +38730,18 @@ function makeMediaStream() {
                         }
                     }
                     else {
-                        if ((length_25 > 0)) {
+                        if ((length_27 > 0)) {
                             var index = void 0;
                             var num5 = void 0;
                             var buffer = void 0;
                             if ((offset >= this.getIndex())) {
                                 if (((this.getIndex() + newLength) < this.getData().length)) {
                                     index = (this.getIndex() + offset);
-                                    num5 = ((this.getIndex() + offset) + length_25);
+                                    num5 = ((this.getIndex() + offset) + length_27);
                                     var num6 = (this.getLength() - offset);
                                     fm.icelink.BitAssistant.copy(this.getData(), index, this.getData(), num5, num6);
                                     if (setZero) {
-                                        fm.icelink.BitAssistant.set(this.getData(), index, length_25, 0);
+                                        fm.icelink.BitAssistant.set(this.getData(), index, length_27, 0);
                                     }
                                 }
                                 else {
@@ -34783,7 +38751,7 @@ function makeMediaStream() {
                                     buffer = new Uint8Array((this.getIndex() + newLength));
                                     fm.icelink.BitAssistant.copy(this.getData(), this.getIndex(), buffer, this.getIndex(), offset);
                                     index = (this.getIndex() + offset);
-                                    num5 = ((this.getIndex() + offset) + length_25);
+                                    num5 = ((this.getIndex() + offset) + length_27);
                                     var num7 = (this.getLength() - offset);
                                     fm.icelink.BitAssistant.copy(this.getData(), index, buffer, num5, num7);
                                     this.setInnerData(buffer);
@@ -34793,7 +38761,7 @@ function makeMediaStream() {
                                 if ((offset < 0)) {
                                     if (((this.getIndex() + newLength) <= this.getData().length)) {
                                         if (setZero) {
-                                            fm.icelink.BitAssistant.set(this.getData(), this.getLength(), length_25, 0);
+                                            fm.icelink.BitAssistant.set(this.getData(), this.getLength(), length_27, 0);
                                         }
                                     }
                                     else {
@@ -34815,7 +38783,7 @@ function makeMediaStream() {
                                         }
                                         buffer = new Uint8Array(newLength);
                                         index = this.getIndex();
-                                        num5 = length_25;
+                                        num5 = length_27;
                                         fm.icelink.BitAssistant.copy(this.getData(), index, buffer, num5, this.getLength());
                                         this.setInnerData(buffer);
                                         this.setIndex(0);
@@ -34830,6 +38798,10 @@ function makeMediaStream() {
                     var newLength = arguments[0];
                     var offset = arguments[1];
                     this.resize(newLength, offset, false);
+                }
+                else if (arguments.length == 1) {
+                    var newLength = arguments[0];
+                    this.resize(newLength, -1);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34872,11 +38844,7 @@ function makeMediaStream() {
                 }
             };
             DataBuffer.prototype.set = function () {
-                if (arguments.length == 1) {
-                    var value = arguments[0];
-                    this.set(value, 0, this.getLength());
-                }
-                else if (arguments.length == 2) {
+                if (arguments.length == 2) {
                     var value = arguments[0];
                     var offset = arguments[1];
                     fm.icelink.BitAssistant.set(this.getData(), (this.getIndex() + offset), (this.getLength() - offset), value);
@@ -34884,8 +38852,12 @@ function makeMediaStream() {
                 else if (arguments.length == 3) {
                     var value = arguments[0];
                     var offset = arguments[1];
-                    var length_26 = arguments[2];
-                    fm.icelink.BitAssistant.set(this.getData(), (this.getIndex() + offset), length_26, value);
+                    var length_28 = arguments[2];
+                    fm.icelink.BitAssistant.set(this.getData(), (this.getIndex() + offset), length_28, value);
+                }
+                else if (arguments.length == 1) {
+                    var value = arguments[0];
+                    this.set(value, 0, this.getLength());
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -34974,14 +38946,14 @@ function makeMediaStream() {
                 }
                 else if (arguments.length == 2) {
                     var offset = arguments[0];
-                    var length_27 = arguments[1];
-                    if ((((offset + length_27) > this.getLength()) || (length_27 < 0))) {
+                    var length_29 = arguments[1];
+                    if ((((offset + length_29) > this.getLength()) || (length_29 < 0))) {
                         return null;
                     }
                     if (this.getIsPooled()) {
-                        return new fm.icelink.DataBufferSubset(this, (this.getIndex() + offset), length_27);
+                        return new fm.icelink.DataBufferSubset(this, (this.getIndex() + offset), length_29);
                     }
-                    return new fm.icelink.DataBuffer(this.getData(), (this.getIndex() + offset), length_27, this.getLittleEndian());
+                    return new fm.icelink.DataBuffer(this.getData(), (this.getIndex() + offset), length_29, this.getLittleEndian());
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -35059,10 +39031,70 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead10'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 10-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead10 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes10(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead11'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read an 11-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead11 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes11(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead12'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 12-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead12 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes12(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.DataBuffer-tryRead13'>&nbsp;</span>**/
             /**
              <div>
-             Tries to read a 13-bit value;
+             Tries to read a 13-bit value.
              </div>
     
             @param {number} offset The offset.
@@ -35072,7 +39104,47 @@ function makeMediaStream() {
             */
             DataBuffer.prototype.tryRead13 = function (offset, bitOffset, value) {
                 if (arguments.length == 3) {
-                    var _var0 = fm.icelink.Binary.tryFromBytes13(this.getData(), (this.getIndex() + offset), bitOffset, this.getLittleEndian(), value);
+                    var _var0 = fm.icelink.Binary.tryFromBytes13(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead14'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 14-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead14 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes14(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead15'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 15-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead15 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes15(this.getData(), (this.getIndex() + offset), bitOffset, value);
                     return _var0;
                 }
                 else {
@@ -35098,6 +39170,66 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead17'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 17-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead17 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes17(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead18'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read an 18-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead18 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes18(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead19'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 19-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead19 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes19(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.DataBuffer-tryRead2'>&nbsp;</span>**/
             /**
              <div>
@@ -35112,6 +39244,86 @@ function makeMediaStream() {
             DataBuffer.prototype.tryRead2 = function (offset, bitOffset, value) {
                 if (arguments.length == 3) {
                     var _var0 = fm.icelink.Binary.tryFromBytes2(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead20'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 20-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead20 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes20(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead21'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 21-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead21 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes21(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead22'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 22-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead22 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes22(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead23'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 23-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead23 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes23(this.getData(), (this.getIndex() + offset), bitOffset, value);
                     return _var0;
                 }
                 else {
@@ -35351,8 +39563,35 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.DataBuffer-tryRead9'>&nbsp;</span>**/
+            /**
+             <div>
+             Tries to read a 9-bit value.
+             </div>
+    
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @param {fm.icelink.Holder<number>} value The value.
+            @return {boolean}
+            */
+            DataBuffer.prototype.tryRead9 = function (offset, bitOffset, value) {
+                if (arguments.length == 3) {
+                    var _var0 = fm.icelink.Binary.tryFromBytes9(this.getData(), (this.getIndex() + offset), bitOffset, value);
+                    return _var0;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             DataBuffer.prototype.write = function () {
-                if (arguments.length == 1) {
+                if (arguments.length == 3) {
+                    var buffer = arguments[0];
+                    var offset = arguments[1];
+                    var offsetPlus = arguments[2];
+                    offsetPlus.setValue((offset + buffer.getLength()));
+                    this.write(buffer, offset);
+                }
+                else if (arguments.length == 1) {
                     var buffer = arguments[0];
                     this.write(buffer, 0);
                 }
@@ -35360,13 +39599,6 @@ function makeMediaStream() {
                     var buffer = arguments[0];
                     var offset = arguments[1];
                     fm.icelink.BitAssistant.copy(buffer.getData(), buffer.getIndex(), this.getData(), (this.getIndex() + offset), buffer.getLength());
-                }
-                else if (arguments.length == 3) {
-                    var buffer = arguments[0];
-                    var offset = arguments[1];
-                    var offsetPlus = arguments[2];
-                    offsetPlus.setValue((offset + buffer.getLength()));
-                    this.write(buffer, offset);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -35391,6 +39623,63 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.DataBuffer-write10'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes a 10-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write10 = function (value, offset, bitOffset) {
+                if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes10(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-write11'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes an 11-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write11 = function (value, offset, bitOffset) {
+                if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes11(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-write12'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes a 12-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write12 = function (value, offset, bitOffset) {
+                if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes12(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.DataBuffer-write13'>&nbsp;</span>**/
             /**
              <div>
@@ -35410,18 +39699,75 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            DataBuffer.prototype.write16 = function () {
+            /**<span id='method-fm.icelink.DataBuffer-write14'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes a 14-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write14 = function (value, offset, bitOffset) {
                 if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes14(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-write15'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes a 15-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write15 = function (value, offset, bitOffset) {
+                if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes15(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            DataBuffer.prototype.write16 = function () {
+                if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var offset = arguments[1];
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes16(value, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else if (arguments.length == 3) {
                     var value = arguments[0];
                     var offset = arguments[1];
                     var offsetPlus = arguments[2];
                     offsetPlus.setValue((offset + 2));
                     return this.write16(value, offset);
                 }
-                else if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var offset = arguments[1];
-                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes16(value, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-write17'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes a 17-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write17 = function (value, offset, bitOffset) {
+                if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes17(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -35446,6 +39792,25 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.DataBuffer-write19'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes a 19-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write19 = function (value, offset, bitOffset) {
+                if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes19(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             /**<span id='method-fm.icelink.DataBuffer-write2'>&nbsp;</span>**/
             /**
              <div>
@@ -35465,18 +39830,94 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            DataBuffer.prototype.write24 = function () {
+            /**<span id='method-fm.icelink.DataBuffer-write20'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes a 20-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write20 = function (value, offset, bitOffset) {
                 if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes20(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-write21'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes a 21-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write21 = function (value, offset, bitOffset) {
+                if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes21(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-write22'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes a 22-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write22 = function (value, offset, bitOffset) {
+                if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes22(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataBuffer-write23'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes a 23-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write23 = function (value, offset, bitOffset) {
+                if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes23(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            DataBuffer.prototype.write24 = function () {
+                if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var offset = arguments[1];
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes24(value, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else if (arguments.length == 3) {
                     var value = arguments[0];
                     var offset = arguments[1];
                     var offsetPlus = arguments[2];
                     offsetPlus.setValue((offset + 3));
                     return this.write24(value, offset);
-                }
-                else if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var offset = arguments[1];
-                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes24(value, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -35502,17 +39943,17 @@ function makeMediaStream() {
                 }
             };
             DataBuffer.prototype.write32 = function () {
-                if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var offset = arguments[1];
-                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes32(value, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
-                }
-                else if (arguments.length == 3) {
+                if (arguments.length == 3) {
                     var value = arguments[0];
                     var offset = arguments[1];
                     var offsetPlus = arguments[2];
                     offsetPlus.setValue((offset + 4));
                     return this.write32(value, offset);
+                }
+                else if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var offset = arguments[1];
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes32(value, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -35555,17 +39996,17 @@ function makeMediaStream() {
                 }
             };
             DataBuffer.prototype.write48 = function () {
-                if (arguments.length == 2) {
-                    var value = arguments[0];
-                    var offset = arguments[1];
-                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes48(value, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
-                }
-                else if (arguments.length == 3) {
+                if (arguments.length == 3) {
                     var value = arguments[0];
                     var offset = arguments[1];
                     var offsetPlus = arguments[2];
                     offsetPlus.setValue((offset + 6));
                     return this.write48(value, offset);
+                }
+                else if (arguments.length == 2) {
+                    var value = arguments[0];
+                    var offset = arguments[1];
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes48(value, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -35679,8 +40120,36 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.DataBuffer-write9'>&nbsp;</span>**/
+            /**
+             <div>
+             Writes a 9-bit value.
+             </div>
+    
+            @param {number} value The value.
+            @param {number} offset The offset.
+            @param {number} bitOffset The bit offset.
+            @return {boolean}
+            */
+            DataBuffer.prototype.write9 = function (value, offset, bitOffset) {
+                if (arguments.length == 3) {
+                    return (!fm.icelink.Global.equals(fm.icelink.Binary.toBytes9(value, bitOffset, this.getLittleEndian(), this.getData(), (this.getIndex() + offset)), null));
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             DataBuffer.prototype.writeBytes = function () {
-                if (arguments.length == 1) {
+                if (arguments.length == 5) {
+                    var bytes = arguments[0];
+                    var bytesIndex = arguments[1];
+                    var bytesLength = arguments[2];
+                    var offset = arguments[3];
+                    var offsetPlus = arguments[4];
+                    offsetPlus.setValue((offset + bytesLength));
+                    this.writeBytes(bytes, bytesIndex, bytesLength, offset);
+                }
+                else if (arguments.length == 1) {
                     var bytes = arguments[0];
                     this.writeBytes(bytes, 0, bytes.length, 0);
                 }
@@ -35688,6 +40157,12 @@ function makeMediaStream() {
                     var bytes = arguments[0];
                     var offset = arguments[1];
                     this.writeBytes(bytes, 0, bytes.length, offset);
+                }
+                else if (arguments.length == 3) {
+                    var bytes = arguments[0];
+                    var bytesIndex = arguments[1];
+                    var offset = arguments[2];
+                    this.writeBytes(bytes, bytesIndex, (bytes.length - bytesIndex), offset);
                 }
                 else if (arguments.length == 4) {
                     var bytes = arguments[0];
@@ -35698,21 +40173,6 @@ function makeMediaStream() {
                         throw new fm.icelink.Exception("Would write out of the allowed bounds for this data buffer.");
                     }
                     fm.icelink.BitAssistant.copy(bytes, bytesIndex, this.getData(), (this.getIndex() + offset), bytesLength);
-                }
-                else if (arguments.length == 5) {
-                    var bytes = arguments[0];
-                    var bytesIndex = arguments[1];
-                    var bytesLength = arguments[2];
-                    var offset = arguments[3];
-                    var offsetPlus = arguments[4];
-                    offsetPlus.setValue((offset + bytesLength));
-                    this.writeBytes(bytes, bytesIndex, bytesLength, offset);
-                }
-                else if (arguments.length == 3) {
-                    var bytes = arguments[0];
-                    var bytesIndex = arguments[1];
-                    var offset = arguments[2];
-                    this.writeBytes(bytes, bytesIndex, (bytes.length - bytesIndex), offset);
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -35764,8 +40224,8 @@ function makeMediaStream() {
                 if (__arguments.length == 3) {
                     var buffer_1 = __arguments[0];
                     var index_1 = __arguments[1];
-                    var length_28 = __arguments[2];
-                    _this = _super.call(this, null, index_1, length_28, buffer_1.getLittleEndian()) || this;
+                    var length_30 = __arguments[2];
+                    _this = _super.call(this, null, index_1, length_30, buffer_1.getLittleEndian()) || this;
                     _this.setParent(buffer_1);
                 }
                 else {
@@ -35796,11 +40256,12 @@ function makeMediaStream() {
              </div>
     
     
-            @return {void}
+            @return {fm.icelink.DataBuffer}
             */
             DataBufferSubset.prototype.free = function () {
                 if (arguments.length == 0) {
                     this.getParent().free();
+                    return this;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -35920,8 +40381,8 @@ function makeMediaStream() {
             DataBufferSubset.prototype.subset = function () {
                 if (arguments.length == 2) {
                     var offset = arguments[0];
-                    var length_29 = arguments[1];
-                    return this.getParent().subset((offset + _super.prototype.getIndex.call(this)), length_29);
+                    var length_31 = arguments[1];
+                    return this.getParent().subset((offset + _super.prototype.getIndex.call(this)), length_31);
                 }
                 else if (arguments.length == 1) {
                     var offset = arguments[0];
@@ -35941,35 +40402,55 @@ function makeMediaStream() {
     var icelink;
     (function (icelink) {
         /**
-        @internal
+         <div>
+         LogItem class that contains the log event details.
+         </div>
+    
         */
-        var LogQueueItem = /** @class */ (function () {
-            function LogQueueItem(timestamp, tag, level, msg, ex) {
+        var LogEvent = /** @class */ (function () {
+            function LogEvent(timestamp, tag, scope, level, msg, ex, threadId) {
                 var __arguments = new Array(arguments.length);
                 for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
                     __arguments[__argumentIndex] = arguments[__argumentIndex];
                 }
-                if (__arguments.length == 5) {
+                if (__arguments.length == 7) {
                     var timestamp_2 = __arguments[0];
                     var tag_2 = __arguments[1];
-                    var level_1 = __arguments[2];
-                    var msg_1 = __arguments[3];
-                    var ex_1 = __arguments[4];
+                    var scope_1 = __arguments[2];
+                    var level_1 = __arguments[3];
+                    var msg_1 = __arguments[4];
+                    var ex_1 = __arguments[5];
+                    var threadId_1 = __arguments[6];
                     //super();
+                    this.fmicelinkLogEventInit();
                     this.setTimeStamp(timestamp_2);
                     this.setTag(tag_2);
+                    this.setScope(scope_1);
                     this.setLogLevel(level_1);
                     this.setMessage(msg_1);
                     this.setException(ex_1);
+                    this.setThreadId(threadId_1);
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
                 }
             }
-            LogQueueItem.prototype.getTypeString = function () {
-                return '[fm.icelink.LogQueueItem]';
+            LogEvent.prototype.getTypeString = function () {
+                return '[fm.icelink.LogEvent]';
             };
-            LogQueueItem.prototype.getException = function () {
+            LogEvent.prototype.fmicelinkLogEventInit = function () {
+                this._threadId = 0;
+            };
+            /**<span id='method-fm.icelink.LogEvent-getException'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the exception if one exists for this log event.
+             </div>
+    
+    
+            @return {fm.icelink.Exception}
+            */
+            LogEvent.prototype.getException = function () {
                 if (arguments.length == 0) {
                     return this._exception;
                 }
@@ -35977,7 +40458,16 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            LogQueueItem.prototype.getLogLevel = function () {
+            /**<span id='method-fm.icelink.LogEvent-getLogLevel'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the level of this log event.
+             </div>
+    
+    
+            @return {fm.icelink.LogLevel}
+            */
+            LogEvent.prototype.getLogLevel = function () {
                 if (arguments.length == 0) {
                     return this._logLevel;
                 }
@@ -35985,7 +40475,16 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            LogQueueItem.prototype.getMessage = function () {
+            /**<span id='method-fm.icelink.LogEvent-getMessage'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the log message.
+             </div>
+    
+    
+            @return {string}
+            */
+            LogEvent.prototype.getMessage = function () {
                 if (arguments.length == 0) {
                     return this._message;
                 }
@@ -35993,7 +40492,33 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            LogQueueItem.prototype.getTag = function () {
+            /**<span id='method-fm.icelink.LogEvent-getScope'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the scope of this log event.
+             </div>
+    
+    
+            @return {string}
+            */
+            LogEvent.prototype.getScope = function () {
+                if (arguments.length == 0) {
+                    return this._scope;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.LogEvent-getTag'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the tag of this log event.
+             </div>
+    
+    
+            @return {string}
+            */
+            LogEvent.prototype.getTag = function () {
                 if (arguments.length == 0) {
                     return this._tag;
                 }
@@ -36001,7 +40526,33 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            LogQueueItem.prototype.getTimeStamp = function () {
+            /**<span id='method-fm.icelink.LogEvent-getThreadId'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the id of the thread this log event occurred on.
+             </div>
+    
+    
+            @return {number}
+            */
+            LogEvent.prototype.getThreadId = function () {
+                if (arguments.length == 0) {
+                    return this._threadId;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.LogEvent-getTimeStamp'>&nbsp;</span>**/
+            /**
+             <div>
+             Gets the timestamp when this log event occurred.
+             </div>
+    
+    
+            @return {fm.icelink.DateTime}
+            */
+            LogEvent.prototype.getTimeStamp = function () {
                 if (arguments.length == 0) {
                     return this._timeStamp;
                 }
@@ -36009,7 +40560,11 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            LogQueueItem.prototype.setException = function (value) {
+            /**
+            @internal
+    
+            */
+            LogEvent.prototype.setException = function (value) {
                 if (arguments.length == 1) {
                     this._exception = value;
                 }
@@ -36017,7 +40572,11 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            LogQueueItem.prototype.setLogLevel = function (value) {
+            /**
+            @internal
+    
+            */
+            LogEvent.prototype.setLogLevel = function (value) {
                 if (arguments.length == 1) {
                     this._logLevel = value;
                 }
@@ -36025,7 +40584,11 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            LogQueueItem.prototype.setMessage = function (value) {
+            /**
+            @internal
+    
+            */
+            LogEvent.prototype.setMessage = function (value) {
                 if (arguments.length == 1) {
                     this._message = value;
                 }
@@ -36033,7 +40596,23 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            LogQueueItem.prototype.setTag = function (value) {
+            /**
+            @internal
+    
+            */
+            LogEvent.prototype.setScope = function (value) {
+                if (arguments.length == 1) {
+                    this._scope = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            LogEvent.prototype.setTag = function (value) {
                 if (arguments.length == 1) {
                     this._tag = value;
                 }
@@ -36041,7 +40620,23 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            LogQueueItem.prototype.setTimeStamp = function (value) {
+            /**
+            @internal
+    
+            */
+            LogEvent.prototype.setThreadId = function (value) {
+                if (arguments.length == 1) {
+                    this._threadId = value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**
+            @internal
+    
+            */
+            LogEvent.prototype.setTimeStamp = function (value) {
                 if (arguments.length == 1) {
                     this._timeStamp = value;
                 }
@@ -36049,9 +40644,9 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
-            return LogQueueItem;
+            return LogEvent;
         }());
-        icelink.LogQueueItem = LogQueueItem;
+        icelink.LogEvent = LogEvent;
     })(icelink = fm.icelink || (fm.icelink = {}));
 })(fm || (fm = {}));
 
@@ -36224,7 +40819,7 @@ function makeMediaStream() {
             */
             UnixTimestamp.ticksToUnix = function (ticks) {
                 if (arguments.length == 1) {
-                    return fm.icelink.MathAssistant.floor(((ticks - fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__baseTime.getTicks()) / fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__ticksPerSecond));
+                    return icelink.MathAssistant.floor((ticks - fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__baseTicks) / fm.icelink.Constants.getTicksPerSecond());
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -36241,7 +40836,7 @@ function makeMediaStream() {
             */
             UnixTimestamp.ticksToUnixMillis = function (ticks) {
                 if (arguments.length == 1) {
-                    return fm.icelink.MathAssistant.floor(((ticks - fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__baseTime.getTicks()) / fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__ticksPerMillisecond));
+                    return icelink.MathAssistant.floor((ticks - fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__baseTicks) / fm.icelink.Constants.getTicksPerMillisecond());
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -36275,7 +40870,7 @@ function makeMediaStream() {
             */
             UnixTimestamp.unixMillisToTicks = function (unix) {
                 if (arguments.length == 1) {
-                    return (fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__baseTime.getTicks() + (unix * fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__ticksPerMillisecond));
+                    return (fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__baseTicks + (unix * fm.icelink.Constants.getTicksPerMillisecond()));
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -36309,7 +40904,7 @@ function makeMediaStream() {
             */
             UnixTimestamp.unixToTicks = function (unix) {
                 if (arguments.length == 1) {
-                    return (fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__baseTime.getTicks() + (unix * fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__ticksPerSecond));
+                    return (fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__baseTicks + (unix * fm.icelink.Constants.getTicksPerSecond()));
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -36318,9 +40913,9 @@ function makeMediaStream() {
             /** @internal */
             UnixTimestamp.fmicelinkUnixTimestampInitialize = function () {
                 if (!fm.icelink.UnixTimestamp.__fmicelinkUnixTimestampInitialized) {
-                    fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__baseTime = new fm.icelink.DateTime(1970, 1, 1, 0, 0, 0);
-                    fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__ticksPerSecond = 10000000;
-                    fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__ticksPerMillisecond = 10000;
+                    UnixTimestamp.fm_icelink_UnixTimestamp__baseTicks = 0;
+                    var time = new fm.icelink.DateTime(1970, 1, 1, 0, 0, 0);
+                    fm.icelink.UnixTimestamp.fm_icelink_UnixTimestamp__baseTicks = time.getTicks();
                 }
                 fm.icelink.UnixTimestamp.__fmicelinkUnixTimestampInitialized = true;
             };
@@ -36349,10 +40944,12 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkDoubleHolderInit();
                 }
                 else if (__arguments.length == 1) {
                     var value = __arguments[0];
                     //super();
+                    this.fmicelinkDoubleHolderInit();
                     this.setValue(value);
                 }
                 else {
@@ -36361,6 +40958,9 @@ function makeMediaStream() {
             }
             DoubleHolder.prototype.getTypeString = function () {
                 return '[fm.icelink.DoubleHolder]';
+            };
+            DoubleHolder.prototype.fmicelinkDoubleHolderInit = function () {
+                this._value = 0;
             };
             /**<span id='method-fm.icelink.DoubleHolder-getValue'>&nbsp;</span>**/
             /**
@@ -36819,10 +41419,12 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkFloatHolderInit();
                 }
                 else if (__arguments.length == 1) {
                     var value = __arguments[0];
                     //super();
+                    this.fmicelinkFloatHolderInit();
                     this.setValue(value);
                 }
                 else {
@@ -36831,6 +41433,9 @@ function makeMediaStream() {
             }
             FloatHolder.prototype.getTypeString = function () {
                 return '[fm.icelink.FloatHolder]';
+            };
+            FloatHolder.prototype.fmicelinkFloatHolderInit = function () {
+                this._value = 0;
             };
             /**<span id='method-fm.icelink.FloatHolder-getValue'>&nbsp;</span>**/
             /**
@@ -36951,6 +41556,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkHttpRequestArgsInit();
                     _this.setTimeout(15000);
                     _this.setMethod(fm.icelink.HttpMethod.Post);
                     _this.__headers = new fm.icelink.NameValueCollection();
@@ -36962,6 +41568,9 @@ function makeMediaStream() {
             }
             HttpRequestArgs.prototype.getTypeString = function () {
                 return '[fm.icelink.HttpRequestArgs]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            HttpRequestArgs.prototype.fmicelinkHttpRequestArgsInit = function () {
+                this._timeout = 0;
             };
             /**<span id='method-fm.icelink.HttpRequestArgs-getBinaryContent'>&nbsp;</span>**/
             /**
@@ -37089,7 +41698,7 @@ function makeMediaStream() {
             /**
              <div>
              Gets the number of milliseconds to wait before timing out the HTTP transfer.
-             Defaults to 15000 (15 seconds).
+             Defaults to 15000 ms (15 seconds).
              </div>
     
     
@@ -37258,7 +41867,7 @@ function makeMediaStream() {
             /**
              <div>
              Sets the number of milliseconds to wait before timing out the HTTP transfer.
-             Defaults to 15000 (15 seconds).
+             Defaults to 15000 ms (15 seconds).
              </div>
     
     
@@ -37450,6 +42059,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkHttpResponseArgsInit();
                     this.setHeaders(new fm.icelink.NameValueCollection());
                 }
                 else if (__arguments.length == 1) {
@@ -37458,6 +42068,7 @@ function makeMediaStream() {
                     __arguments = new Array(0);
                     {
                         //super();
+                        this.fmicelinkHttpResponseArgsInit();
                         this.setHeaders(new fm.icelink.NameValueCollection());
                     }
                     this.setRequestArgs(requestArgs);
@@ -37468,6 +42079,9 @@ function makeMediaStream() {
             }
             HttpResponseArgs.prototype.getTypeString = function () {
                 return '[fm.icelink.HttpResponseArgs]';
+            };
+            HttpResponseArgs.prototype.fmicelinkHttpResponseArgsInit = function () {
+                this._statusCode = 0;
             };
             /**<span id='method-fm.icelink.HttpResponseArgs-getBinaryContent'>&nbsp;</span>**/
             /**
@@ -38261,6 +42875,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkHttpWebRequestSenderInit();
                     _this.__disableJsonp = true;
                     _this.__forceJsonp = false;
                 }
@@ -38271,6 +42886,12 @@ function makeMediaStream() {
             }
             HttpWebRequestSender.prototype.getTypeString = function () {
                 return '[fm.icelink.HttpWebRequestSender]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            HttpWebRequestSender.prototype.fmicelinkHttpWebRequestSenderInit = function () {
+                this.__disableJsonp = false;
+                this.__forceJsonp = false;
+                this._disableCors = false;
+                this._disablePostMessage = false;
             };
             /**<span id='method-fm.icelink.HttpWebRequestSender-getDisableCors'>&nbsp;</span>**/
             /**
@@ -38441,10 +43062,12 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkIntegerHolderInit();
                 }
                 else if (__arguments.length == 1) {
                     var value = __arguments[0];
                     //super();
+                    this.fmicelinkIntegerHolderInit();
                     this.setValue(value);
                 }
                 else {
@@ -38453,6 +43076,9 @@ function makeMediaStream() {
             }
             IntegerHolder.prototype.getTypeString = function () {
                 return '[fm.icelink.IntegerHolder]';
+            };
+            IntegerHolder.prototype.fmicelinkIntegerHolderInit = function () {
+                this._value = 0;
             };
             /**<span id='method-fm.icelink.IntegerHolder-getValue'>&nbsp;</span>**/
             /**
@@ -38514,6 +43140,7 @@ function makeMediaStream() {
                     {
                         var depth = __arguments[0];
                         //super();
+                        this.fmicelinkJsonCheckerInit();
                         if ((depth < 0)) {
                             throw new fm.icelink.Exception("Invalid depth.");
                         }
@@ -38526,6 +43153,7 @@ function makeMediaStream() {
                 else if (__arguments.length == 1) {
                     var depth = __arguments[0];
                     //super();
+                    this.fmicelinkJsonCheckerInit();
                     if ((depth < 0)) {
                         throw new fm.icelink.Exception("Invalid depth.");
                     }
@@ -38540,6 +43168,11 @@ function makeMediaStream() {
             }
             JsonChecker.prototype.getTypeString = function () {
                 return '[fm.icelink.JsonChecker]';
+            };
+            JsonChecker.prototype.fmicelinkJsonCheckerInit = function () {
+                this.__depth = 0;
+                this.__offset = 0;
+                this.__state = 0;
             };
             /**
             @internal
@@ -39452,6 +44085,7 @@ function makeMediaStream() {
             /** @internal */
             LogConfiguration.fmicelinkLogConfigurationInitialize = function () {
                 if (!fm.icelink.LogConfiguration.__fmicelinkLogConfigurationInitialized) {
+                    LogConfiguration.fm_icelink_LogConfiguration___providerCount = 0;
                     fm.icelink.LogConfiguration.fm_icelink_LogConfiguration___lock = new Object();
                     fm.icelink.LogConfiguration.setDefaultLogLevel(fm.icelink.LogLevel.Info);
                     fm.icelink.LogConfiguration.fm_icelink_LogConfiguration___logProviders = new Array(0);
@@ -39533,10 +44167,12 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkLongHolderInit();
                 }
                 else if (__arguments.length == 1) {
                     var value = __arguments[0];
                     //super();
+                    this.fmicelinkLongHolderInit();
                     this.setValue(value);
                 }
                 else {
@@ -39545,6 +44181,9 @@ function makeMediaStream() {
             }
             LongHolder.prototype.getTypeString = function () {
                 return '[fm.icelink.LongHolder]';
+            };
+            LongHolder.prototype.fmicelinkLongHolderInit = function () {
+                this._value = 0;
             };
             /**<span id='method-fm.icelink.LongHolder-getValue'>&nbsp;</span>**/
             /**
@@ -39697,15 +44336,11 @@ function makeMediaStream() {
              Logs a message at the specified log level.
              </div>
     
-            @param {fm.icelink.DateTime} timestamp The timestamp when the event occurred.
-            @param {fm.icelink.LogLevel} level The log level.
-            @param {string} tag The logger tag.
-            @param {string} message The message.
-            @param {fm.icelink.Exception} ex The exception.
+            @param {fm.icelink.LogEvent} logItem The log event containing the details.
             @return {void}
             */
-            NullLogProvider.prototype.doLog = function (timestamp, level, tag, message, ex) {
-                if (arguments.length == 5) {
+            NullLogProvider.prototype.doLog = function (logItem) {
+                if (arguments.length == 1) {
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -39775,10 +44410,12 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkShortHolderInit();
                 }
                 else if (__arguments.length == 1) {
                     var value = __arguments[0];
                     //super();
+                    this.fmicelinkShortHolderInit();
                     this.setValue(value);
                 }
                 else {
@@ -39787,6 +44424,9 @@ function makeMediaStream() {
             }
             ShortHolder.prototype.getTypeString = function () {
                 return '[fm.icelink.ShortHolder]';
+            };
+            ShortHolder.prototype.fmicelinkShortHolderInit = function () {
+                this._value = 0;
             };
             /**<span id='method-fm.icelink.ShortHolder-getValue'>&nbsp;</span>**/
             /**
@@ -39861,7 +44501,7 @@ function makeMediaStream() {
             Sort.doQuickSort = function (array, left, right, comparer) {
                 if (arguments.length == 4) {
                     if ((left < right)) {
-                        var pivotIndex = (left + ((right - left) / 2));
+                        var pivotIndex = (left + icelink.MathAssistant.floor((right - left) / 2));
                         var num2 = fm.icelink.Sort.partition(array, left, right, pivotIndex, comparer);
                         fm.icelink.Sort.doQuickSort(array, left, (num2 - 1), comparer);
                         fm.icelink.Sort.doQuickSort(array, (num2 + 1), right, comparer);
@@ -40153,16 +44793,12 @@ function makeMediaStream() {
              Logs a message at the specified log level.
              </div>
     
-            @param {fm.icelink.DateTime} timestamp The timestamp when the event occurred.
-            @param {fm.icelink.LogLevel} level The log level.
-            @param {string} tag The logger tag.
-            @param {string} message The message.
-            @param {fm.icelink.Exception} ex The exception.
+            @param {fm.icelink.LogEvent} logItem The log event containing the details.
             @return {void}
             */
-            TextLogProvider.prototype.doLog = function (timestamp, level, tag, message, ex) {
-                if (arguments.length == 5) {
-                    this.writeLine(_super.prototype.generateLogLine.call(this, timestamp, level, tag, message, ex));
+            TextLogProvider.prototype.doLog = function (logItem) {
+                if (arguments.length == 1) {
+                    this.writeLine(_super.prototype.generateLogLine.call(this, logItem));
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -40326,6 +44962,7 @@ function makeMediaStream() {
                 if (__arguments.length == 1) {
                     var exception_1 = __arguments[0];
                     //super();
+                    this.fmicelinkUnhandledExceptionArgsInit();
                     this.__exception = exception_1;
                 }
                 else {
@@ -40334,6 +44971,9 @@ function makeMediaStream() {
             }
             UnhandledExceptionArgs.prototype.getTypeString = function () {
                 return '[fm.icelink.UnhandledExceptionArgs]';
+            };
+            UnhandledExceptionArgs.prototype.fmicelinkUnhandledExceptionArgsInit = function () {
+                this._handled = false;
             };
             /**<span id='method-fm.icelink.UnhandledExceptionArgs-getException'>&nbsp;</span>**/
             /**
@@ -40426,8 +45066,8 @@ function makeMediaStream() {
                 if (arguments.length == 3) {
                     var input = arguments[0];
                     var index = arguments[1];
-                    var length_30 = arguments[2];
-                    return fm.icelink.Encoding.getUtf8().getString(input, index, length_30);
+                    var length_32 = arguments[2];
+                    return fm.icelink.Encoding.getUtf8().getString(input, index, length_32);
                 }
                 else if (arguments.length == 1 && (icelink.Util.isNullOrUndefined(arguments[0]) || icelink.Util.isObjectType(arguments[0], '[fm.icelink.DataBuffer]'))) {
                     var buffer = arguments[0];
@@ -40866,6 +45506,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkWebSocketOpenArgsInit();
                     _this.setHandshakeTimeout(15000);
                     _this.setStreamTimeout(40000);
                 }
@@ -40877,10 +45518,14 @@ function makeMediaStream() {
             WebSocketOpenArgs.prototype.getTypeString = function () {
                 return '[fm.icelink.WebSocketOpenArgs]' + ',' + _super.prototype.getTypeString.call(this);
             };
+            WebSocketOpenArgs.prototype.fmicelinkWebSocketOpenArgsInit = function () {
+                this._handshakeTimeout = 0;
+                this._streamTimeout = 0;
+            };
             /**<span id='method-fm.icelink.WebSocketOpenArgs-getHandshakeTimeout'>&nbsp;</span>**/
             /**
              <div>
-             Gets the timeout for the handshake.
+             Gets the timeout for the handshake (in ms).
              </div>
     
     
@@ -41033,7 +45678,7 @@ function makeMediaStream() {
             /**<span id='method-fm.icelink.WebSocketOpenArgs-getStreamTimeout'>&nbsp;</span>**/
             /**
              <div>
-             Gets the timeout for the stream.
+             Gets the timeout for the stream (in ms).
              </div>
     
     
@@ -41050,7 +45695,7 @@ function makeMediaStream() {
             /**<span id='method-fm.icelink.WebSocketOpenArgs-setHandshakeTimeout'>&nbsp;</span>**/
             /**
              <div>
-             Sets the timeout for the handshake.
+             Sets the timeout for the handshake (in ms).
              </div>
     
     
@@ -41212,7 +45857,7 @@ function makeMediaStream() {
             /**<span id='method-fm.icelink.WebSocketOpenArgs-setStreamTimeout'>&nbsp;</span>**/
             /**
              <div>
-             Sets the timeout for the stream.
+             Sets the timeout for the stream (in ms).
              </div>
     
     
@@ -41693,6 +46338,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkWebSocketSendArgsInit();
                     _this.setTimeout(15000);
                 }
                 else {
@@ -41702,6 +46348,9 @@ function makeMediaStream() {
             }
             WebSocketSendArgs.prototype.getTypeString = function () {
                 return '[fm.icelink.WebSocketSendArgs]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            WebSocketSendArgs.prototype.fmicelinkWebSocketSendArgsInit = function () {
+                this._timeout = 0;
             };
             /**<span id='method-fm.icelink.WebSocketSendArgs-getBinaryMessage'>&nbsp;</span>**/
             /**
@@ -41752,7 +46401,7 @@ function makeMediaStream() {
             /**<span id='method-fm.icelink.WebSocketSendArgs-getTimeout'>&nbsp;</span>**/
             /**
              <div>
-             Gets the timeout for the request.
+             Gets the timeout for the request (in ms).
              </div>
     
     
@@ -41805,7 +46454,7 @@ function makeMediaStream() {
             /**<span id='method-fm.icelink.WebSocketSendArgs-setTimeout'>&nbsp;</span>**/
             /**
              <div>
-             Sets the timeout for the request.
+             Sets the timeout for the request (in ms).
              </div>
     
     
@@ -42053,6 +46702,7 @@ function makeMediaStream() {
                 if (__arguments.length == 1) {
                     var url_1 = __arguments[0];
                     //super();
+                    this.fmicelinkWebSocketTransferInit();
                     this.setUrl(url_1);
                 }
                 else {
@@ -42062,10 +46712,14 @@ function makeMediaStream() {
             WebSocketTransfer.prototype.getTypeString = function () {
                 return '[fm.icelink.WebSocketTransfer]';
             };
+            WebSocketTransfer.prototype.fmicelinkWebSocketTransferInit = function () {
+                this._handshakeTimeout = 0;
+                this._streamTimeout = 0;
+            };
             /**<span id='method-fm.icelink.WebSocketTransfer-getHandshakeTimeout'>&nbsp;</span>**/
             /**
              <div>
-             Gets the timeout for the initial handshake.
+             Gets the timeout for the initial handshake (in ms).
              </div>
     
     
@@ -42184,7 +46838,7 @@ function makeMediaStream() {
             /**<span id='method-fm.icelink.WebSocketTransfer-getStreamTimeout'>&nbsp;</span>**/
             /**
              <div>
-             Gets the timeout for the stream.
+             Gets the timeout for the stream (in ms).
              </div>
     
     
@@ -42218,7 +46872,7 @@ function makeMediaStream() {
             /**<span id='method-fm.icelink.WebSocketTransfer-setHandshakeTimeout'>&nbsp;</span>**/
             /**
              <div>
-             Sets the timeout for the initial handshake.
+             Sets the timeout for the initial handshake (in ms).
              </div>
     
     
@@ -42344,7 +46998,7 @@ function makeMediaStream() {
             /**<span id='method-fm.icelink.WebSocketTransfer-setStreamTimeout'>&nbsp;</span>**/
             /**
              <div>
-             Sets the timeout for the stream.
+             Sets the timeout for the stream (in ms).
              </div>
     
     
@@ -42746,6 +47400,7 @@ function makeMediaStream() {
                     var dataBuffers = __arguments[0];
                     var format = __arguments[1];
                     _this = _super.call(this) || this;
+                    _this.fmicelinkMediaBufferInit();
                     _this.setDataBuffers(dataBuffers);
                     _this.setFormat(format);
                 }
@@ -42760,12 +47415,14 @@ function makeMediaStream() {
                         var dataBuffers = __arguments[0];
                         var format_1 = __arguments[1];
                         _this = _super.call(this) || this;
+                        _this.fmicelinkMediaBufferInit();
                         _this.setDataBuffers(dataBuffers);
                         _this.setFormat(format_1);
                     }
                 }
                 else if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkMediaBufferInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -42774,6 +47431,9 @@ function makeMediaStream() {
             }
             MediaBuffer.prototype.getTypeString = function () {
                 return '[fm.icelink.MediaBuffer]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            MediaBuffer.prototype.fmicelinkMediaBufferInit = function () {
+                this._recoveredByFec = false;
             };
             /**<span id='method-fm.icelink.MediaBuffer-clone'>&nbsp;</span>**/
             /**
@@ -42810,8 +47470,7 @@ function makeMediaStream() {
              Frees the data buffers referenced by this instance.
              </div>
     
-    
-            @return {void}
+            @return {TBuffer} This instance.
             */
             MediaBuffer.prototype.free = function () {
                 if (arguments.length == 0) {
@@ -42819,6 +47478,7 @@ function makeMediaStream() {
                         var buffer = _a[_i];
                         buffer.free();
                     }
+                    return this;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -43066,8 +47726,7 @@ function makeMediaStream() {
              Keeps the data buffers referenced by this instance.
              </div>
     
-    
-            @return {void}
+            @return {TBuffer} This instance.
             */
             MediaBuffer.prototype.keep = function () {
                 if (arguments.length == 0) {
@@ -43075,6 +47734,7 @@ function makeMediaStream() {
                         var buffer = _a[_i];
                         buffer.keep();
                     }
+                    return this;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -43889,6 +48549,7 @@ function makeMediaStream() {
                 if (__arguments.length == 1) {
                     var clockRate_1 = __arguments[0];
                     //super();
+                    this.fmicelinkMediaConfigInit();
                     this.setClockRate(clockRate_1);
                 }
                 else {
@@ -43897,6 +48558,9 @@ function makeMediaStream() {
             }
             MediaConfig.prototype.getTypeString = function () {
                 return '[fm.icelink.MediaConfig]';
+            };
+            MediaConfig.prototype.fmicelinkMediaConfigInit = function () {
+                this._clockRate = 0;
             };
             /**<span id='method-fm.icelink.MediaConfig-getClockRate'>&nbsp;</span>**/
             /**
@@ -43986,6 +48650,7 @@ function makeMediaStream() {
                     var clockRate_2 = __arguments[0];
                     var channelCount_1 = __arguments[1];
                     _this = _super.call(this, clockRate_2) || this;
+                    _this.fmicelinkAudioConfigInit();
                     _this.setChannelCount(channelCount_1);
                 }
                 else {
@@ -43995,6 +48660,9 @@ function makeMediaStream() {
             }
             AudioConfig.prototype.getTypeString = function () {
                 return '[fm.icelink.AudioConfig]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            AudioConfig.prototype.fmicelinkAudioConfigInit = function () {
+                this._channelCount = 0;
             };
             /**<span id='method-fm.icelink.AudioConfig-getChannelCount'>&nbsp;</span>**/
             /**
@@ -44085,6 +48753,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkMediaFormatInit();
                     this.setRegisteredPayloadType(-1);
                     this.setStaticPayloadType(-1);
                 }
@@ -44092,6 +48761,7 @@ function makeMediaStream() {
                     var name_8 = __arguments[0];
                     var clockRate = __arguments[1];
                     //super();
+                    this.fmicelinkMediaFormatInit();
                     this.setName(name_8);
                     this.setClockRate(clockRate);
                     this.setRegisteredPayloadType(-1);
@@ -44103,6 +48773,14 @@ function makeMediaStream() {
             }
             MediaFormat.prototype.getTypeString = function () {
                 return '[fm.icelink.MediaFormat]';
+            };
+            MediaFormat.prototype.fmicelinkMediaFormatInit = function () {
+                this._clockRate = 0;
+                this._isEncrypted = false;
+                this._isInjected = false;
+                this._isPacketized = false;
+                this._registeredPayloadType = 0;
+                this._staticPayloadType = 0;
             };
             /**<span id='method-fm.icelink.MediaFormat-getRedName'>&nbsp;</span>**/
             /**
@@ -44500,6 +49178,7 @@ function makeMediaStream() {
                     var clockRate = __arguments[1];
                     var channelCount = __arguments[2];
                     _this = _super.call(this, name_9, clockRate) || this;
+                    _this.fmicelinkAudioFormatInit();
                     _this.setChannelCount(channelCount);
                 }
                 else if (__arguments.length == 2) {
@@ -44515,11 +49194,13 @@ function makeMediaStream() {
                         var clockRate = __arguments[1];
                         var channelCount = __arguments[2];
                         _this = _super.call(this, name_11, clockRate) || this;
+                        _this.fmicelinkAudioFormatInit();
                         _this.setChannelCount(channelCount);
                     }
                 }
                 else if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkAudioFormatInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -44528,6 +49209,10 @@ function makeMediaStream() {
             }
             AudioFormat.prototype.getTypeString = function () {
                 return '[fm.icelink.AudioFormat]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            AudioFormat.prototype.fmicelinkAudioFormatInit = function () {
+                this._channelCount = 0;
+                this._littleEndian = false;
             };
             /**<span id='method-fm.icelink.AudioFormat-getDtmfName'>&nbsp;</span>**/
             /**
@@ -44881,15 +49566,6 @@ function makeMediaStream() {
         */
         var MediaSinkBase = /** @class */ (function (_super) {
             __extends(MediaSinkBase, _super);
-            /**<span id='method-fm.icelink.MediaSinkBase-constructor'>&nbsp;</span>**/
-            /**
-             <div>
-             Initializes a new instance of the `fm.icelink.mediaSinkBase` class.
-             </div>
-    
-    
-            @return {}
-            */
             function MediaSinkBase() {
                 var _this = this;
                 var __arguments = new Array(arguments.length);
@@ -44898,7 +49574,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
-                    _this.setId(fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", ""));
+                    _this.__id = fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", "");
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -44919,7 +49595,7 @@ function makeMediaStream() {
             */
             MediaSinkBase.prototype.getId = function () {
                 if (arguments.length == 0) {
-                    return this._id;
+                    return this.__id;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -44937,24 +49613,6 @@ function makeMediaStream() {
             MediaSinkBase.prototype.getTag = function () {
                 if (arguments.length == 0) {
                     return this._tag;
-                }
-                else {
-                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
-                }
-            };
-            /**<span id='method-fm.icelink.MediaSinkBase-setId'>&nbsp;</span>**/
-            /**
-             <div>
-             Sets the identifier.
-             </div>
-    
-    
-            @param {string} value
-            @return {void}
-            */
-            MediaSinkBase.prototype.setId = function (value) {
-                if (arguments.length == 1) {
-                    this._id = value;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -44997,15 +49655,6 @@ function makeMediaStream() {
         */
         var MediaSourceBase = /** @class */ (function (_super) {
             __extends(MediaSourceBase, _super);
-            /**<span id='method-fm.icelink.MediaSourceBase-constructor'>&nbsp;</span>**/
-            /**
-             <div>
-             Initializes a new instance of the `fm.icelink.mediaSourceBase` class.
-             </div>
-    
-    
-            @return {}
-            */
             function MediaSourceBase() {
                 var _this = this;
                 var __arguments = new Array(arguments.length);
@@ -45014,7 +49663,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
-                    _this.setId(fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", ""));
+                    _this.__id = fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", "");
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -45035,7 +49684,7 @@ function makeMediaStream() {
             */
             MediaSourceBase.prototype.getId = function () {
                 if (arguments.length == 0) {
-                    return this._id;
+                    return this.__id;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -45053,24 +49702,6 @@ function makeMediaStream() {
             MediaSourceBase.prototype.getTag = function () {
                 if (arguments.length == 0) {
                     return this._tag;
-                }
-                else {
-                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
-                }
-            };
-            /**<span id='method-fm.icelink.MediaSourceBase-setId'>&nbsp;</span>**/
-            /**
-             <div>
-             Sets the identifier.
-             </div>
-    
-    
-            @param {string} value
-            @return {void}
-            */
-            MediaSourceBase.prototype.setId = function (value) {
-                if (arguments.length == 1) {
-                    this._id = value;
                 }
                 else {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -45117,6 +49748,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkCandidateInit();
                     this.__turnTransportProtocol = fm.icelink.ProtocolType.Unknown;
                 }
                 else {
@@ -45125,6 +49757,10 @@ function makeMediaStream() {
             }
             Candidate.prototype.getTypeString = function () {
                 return '[fm.icelink.Candidate]';
+            };
+            Candidate.prototype.fmicelinkCandidateInit = function () {
+                this._dispatched = false;
+                this._sdpMediaIndex = 0;
             };
             /**<span id='method-fm.icelink.Candidate-fromJson'>&nbsp;</span>**/
             /**
@@ -45523,6 +50159,7 @@ function makeMediaStream() {
                     var g_1 = __arguments[1];
                     var b_1 = __arguments[2];
                     //super();
+                    this.fmicelinkColorInit();
                     this.setR(fm.icelink.MathAssistant.max(0, fm.icelink.MathAssistant.min(255, r_1)));
                     this.setG(fm.icelink.MathAssistant.max(0, fm.icelink.MathAssistant.min(255, g_1)));
                     this.setB(fm.icelink.MathAssistant.max(0, fm.icelink.MathAssistant.min(255, b_1)));
@@ -45533,6 +50170,11 @@ function makeMediaStream() {
             }
             Color.prototype.getTypeString = function () {
                 return '[fm.icelink.Color]';
+            };
+            Color.prototype.fmicelinkColorInit = function () {
+                this._b = 0;
+                this._g = 0;
+                this._r = 0;
             };
             /**<span id='method-fm.icelink.Color-fromHsb'>&nbsp;</span>**/
             /**
@@ -46087,6 +50729,281 @@ function makeMediaStream() {
             return ConnectionCollection;
         }(fm.icelink.Collection));
         icelink.ConnectionCollection = ConnectionCollection;
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
+/// <reference path="StateMachine.ts" />
+
+/// <reference path="StateMachine.ts" />
+(function (fm) {
+    var icelink;
+    (function (icelink) {
+        /**
+         <div>
+         A state machine for data channel states.
+         </div>
+    
+        */
+        var DataChannelStateMachine = /** @class */ (function (_super) {
+            __extends(DataChannelStateMachine, _super);
+            /**<span id='method-fm.icelink.DataChannelStateMachine-constructor'>&nbsp;</span>**/
+            /**
+             <div>
+             Initializes a new instance of the `fm.icelink.dataChannelStateMachine` class.
+             </div>
+    
+    
+            @return {}
+            */
+            function DataChannelStateMachine() {
+                var _this = this;
+                var __arguments = new Array(arguments.length);
+                for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
+                    __arguments[__argumentIndex] = arguments[__argumentIndex];
+                }
+                if (__arguments.length == 0) {
+                    _this = _super.call(this, fm.icelink.DataChannelState.New) || this;
+                    _super.prototype.addTransition.call(_this, fm.icelink.DataChannelState.New, fm.icelink.DataChannelState.Connecting);
+                    _super.prototype.addTransition.call(_this, fm.icelink.DataChannelState.New, fm.icelink.DataChannelState.Failed);
+                    _super.prototype.addTransition.call(_this, fm.icelink.DataChannelState.New, fm.icelink.DataChannelState.Closing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.DataChannelState.Connecting, fm.icelink.DataChannelState.Connected);
+                    _super.prototype.addTransition.call(_this, fm.icelink.DataChannelState.Connecting, fm.icelink.DataChannelState.Failed);
+                    _super.prototype.addTransition.call(_this, fm.icelink.DataChannelState.Connecting, fm.icelink.DataChannelState.Closing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.DataChannelState.Connected, fm.icelink.DataChannelState.Failed);
+                    _super.prototype.addTransition.call(_this, fm.icelink.DataChannelState.Connected, fm.icelink.DataChannelState.Closing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.DataChannelState.Closing, fm.icelink.DataChannelState.Failed);
+                    _super.prototype.addTransition.call(_this, fm.icelink.DataChannelState.Closing, fm.icelink.DataChannelState.Closed);
+                }
+                else {
+                    throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
+                }
+                return _this;
+            }
+            DataChannelStateMachine.prototype.getTypeString = function () {
+                return '[fm.icelink.DataChannelStateMachine]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            /**<span id='method-fm.icelink.DataChannelStateMachine-stateToValue'>&nbsp;</span>**/
+            /**
+             <div>
+             Converts a state to an integer value.
+             </div>
+    
+            @param {fm.icelink.DataChannelState} state The state.
+            @return {number}
+            */
+            DataChannelStateMachine.prototype.stateToValue = function (state) {
+                if (arguments.length == 1) {
+                    return state;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.DataChannelStateMachine-valueToState'>&nbsp;</span>**/
+            /**
+             <div>
+             Converts an integer value to a state.
+             </div>
+    
+            @param {number} value The integer value.
+            @return {fm.icelink.DataChannelState}
+            */
+            DataChannelStateMachine.prototype.valueToState = function (value) {
+                if (arguments.length == 1) {
+                    return value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            return DataChannelStateMachine;
+        }(fm.icelink.StateMachine));
+        icelink.DataChannelStateMachine = DataChannelStateMachine;
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
+/// <reference path="StateMachine.ts" />
+
+/// <reference path="StateMachine.ts" />
+(function (fm) {
+    var icelink;
+    (function (icelink) {
+        /**
+         <div>
+         A state machine for stream states.
+         </div>
+    
+        */
+        var StreamStateMachine = /** @class */ (function (_super) {
+            __extends(StreamStateMachine, _super);
+            /**<span id='method-fm.icelink.StreamStateMachine-constructor'>&nbsp;</span>**/
+            /**
+             <div>
+             Initializes a new instance of the `fm.icelink.streamStateMachine` class.
+             </div>
+    
+    
+            @return {}
+            */
+            function StreamStateMachine() {
+                var _this = this;
+                var __arguments = new Array(arguments.length);
+                for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
+                    __arguments[__argumentIndex] = arguments[__argumentIndex];
+                }
+                if (__arguments.length == 0) {
+                    _this = _super.call(this, fm.icelink.StreamState.New) || this;
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.New, fm.icelink.StreamState.Initializing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.New, fm.icelink.StreamState.Failing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.New, fm.icelink.StreamState.Closing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.Initializing, fm.icelink.StreamState.Connecting);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.Initializing, fm.icelink.StreamState.Failing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.Initializing, fm.icelink.StreamState.Closing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.Connecting, fm.icelink.StreamState.Connected);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.Connecting, fm.icelink.StreamState.Failing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.Connecting, fm.icelink.StreamState.Closing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.Connected, fm.icelink.StreamState.Failing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.Connected, fm.icelink.StreamState.Closing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.Closing, fm.icelink.StreamState.Failing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.Closing, fm.icelink.StreamState.Closed);
+                    _super.prototype.addTransition.call(_this, fm.icelink.StreamState.Failing, fm.icelink.StreamState.Failed);
+                }
+                else {
+                    throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
+                }
+                return _this;
+            }
+            StreamStateMachine.prototype.getTypeString = function () {
+                return '[fm.icelink.StreamStateMachine]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            /**<span id='method-fm.icelink.StreamStateMachine-stateToValue'>&nbsp;</span>**/
+            /**
+             <div>
+             Converts a state to an integer value.
+             </div>
+    
+            @param {fm.icelink.StreamState} state The state.
+            @return {number}
+            */
+            StreamStateMachine.prototype.stateToValue = function (state) {
+                if (arguments.length == 1) {
+                    return state;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.StreamStateMachine-valueToState'>&nbsp;</span>**/
+            /**
+             <div>
+             Converts an integer value to a state.
+             </div>
+    
+            @param {number} value The integer value.
+            @return {fm.icelink.StreamState}
+            */
+            StreamStateMachine.prototype.valueToState = function (value) {
+                if (arguments.length == 1) {
+                    return value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            return StreamStateMachine;
+        }(fm.icelink.StateMachine));
+        icelink.StreamStateMachine = StreamStateMachine;
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
+/// <reference path="StateMachine.ts" />
+
+/// <reference path="StateMachine.ts" />
+(function (fm) {
+    var icelink;
+    (function (icelink) {
+        /**
+         <div>
+         A state machine for connection states.
+         </div>
+    
+        */
+        var ConnectionStateMachine = /** @class */ (function (_super) {
+            __extends(ConnectionStateMachine, _super);
+            /**<span id='method-fm.icelink.ConnectionStateMachine-constructor'>&nbsp;</span>**/
+            /**
+             <div>
+             Initializes a new instance of the `fm.icelink.connectionStateMachine` class.
+             </div>
+    
+    
+            @return {}
+            */
+            function ConnectionStateMachine() {
+                var _this = this;
+                var __arguments = new Array(arguments.length);
+                for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
+                    __arguments[__argumentIndex] = arguments[__argumentIndex];
+                }
+                if (__arguments.length == 0) {
+                    _this = _super.call(this, fm.icelink.ConnectionState.New) || this;
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.New, fm.icelink.ConnectionState.Initializing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.New, fm.icelink.ConnectionState.Failing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.New, fm.icelink.ConnectionState.Closing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.Initializing, fm.icelink.ConnectionState.Connecting);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.Initializing, fm.icelink.ConnectionState.Failing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.Initializing, fm.icelink.ConnectionState.Closing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.Connecting, fm.icelink.ConnectionState.Connected);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.Connecting, fm.icelink.ConnectionState.Failing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.Connecting, fm.icelink.ConnectionState.Closing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.Connected, fm.icelink.ConnectionState.Failing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.Connected, fm.icelink.ConnectionState.Closing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.Closing, fm.icelink.ConnectionState.Failing);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.Closing, fm.icelink.ConnectionState.Closed);
+                    _super.prototype.addTransition.call(_this, fm.icelink.ConnectionState.Failing, fm.icelink.ConnectionState.Failed);
+                }
+                else {
+                    throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
+                }
+                return _this;
+            }
+            ConnectionStateMachine.prototype.getTypeString = function () {
+                return '[fm.icelink.ConnectionStateMachine]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            /**<span id='method-fm.icelink.ConnectionStateMachine-stateToValue'>&nbsp;</span>**/
+            /**
+             <div>
+             Converts a state to an integer value.
+             </div>
+    
+            @param {fm.icelink.ConnectionState} state The state.
+            @return {number}
+            */
+            ConnectionStateMachine.prototype.stateToValue = function (state) {
+                if (arguments.length == 1) {
+                    return state;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            /**<span id='method-fm.icelink.ConnectionStateMachine-valueToState'>&nbsp;</span>**/
+            /**
+             <div>
+             Converts an integer value to a state.
+             </div>
+    
+            @param {number} value The integer value.
+            @return {fm.icelink.ConnectionState}
+            */
+            ConnectionStateMachine.prototype.valueToState = function (value) {
+                if (arguments.length == 1) {
+                    return value;
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            return ConnectionStateMachine;
+        }(fm.icelink.StateMachine));
+        icelink.ConnectionStateMachine = ConnectionStateMachine;
     })(icelink = fm.icelink || (fm.icelink = {}));
 })(fm || (fm = {}));
 
@@ -48319,6 +53236,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkLayoutInit();
                     this.__localFrame = new fm.icelink.LayoutFrame(0, 0, 0, 0);
                     this.__remoteFrames = new Array(0);
                 }
@@ -48328,6 +53246,10 @@ function makeMediaStream() {
             }
             Layout.prototype.getTypeString = function () {
                 return '[fm.icelink.Layout]';
+            };
+            Layout.prototype.fmicelinkLayoutInit = function () {
+                this._height = 0;
+                this._width = 0;
             };
             /**<span id='method-fm.icelink.Layout-getAllFrames'>&nbsp;</span>**/
             /**
@@ -48724,6 +53646,7 @@ function makeMediaStream() {
                     var width = __arguments[2];
                     var height = __arguments[3];
                     //super();
+                    this.fmicelinkLayoutFrameInit();
                     this.setX(x);
                     this.setY(y);
                     this.setWidth(width);
@@ -48731,6 +53654,7 @@ function makeMediaStream() {
                 }
                 else if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkLayoutFrameInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -48738,6 +53662,12 @@ function makeMediaStream() {
             }
             LayoutFrame.prototype.getTypeString = function () {
                 return '[fm.icelink.LayoutFrame]';
+            };
+            LayoutFrame.prototype.fmicelinkLayoutFrameInit = function () {
+                this._height = 0;
+                this._width = 0;
+                this._x = 0;
+                this._y = 0;
             };
             /**<span id='method-fm.icelink.LayoutFrame-fromJson'>&nbsp;</span>**/
             /**
@@ -48760,11 +53690,11 @@ function makeMediaStream() {
                                     rectangle.setY(fm.icelink.ParseAssistant.parseIntegerValue(valueJson));
                                 }
                                 else {
-                                    if ((fm.icelink.Global.equals(str, "width"))) {
+                                    if (((fm.icelink.Global.equals(str, "w")) || (fm.icelink.Global.equals(str, "width")))) {
                                         rectangle.setWidth(fm.icelink.ParseAssistant.parseIntegerValue(valueJson));
                                     }
                                     else {
-                                        if ((fm.icelink.Global.equals(str, "height"))) {
+                                        if (((fm.icelink.Global.equals(str, "h")) || (fm.icelink.Global.equals(str, "height")))) {
                                             rectangle.setHeight(fm.icelink.ParseAssistant.parseIntegerValue(valueJson));
                                         }
                                     }
@@ -48802,11 +53732,11 @@ function makeMediaStream() {
                     if (((((fm.icelink.Global.equals(outerWidth, 0)) || (fm.icelink.Global.equals(outerHeight, 0))) || (fm.icelink.Global.equals(innerWidth, 0))) || (fm.icelink.Global.equals(innerHeight, 0)))) {
                         if (((fm.icelink.Global.equals(outerWidth, 0)) || (fm.icelink.Global.equals(innerWidth, 0)))) {
                             width = 0;
-                            x = (outerWidth / 2);
+                            x = icelink.MathAssistant.floor(outerWidth / 2);
                         }
                         if (((fm.icelink.Global.equals(outerHeight, 0)) || (fm.icelink.Global.equals(innerHeight, 0)))) {
                             height = 0;
-                            y = (outerHeight / 2);
+                            y = icelink.MathAssistant.floor(outerHeight / 2);
                         }
                     }
                     else {
@@ -48817,12 +53747,12 @@ function makeMediaStream() {
                             num6 = (innerWidth / innerHeight);
                             if ((num5 > num6)) {
                                 width = (outerHeight * num6);
-                                x = ((outerWidth - width) / 2);
+                                x = icelink.MathAssistant.floor((outerWidth - width) / 2);
                             }
                             else {
                                 if ((num5 < num6)) {
                                     height = (outerWidth / num6);
-                                    y = ((outerHeight - height) / 2);
+                                    y = icelink.MathAssistant.floor((outerHeight - height) / 2);
                                 }
                             }
                         }
@@ -48832,12 +53762,12 @@ function makeMediaStream() {
                                 num6 = (innerWidth / innerHeight);
                                 if ((num5 < num6)) {
                                     width = (outerHeight * num6);
-                                    x = ((outerWidth - width) / 2);
+                                    x = icelink.MathAssistant.floor((outerWidth - width) / 2);
                                 }
                                 else {
                                     if ((num5 > num6)) {
                                         height = (outerWidth / num6);
-                                        y = ((outerHeight - height) / 2);
+                                        y = icelink.MathAssistant.floor((outerHeight - height) / 2);
                                     }
                                 }
                             }
@@ -49211,6 +54141,7 @@ function makeMediaStream() {
                     var cellWidth_1 = __arguments[2];
                     var cellHeight_1 = __arguments[3];
                     //super();
+                    this.fmicelinkLayoutTableInit();
                     this.setColumnCount(columnCount_1);
                     this.setRowCount(rowCount_1);
                     this.setCellWidth(cellWidth_1);
@@ -49222,6 +54153,12 @@ function makeMediaStream() {
             }
             LayoutTable.prototype.getTypeString = function () {
                 return '[fm.icelink.LayoutTable]';
+            };
+            LayoutTable.prototype.fmicelinkLayoutTableInit = function () {
+                this._cellHeight = 0;
+                this._cellWidth = 0;
+                this._columnCount = 0;
+                this._rowCount = 0;
             };
             /**<span id='method-fm.icelink.LayoutTable-getCellHeight'>&nbsp;</span>**/
             /**
@@ -49439,6 +54376,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkVideoBufferInit();
                     _this.__orientation = 0;
                 }
                 else if (__arguments.length == 4 && (icelink.Util.isNullOrUndefined(arguments[2]) || icelink.Util.isObjectType(arguments[2], '[fm.icelink.DataBuffer]'))) {
@@ -49447,6 +54385,7 @@ function makeMediaStream() {
                     var dataBuffer = __arguments[2];
                     var format = __arguments[3];
                     _this = _super.call(this, dataBuffer, format) || this;
+                    _this.fmicelinkVideoBufferInit();
                     _this.__orientation = 0;
                     _this.setWidth(width);
                     _this.setHeight(height);
@@ -49458,6 +54397,7 @@ function makeMediaStream() {
                     var dataBuffers = __arguments[2];
                     var format = __arguments[3];
                     _this = _super.call(this, dataBuffers, format) || this;
+                    _this.fmicelinkVideoBufferInit();
                     _this.__orientation = 0;
                     _this.setWidth(width);
                     _this.setHeight(height);
@@ -49470,6 +54410,12 @@ function makeMediaStream() {
             }
             VideoBuffer.prototype.getTypeString = function () {
                 return '[fm.icelink.VideoBuffer]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            VideoBuffer.prototype.fmicelinkVideoBufferInit = function () {
+                this.__height = 0;
+                this.__isMuted = false;
+                this.__orientation = 0;
+                this.__width = 0;
             };
             /**
             @internal
@@ -49646,23 +54592,23 @@ function makeMediaStream() {
                             var num6 = (((0.299 * red) + (0.587 * green)) + (0.110004 * blue));
                             var num7 = ((((-0.168736 * red) - (0.331264 * green)) + (0.5 * blue)) + 128);
                             var num8 = ((((0.5 * red) - (0.418688 * green)) - (0.081312 * blue)) + 128);
-                            var length_31 = num2;
-                            buffer.set(fm.icelink.BitAssistant.castByte(num6), 0, length_31);
+                            var length_33 = num2;
+                            buffer.set(fm.icelink.BitAssistant.castByte(num6), 0, length_33);
                             if ((flag9 || flag10)) {
-                                var num10 = (num2 / 4);
-                                var num11 = (num2 / 4);
-                                var offset = length_31;
-                                var num13 = (length_31 + num10);
+                                var num10 = icelink.MathAssistant.floor(num2 / 4);
+                                var num11 = icelink.MathAssistant.floor(num2 / 4);
+                                var offset = length_33;
+                                var num13 = (length_33 + num10);
                                 if (flag10) {
-                                    num13 = length_31;
-                                    offset = (length_31 + num11);
+                                    num13 = length_33;
+                                    offset = (length_33 + num11);
                                 }
                                 buffer.set(fm.icelink.BitAssistant.castByte(num7), offset, num10);
                                 buffer.set(fm.icelink.BitAssistant.castByte(num8), num13, num11);
                             }
                             else {
-                                var num14 = (num2 / 2);
-                                var num15 = length_31;
+                                var num14 = icelink.MathAssistant.floor(num2 / 2);
+                                var num15 = length_33;
                                 var num16 = 0;
                                 var num17 = 1;
                                 if (flag12) {
@@ -50181,7 +55127,7 @@ function makeMediaStream() {
                         if ((fm.icelink.Global.equals(_super.prototype.getDataBuffers.call(this).length, 1))) {
                             return [width];
                         }
-                        return [width, (width / 2), (width / 2)];
+                        return [width, icelink.MathAssistant.floor(width / 2), icelink.MathAssistant.floor(width / 2)];
                     }
                     if ((format.getIsNv12() || format.getIsNv21())) {
                         if ((fm.icelink.Global.equals(_super.prototype.getDataBuffers.call(this).length, 1))) {
@@ -50646,10 +55592,10 @@ function makeMediaStream() {
                                 if (_super.prototype.getFormat.call(this).getIsYuvType()) {
                                     var dataBuffers = _super.prototype.getDataBuffers.call(this);
                                     if ((fm.icelink.Global.equals(dataBuffers.length, 1))) {
-                                        var length_32 = (this.getWidth() * this.getHeight());
+                                        var length_34 = (this.getWidth() * this.getHeight());
                                         dataBuffer = dataBuffers[0];
-                                        dataBuffer.set(0, 0, length_32);
-                                        dataBuffer.set(fm.icelink.BitAssistant.castByte(128), length_32);
+                                        dataBuffer.set(0, 0, length_34);
+                                        dataBuffer.set(fm.icelink.BitAssistant.castByte(128), length_34);
                                     }
                                     else {
                                         dataBuffers[0].set(0);
@@ -50805,8 +55751,8 @@ function makeMediaStream() {
                         else {
                             if (_super.prototype.getFormat.call(this).getIsYuvType()) {
                                 var numArray = new Array(num);
-                                var numArray2 = new Array((num / 4));
-                                var numArray3 = new Array((num / 4));
+                                var numArray2 = new Array(icelink.MathAssistant.floor(num / 4));
+                                var numArray3 = new Array(icelink.MathAssistant.floor(num / 4));
                                 var num8 = 0;
                                 var num9 = 0;
                                 var num10 = 0;
@@ -50831,8 +55777,8 @@ function makeMediaStream() {
                                     var buffer4 = void 0;
                                     var num18 = void 0;
                                     var num19 = void 0;
-                                    var num14 = (this.getWidth() / 2);
-                                    var num15 = (this.getWidth() / 2);
+                                    var num14 = icelink.MathAssistant.floor(this.getWidth() / 2);
+                                    var num15 = icelink.MathAssistant.floor(this.getWidth() / 2);
                                     var num16 = 0;
                                     var num17 = 0;
                                     if (flag) {
@@ -50856,17 +55802,17 @@ function makeMediaStream() {
                                     if (flag) {
                                         if (_super.prototype.getFormat.call(this).getIsI420()) {
                                             num16 = (num13 * this.getHeight());
-                                            num17 = (num16 + ((num18 * this.getHeight()) / 2));
+                                            num17 = (num16 + icelink.MathAssistant.floor((num18 * this.getHeight()) / 2));
                                         }
                                         else {
                                             num17 = (num13 * this.getHeight());
-                                            num16 = (num17 + ((num19 * this.getHeight()) / 2));
+                                            num16 = (num17 + icelink.MathAssistant.floor((num19 * this.getHeight()) / 2));
                                         }
                                     }
                                     num6 = 0;
-                                    while ((num6 < (this.getHeight() / 2))) {
+                                    while ((num6 < icelink.MathAssistant.floor(this.getHeight() / 2))) {
                                         num7 = 0;
-                                        while ((num7 < (this.getWidth() / 2))) {
+                                        while ((num7 < icelink.MathAssistant.floor(this.getWidth() / 2))) {
                                             numArray2[num9++] = buffer3.read8(num16++);
                                             numArray3[num10++] = buffer4.read8(num17++);
                                             num7++;
@@ -50897,9 +55843,9 @@ function makeMediaStream() {
                                             num21 = (num13 * this.getHeight());
                                         }
                                         if (_super.prototype.getFormat.call(this).getIsNv12()) {
-                                            for (num6 = 0; (num6 < (this.getHeight() / 2)); num6++) {
+                                            for (num6 = 0; (num6 < icelink.MathAssistant.floor(this.getHeight() / 2)); num6++) {
                                                 num7 = 0;
-                                                while ((num7 < (this.getWidth() / 2))) {
+                                                while ((num7 < icelink.MathAssistant.floor(this.getWidth() / 2))) {
                                                     numArray2[num9++] = buffer5.read8(num21++);
                                                     numArray3[num10++] = buffer5.read8(num21++);
                                                     num7++;
@@ -50909,9 +55855,9 @@ function makeMediaStream() {
                                         }
                                         else {
                                             num6 = 0;
-                                            while ((num6 < (this.getHeight() / 2))) {
+                                            while ((num6 < icelink.MathAssistant.floor(this.getHeight() / 2))) {
                                                 num7 = 0;
-                                                while ((num7 < (this.getWidth() / 2))) {
+                                                while ((num7 < icelink.MathAssistant.floor(this.getWidth() / 2))) {
                                                     numArray3[num10++] = buffer5.read8(num21++);
                                                     numArray2[num9++] = buffer5.read8(num21++);
                                                     num7++;
@@ -50935,15 +55881,18 @@ function makeMediaStream() {
                                             index++;
                                             num25++;
                                         }
-                                        rValues.getValue()[num2] = fm.icelink.BitAssistant.castInteger(fm.icelink.BitAssistant.castByte(((1.164 * (num26 - 16)) + (1.596 * (num28 - 128)))));
-                                        gValues.getValue()[num2] = fm.icelink.BitAssistant.castInteger(fm.icelink.BitAssistant.castByte((((1.164 * (num26 - 16)) - (0.813 * (num28 - 128))) - (0.391 * (num27 - 128)))));
-                                        bValues.getValue()[num2] = fm.icelink.BitAssistant.castInteger(fm.icelink.BitAssistant.castByte(((1.164 * (num26 - 16)) + (2.018 * (num27 - 128)))));
+                                        var num29 = fm.icelink.MathAssistant.min(255, fm.icelink.MathAssistant.max(0, ((1.164 * (num26 - 16)) + (2.018 * (num27 - 128)))));
+                                        var num30 = fm.icelink.MathAssistant.min(255, fm.icelink.MathAssistant.max(0, (((1.164 * (num26 - 16)) - (0.813 * (num28 - 128))) - (0.391 * (num27 - 128)))));
+                                        var num31 = fm.icelink.MathAssistant.min(255, fm.icelink.MathAssistant.max(0, ((1.164 * (num26 - 16)) + (1.596 * (num28 - 128)))));
+                                        rValues.getValue()[num2] = fm.icelink.BitAssistant.castInteger(fm.icelink.BitAssistant.castByte(num31));
+                                        gValues.getValue()[num2] = fm.icelink.BitAssistant.castInteger(fm.icelink.BitAssistant.castByte(num30));
+                                        bValues.getValue()[num2] = fm.icelink.BitAssistant.castInteger(fm.icelink.BitAssistant.castByte(num29));
                                         aValues.getValue()[num2] = 255;
                                         num2++;
                                     }
                                     if ((fm.icelink.Global.equals((num6 % 2), 0))) {
-                                        index = (index - (this.getWidth() / 2));
-                                        num25 = (num25 - (this.getWidth() / 2));
+                                        index = (index - icelink.MathAssistant.floor(this.getWidth() / 2));
+                                        num25 = (num25 - icelink.MathAssistant.floor(this.getWidth() / 2));
                                     }
                                 }
                             }
@@ -51106,11 +56055,11 @@ function makeMediaStream() {
                         var num9 = void 0;
                         var num10 = void 0;
                         num2 = stride;
-                        var num3 = (stride / 2);
-                        var num4 = (stride / 2);
+                        var num3 = icelink.MathAssistant.floor(stride / 2);
+                        var num4 = icelink.MathAssistant.floor(stride / 2);
                         num5 = (stride * buffer.getHeight());
-                        var num6 = (num5 / 4);
-                        var num7 = (num5 / 4);
+                        var num6 = icelink.MathAssistant.floor(num5 / 4);
+                        var num7 = icelink.MathAssistant.floor(num5 / 4);
                         num8 = 0;
                         if (buffer.getIsI420()) {
                             num9 = num5;
@@ -51129,10 +56078,10 @@ function makeMediaStream() {
                     num2 = stride;
                     var num11 = stride;
                     num5 = (stride * buffer.getHeight());
-                    var length_33 = (num5 / 2);
+                    var length_35 = icelink.MathAssistant.floor(num5 / 2);
                     num8 = 0;
                     var offset = num5;
-                    buffer.setDataBuffers([dataBuffer.subset(num8, num5), dataBuffer.subset(offset, length_33)]);
+                    buffer.setDataBuffers([dataBuffer.subset(num8, num5), dataBuffer.subset(offset, length_35)]);
                     buffer.setStrides([num2, num11]);
                     return buffer;
                 }
@@ -51219,13 +56168,13 @@ function makeMediaStream() {
                                 var num8 = 0;
                                 if (_super.prototype.getFormat.call(this).getIsI420()) {
                                     offset = num;
-                                    num6 = (num + (num / 4));
+                                    num6 = (num + icelink.MathAssistant.floor(num / 4));
                                     num7 = 1;
                                     num8 = 1;
                                 }
                                 else {
                                     if (_super.prototype.getFormat.call(this).getIsYv12()) {
-                                        offset = (num + (num / 4));
+                                        offset = (num + icelink.MathAssistant.floor(num / 4));
                                         num6 = num;
                                         num7 = 1;
                                         num8 = 1;
@@ -51688,6 +56637,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkRtpPacketHeaderInit();
                     this.setVersion(2);
                 }
                 else {
@@ -51696,6 +56646,18 @@ function makeMediaStream() {
             }
             RtpPacketHeader.prototype.getTypeString = function () {
                 return '[fm.icelink.RtpPacketHeader]';
+            };
+            RtpPacketHeader.prototype.fmicelinkRtpPacketHeaderInit = function () {
+                this._contributingSourceCount = 0;
+                this._extension = false;
+                this._marker = false;
+                this._padding = false;
+                this._paddingLength = 0;
+                this._payloadType = 0;
+                this._sequenceNumber = 0;
+                this._synchronizationSource = 0;
+                this._timestamp = 0;
+                this._version = 0;
             };
             /**<span id='method-fm.icelink.RtpPacketHeader-getFixedHeaderLength'>&nbsp;</span>**/
             /**
@@ -52274,7 +57236,7 @@ function makeMediaStream() {
                 };
                 RawHeaderExtension.prototype.getLength = function () {
                     if (arguments.length == 0) {
-                        return (this.__buffer.getLength() / 4);
+                        return icelink.MathAssistant.floor(this.__buffer.getLength() / 4);
                     }
                     else {
                         throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
@@ -52476,7 +57438,7 @@ function makeMediaStream() {
                         }
                         return flag;
                     }
-                    else if (arguments.length == 1 && (icelink.Util.isNullOrUndefined(arguments[0]) || icelink.Util.isObjectType(arguments[0], '[fm.icelink.sdp.AttributeType]'))) {
+                    else if (arguments.length == 1 && (icelink.Util.isNullOrUndefined(arguments[0]) || icelink.Util.isNumber(arguments[0]))) {
                         var attributeType = arguments[0];
                         return fm.icelink.HashExtensions.remove(this.__attributes, new fm.icelink.sdp.AttributeTypeWrapper(attributeType).toString());
                     }
@@ -52688,6 +57650,7 @@ function makeMediaStream() {
                         var mediaLevel_1 = __arguments[2];
                         var creationDelegate_1 = __arguments[3];
                         //super();
+                        this.fmicelinksdpAttributeRegistrationInit();
                         this.setName(name_15);
                         this.setSessionLevel(sessionLevel_1);
                         this.setMediaLevel(mediaLevel_1);
@@ -52699,6 +57662,10 @@ function makeMediaStream() {
                 }
                 AttributeRegistration.prototype.getTypeString = function () {
                     return '[fm.icelink.sdp.AttributeRegistration]';
+                };
+                AttributeRegistration.prototype.fmicelinksdpAttributeRegistrationInit = function () {
+                    this._mediaLevel = false;
+                    this._sessionLevel = false;
                 };
                 AttributeRegistration.prototype.getCreationDelegate = function () {
                     if (arguments.length == 0) {
@@ -53610,6 +58577,7 @@ function makeMediaStream() {
                         var bandwidthType_1 = __arguments[0];
                         var value_39 = __arguments[1];
                         //super();
+                        this.fmicelinksdpBandwidthInit();
                         this.setBandwidthType(bandwidthType_1);
                         this.setValue(value_39);
                     }
@@ -53619,6 +58587,9 @@ function makeMediaStream() {
                 }
                 Bandwidth.prototype.getTypeString = function () {
                     return '[fm.icelink.sdp.Bandwidth]';
+                };
+                Bandwidth.prototype.fmicelinksdpBandwidthInit = function () {
+                    this._value = 0;
                 };
                 /**<span id='method-fm.icelink.sdp.Bandwidth-parse'>&nbsp;</span>**/
                 /**
@@ -54873,6 +59844,7 @@ function makeMediaStream() {
                         var tag = __arguments[0];
                         var cryptoSuite = __arguments[1];
                         _this = _super.call(this) || this;
+                        _this.fmicelinksdpCryptoAttributeInit();
                         _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.CryptoAttribute);
                         _this.setTag(tag);
                         _this.setCryptoSuite(cryptoSuite);
@@ -54881,6 +59853,7 @@ function makeMediaStream() {
                     }
                     else if (__arguments.length == 0) {
                         _this = _super.call(this) || this;
+                        _this.fmicelinksdpCryptoAttributeInit();
                         _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.CryptoAttribute);
                     }
                     else {
@@ -54890,6 +59863,9 @@ function makeMediaStream() {
                 }
                 CryptoAttribute.prototype.getTypeString = function () {
                     return '[fm.icelink.sdp.CryptoAttribute]' + ',' + _super.prototype.getTypeString.call(this);
+                };
+                CryptoAttribute.prototype.fmicelinksdpCryptoAttributeInit = function () {
+                    this._tag = 0;
                 };
                 /**<span id='method-fm.icelink.sdp.CryptoAttribute-fromAttributeValue'>&nbsp;</span>**/
                 /**
@@ -55561,6 +60537,7 @@ function makeMediaStream() {
                             var format_2 = __arguments[0];
                             var formatSpecificParameters = __arguments[1];
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdpFormatParametersAttributeInit();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.FormatParametersAttribute);
                             _this.setFormat(format_2);
                             _this.setFormatSpecificParameters(formatSpecificParameters);
@@ -55568,12 +60545,14 @@ function makeMediaStream() {
                     }
                     else if (__arguments.length == 0) {
                         _this = _super.call(this) || this;
+                        _this.fmicelinksdpFormatParametersAttributeInit();
                         _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.FormatParametersAttribute);
                     }
                     else if (__arguments.length == 2) {
                         var format = __arguments[0];
                         var formatSpecificParameters = __arguments[1];
                         _this = _super.call(this) || this;
+                        _this.fmicelinksdpFormatParametersAttributeInit();
                         _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.FormatParametersAttribute);
                         _this.setFormat(format);
                         _this.setFormatSpecificParameters(formatSpecificParameters);
@@ -55585,6 +60564,9 @@ function makeMediaStream() {
                 }
                 FormatParametersAttribute.prototype.getTypeString = function () {
                     return '[fm.icelink.sdp.FormatParametersAttribute]' + ',' + _super.prototype.getTypeString.call(this);
+                };
+                FormatParametersAttribute.prototype.fmicelinksdpFormatParametersAttributeInit = function () {
+                    this._format = 0;
                 };
                 /**<span id='method-fm.icelink.sdp.FormatParametersAttribute-fromAttributeValue'>&nbsp;</span>**/
                 /**
@@ -55983,6 +60965,7 @@ function makeMediaStream() {
                         }
                         if (__arguments.length == 0) {
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdpiceCandidateAttributeInit();
                             _this.__foundation = fm.icelink.StringExtensions.empty;
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.IceCandidateAttribute);
                         }
@@ -56015,6 +60998,7 @@ function makeMediaStream() {
                                 var protocol = __arguments[7];
                                 var componentId_1 = __arguments[8];
                                 _this = _super.call(this) || this;
+                                _this.fmicelinksdpiceCandidateAttributeInit();
                                 _this.__foundation = fm.icelink.StringExtensions.empty;
                                 _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.IceCandidateAttribute);
                                 _this.setFoundation(foundation_1);
@@ -56040,6 +61024,7 @@ function makeMediaStream() {
                             var protocol = __arguments[7];
                             var componentId = __arguments[8];
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdpiceCandidateAttributeInit();
                             _this.__foundation = fm.icelink.StringExtensions.empty;
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.IceCandidateAttribute);
                             _this.setFoundation(foundation);
@@ -56061,6 +61046,12 @@ function makeMediaStream() {
                     CandidateAttribute.prototype.getTypeString = function () {
                         return '[fm.icelink.sdp.ice.CandidateAttribute]' + ',' + _super.prototype.getTypeString.call(this);
                     };
+                    CandidateAttribute.prototype.fmicelinksdpiceCandidateAttributeInit = function () {
+                        this._componentId = 0;
+                        this._port = 0;
+                        this._priority = 0;
+                        this._relatedPort = 0;
+                    };
                     /**<span id='method-fm.icelink.sdp.ice.CandidateAttribute-fromAttributeValue'>&nbsp;</span>**/
                     /**
                      <div>
@@ -56079,7 +61070,7 @@ function makeMediaStream() {
                             var num2 = fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.substring(value, 0, index));
                             value = value.substring((index + 1));
                             index = fm.icelink.StringExtensions.indexOf(value, " ");
-                            var str2 = fm.icelink.StringExtensions.substring(value, 0, index);
+                            var str2 = fm.icelink.StringExtensions.toLower(fm.icelink.StringExtensions.substring(value, 0, index));
                             value = value.substring((index + 1));
                             index = fm.icelink.StringExtensions.indexOf(value, " ");
                             var num3 = fm.icelink.ParseAssistant.parseLongValue(fm.icelink.StringExtensions.substring(value, 0, index));
@@ -56092,14 +61083,14 @@ function makeMediaStream() {
                             value = value.substring((index + 1));
                             var dictionary = {};
                             var strArray = fm.icelink.StringExtensions.split(value, [32]);
-                            var length_34 = strArray.length;
+                            var length_36 = strArray.length;
                             var str4 = null;
                             var str5 = null;
                             var num6 = 0;
-                            if ((fm.icelink.Global.equals((length_34 % 2), 1))) {
-                                length_34--;
+                            if ((fm.icelink.Global.equals((length_36 % 2), 1))) {
+                                length_36--;
                             }
-                            for (var i = 0; (i < length_34); i = (i + 2)) {
+                            for (var i = 0; (i < length_36); i = (i + 2)) {
                                 var str6 = strArray[i];
                                 var s = strArray[(i + 1)];
                                 if ((fm.icelink.Global.equals(str6, "typ"))) {
@@ -57676,6 +62667,7 @@ function makeMediaStream() {
                             var connectionAddress_3 = __arguments[1];
                             var port_2 = __arguments[2];
                             //super();
+                            this.fmicelinksdpiceRemoteCandidateInit();
                             if ((fm.icelink.Global.equals(connectionAddress_3, null))) {
                                 throw new fm.icelink.Exception("connectionAddress cannot be null.");
                             }
@@ -57689,6 +62681,10 @@ function makeMediaStream() {
                     }
                     RemoteCandidate.prototype.getTypeString = function () {
                         return '[fm.icelink.sdp.ice.RemoteCandidate]';
+                    };
+                    RemoteCandidate.prototype.fmicelinksdpiceRemoteCandidateInit = function () {
+                        this._componentId = 0;
+                        this._port = 0;
                     };
                     /**<span id='method-fm.icelink.sdp.ice.RemoteCandidate-parse'>&nbsp;</span>**/
                     /**
@@ -58556,11 +63552,13 @@ function makeMediaStream() {
                     if (__arguments.length == 1) {
                         var maxPacketTime = __arguments[0];
                         _this = _super.call(this) || this;
+                        _this.fmicelinksdpMaxPacketTimeAttributeInit();
                         _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.MaxPacketTimeAttribute);
                         _this.setMaxPacketTime(maxPacketTime);
                     }
                     else if (__arguments.length == 0) {
                         _this = _super.call(this) || this;
+                        _this.fmicelinksdpMaxPacketTimeAttributeInit();
                         _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.MaxPacketTimeAttribute);
                     }
                     else {
@@ -58570,6 +63568,9 @@ function makeMediaStream() {
                 }
                 MaxPacketTimeAttribute.prototype.getTypeString = function () {
                     return '[fm.icelink.sdp.MaxPacketTimeAttribute]' + ',' + _super.prototype.getTypeString.call(this);
+                };
+                MaxPacketTimeAttribute.prototype.fmicelinksdpMaxPacketTimeAttributeInit = function () {
+                    this._maxPacketTime = 0;
                 };
                 /**<span id='method-fm.icelink.sdp.MaxPacketTimeAttribute-fromAttributeValue'>&nbsp;</span>**/
                 /**
@@ -58677,6 +63678,7 @@ function makeMediaStream() {
                             var transportProtocol_1 = __arguments[2];
                             var formatDescription = __arguments[3];
                             //super();
+                            this.fmicelinksdpMediaInit();
                             if ((fm.icelink.Global.equals(mediaType_1, null))) {
                                 throw new fm.icelink.Exception("mediaType cannot be null.");
                             }
@@ -58692,6 +63694,7 @@ function makeMediaStream() {
                     }
                     else if (__arguments.length == 0) {
                         //super();
+                        this.fmicelinksdpMediaInit();
                     }
                     else if (__arguments.length == 4) {
                         var mediaType = __arguments[0];
@@ -58699,6 +63702,7 @@ function makeMediaStream() {
                         var transportProtocol = __arguments[2];
                         var formatDescription = __arguments[3];
                         //super();
+                        this.fmicelinksdpMediaInit();
                         if ((fm.icelink.Global.equals(mediaType, null))) {
                             throw new fm.icelink.Exception("mediaType cannot be null.");
                         }
@@ -58717,6 +63721,10 @@ function makeMediaStream() {
                 }
                 Media.prototype.getTypeString = function () {
                     return '[fm.icelink.sdp.Media]';
+                };
+                Media.prototype.fmicelinksdpMediaInit = function () {
+                    this._numberOfPorts = 0;
+                    this._transportPort = 0;
                 };
                 /**<span id='method-fm.icelink.sdp.Media-parse'>&nbsp;</span>**/
                 /**
@@ -58980,6 +63988,7 @@ function makeMediaStream() {
                 /** @internal */
                 Media.fmicelinksdpMediaInitialize = function () {
                     if (!fm.icelink.sdp.Media.__fmicelinksdpMediaInitialized) {
+                        Media.fm_icelink_sdp_Media__defaultNumberOfPorts = 0;
                         fm.icelink.sdp.Media.fm_icelink_sdp_Media__defaultNumberOfPorts = 1;
                     }
                     fm.icelink.sdp.Media.__fmicelinksdpMediaInitialized = true;
@@ -62790,6 +67799,7 @@ function makeMediaStream() {
                         var unicastAddress = __arguments[0];
                         var username = __arguments[1];
                         //super();
+                        this.fmicelinksdpOriginInit();
                         if ((fm.icelink.Global.equals(unicastAddress, null))) {
                             throw new fm.icelink.Exception("unicastAddress cannot be null.");
                         }
@@ -62810,6 +67820,7 @@ function makeMediaStream() {
                             var unicastAddress_1 = __arguments[0];
                             var username = __arguments[1];
                             //super();
+                            this.fmicelinksdpOriginInit();
                             if ((fm.icelink.Global.equals(unicastAddress_1, null))) {
                                 throw new fm.icelink.Exception("unicastAddress cannot be null.");
                             }
@@ -62827,6 +67838,10 @@ function makeMediaStream() {
                 }
                 Origin.prototype.getTypeString = function () {
                     return '[fm.icelink.sdp.Origin]';
+                };
+                Origin.prototype.fmicelinksdpOriginInit = function () {
+                    this._sessionId = 0;
+                    this._sessionVersion = 0;
                 };
                 /**<span id='method-fm.icelink.sdp.Origin-parse'>&nbsp;</span>**/
                 /**
@@ -63153,11 +68168,13 @@ function makeMediaStream() {
                     if (__arguments.length == 1) {
                         var packetTime = __arguments[0];
                         _this = _super.call(this) || this;
+                        _this.fmicelinksdpPacketTimeAttributeInit();
                         _this.setPacketTime(packetTime);
                         _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.PacketTimeAttribute);
                     }
                     else if (__arguments.length == 0) {
                         _this = _super.call(this) || this;
+                        _this.fmicelinksdpPacketTimeAttributeInit();
                         _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.PacketTimeAttribute);
                     }
                     else {
@@ -63167,6 +68184,9 @@ function makeMediaStream() {
                 }
                 PacketTimeAttribute.prototype.getTypeString = function () {
                     return '[fm.icelink.sdp.PacketTimeAttribute]' + ',' + _super.prototype.getTypeString.call(this);
+                };
+                PacketTimeAttribute.prototype.fmicelinksdpPacketTimeAttributeInit = function () {
+                    this._packetTime = 0;
                 };
                 /**<span id='method-fm.icelink.sdp.PacketTimeAttribute-fromAttributeValue'>&nbsp;</span>**/
                 /**
@@ -63329,6 +68349,7 @@ function makeMediaStream() {
                     if (__arguments.length == 1) {
                         var quality = __arguments[0];
                         _this = _super.call(this) || this;
+                        _this.fmicelinksdpQualityAttributeInit();
                         _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.QualityAttribute);
                         if (((quality < 0) || (quality > 10))) {
                             throw new fm.icelink.Exception("quality must be a value in the range 0 to 10.");
@@ -63337,6 +68358,7 @@ function makeMediaStream() {
                     }
                     else if (__arguments.length == 0) {
                         _this = _super.call(this) || this;
+                        _this.fmicelinksdpQualityAttributeInit();
                         _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.QualityAttribute);
                     }
                     else {
@@ -63346,6 +68368,9 @@ function makeMediaStream() {
                 }
                 QualityAttribute.prototype.getTypeString = function () {
                     return '[fm.icelink.sdp.QualityAttribute]' + ',' + _super.prototype.getTypeString.call(this);
+                };
+                QualityAttribute.prototype.fmicelinksdpQualityAttributeInit = function () {
+                    this._quality = 0;
                 };
                 /**<span id='method-fm.icelink.sdp.QualityAttribute-fromAttributeValue'>&nbsp;</span>**/
                 /**
@@ -63777,6 +68802,7 @@ function makeMediaStream() {
                         }
                         if (__arguments.length == 0) {
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdprtcpAttributeInit();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtcpAttribute);
                         }
                         else if (__arguments.length == 2) {
@@ -63786,6 +68812,7 @@ function makeMediaStream() {
                             __arguments = new Array(0);
                             {
                                 _this = _super.call(this) || this;
+                                _this.fmicelinksdprtcpAttributeInit();
                                 _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtcpAttribute);
                             }
                             if ((fm.icelink.Global.equals(connectionAddress, null))) {
@@ -63800,6 +68827,9 @@ function makeMediaStream() {
                     }
                     Attribute.prototype.getTypeString = function () {
                         return '[fm.icelink.sdp.rtcp.Attribute]' + ',' + _super.prototype.getTypeString.call(this);
+                    };
+                    Attribute.prototype.fmicelinksdprtcpAttributeInit = function () {
+                        this._port = 0;
                     };
                     /**<span id='method-fm.icelink.sdp.rtcp.Attribute-fromAttributeValue'>&nbsp;</span>**/
                     /**
@@ -64040,6 +69070,7 @@ function makeMediaStream() {
                         }
                         if (__arguments.length == 0) {
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdprtcpFeedbackAttributeInit();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtcpFeedbackAttribute);
                         }
                         else if (__arguments.length == 3) {
@@ -64047,6 +69078,7 @@ function makeMediaStream() {
                             var type = __arguments[1];
                             var subtype = __arguments[2];
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdprtcpFeedbackAttributeInit();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtcpFeedbackAttribute);
                             _this.setPayloadType(payloadType);
                             _this.setType(type);
@@ -64065,6 +69097,7 @@ function makeMediaStream() {
                                 var type_5 = __arguments[1];
                                 var subtype = __arguments[2];
                                 _this = _super.call(this) || this;
+                                _this.fmicelinksdprtcpFeedbackAttributeInit();
                                 _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtcpFeedbackAttribute);
                                 _this.setPayloadType(payloadType_1);
                                 _this.setType(type_5);
@@ -64078,6 +69111,9 @@ function makeMediaStream() {
                     }
                     FeedbackAttribute.prototype.getTypeString = function () {
                         return '[fm.icelink.sdp.rtcp.FeedbackAttribute]' + ',' + _super.prototype.getTypeString.call(this);
+                    };
+                    FeedbackAttribute.prototype.fmicelinksdprtcpFeedbackAttributeInit = function () {
+                        this._payloadType = 0;
                     };
                     /**<span id='method-fm.icelink.sdp.rtcp.FeedbackAttribute-ccmFirAttribute'>&nbsp;</span>**/
                     /**
@@ -64739,6 +69775,7 @@ function makeMediaStream() {
                             __arguments = new Array(0);
                             {
                                 _this = _super.call(this) || this;
+                                _this.fmicelinksdprtpExtMapAttributeInit();
                                 _this.__direction = fm.icelink.StreamDirection.Unset;
                                 _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtpExtMapAttribute);
                             }
@@ -64747,6 +69784,7 @@ function makeMediaStream() {
                         }
                         else if (__arguments.length == 0) {
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdprtpExtMapAttributeInit();
                             _this.__direction = fm.icelink.StreamDirection.Unset;
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtpExtMapAttribute);
                         }
@@ -64765,6 +69803,7 @@ function makeMediaStream() {
                                 __arguments = new Array(0);
                                 {
                                     _this = _super.call(this) || this;
+                                    _this.fmicelinksdprtpExtMapAttributeInit();
                                     _this.__direction = fm.icelink.StreamDirection.Unset;
                                     _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtpExtMapAttribute);
                                 }
@@ -64780,6 +69819,9 @@ function makeMediaStream() {
                     }
                     ExtMapAttribute.prototype.getTypeString = function () {
                         return '[fm.icelink.sdp.rtp.ExtMapAttribute]' + ',' + _super.prototype.getTypeString.call(this);
+                    };
+                    ExtMapAttribute.prototype.fmicelinksdprtpExtMapAttributeInit = function () {
+                        this._id = 0;
                     };
                     /**<span id='method-fm.icelink.sdp.rtp.ExtMapAttribute-fromAttributeValue'>&nbsp;</span>**/
                     /**
@@ -64801,15 +69843,15 @@ function makeMediaStream() {
                                 unset = fm.icelink.StreamDirectionHelper.directionFromString(fm.icelink.StringExtensions.substring(value, (num2 + 1), ((index - num2) - 1)));
                             }
                             var str2 = value.substring((index + 1));
-                            var length_35 = fm.icelink.StringExtensions.indexOf(str2, " ");
+                            var length_37 = fm.icelink.StringExtensions.indexOf(str2, " ");
                             var uri = "";
                             var str4 = "";
-                            if ((fm.icelink.Global.equals(length_35, -1))) {
+                            if ((fm.icelink.Global.equals(length_37, -1))) {
                                 uri = str2;
                             }
                             else {
-                                uri = fm.icelink.StringExtensions.substring(str2, 0, length_35);
-                                str4 = str2.substring((length_35 + 1));
+                                uri = fm.icelink.StringExtensions.substring(str2, 0, length_37);
+                                str4 = str2.substring((length_37 + 1));
                             }
                             var attribute = new fm.icelink.sdp.rtp.ExtMapAttribute(id, uri);
                             if (flag) {
@@ -65143,6 +70185,7 @@ function makeMediaStream() {
                                 var clockRate_3 = __arguments[2];
                                 var formatParameters = __arguments[3];
                                 _this = _super.call(this) || this;
+                                _this.fmicelinksdprtpMapAttributeInit();
                                 _this.__relatedRtcpFeedbackAttributes = new fm.icelink.sdp.rtp.FeedbackAttributeCollection();
                                 _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtpMapAttribute);
                                 if ((fm.icelink.Global.equals(formatName_1, null))) {
@@ -65156,6 +70199,7 @@ function makeMediaStream() {
                         }
                         else if (__arguments.length == 0) {
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdprtpMapAttributeInit();
                             _this.__relatedRtcpFeedbackAttributes = new fm.icelink.sdp.rtp.FeedbackAttributeCollection();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtpMapAttribute);
                         }
@@ -65165,6 +70209,7 @@ function makeMediaStream() {
                             var clockRate = __arguments[2];
                             var formatParameters = __arguments[3];
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdprtpMapAttributeInit();
                             _this.__relatedRtcpFeedbackAttributes = new fm.icelink.sdp.rtp.FeedbackAttributeCollection();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtpMapAttribute);
                             if ((fm.icelink.Global.equals(formatName, null))) {
@@ -65183,6 +70228,10 @@ function makeMediaStream() {
                     MapAttribute.prototype.getTypeString = function () {
                         return '[fm.icelink.sdp.rtp.MapAttribute]' + ',' + _super.prototype.getTypeString.call(this);
                     };
+                    MapAttribute.prototype.fmicelinksdprtpMapAttributeInit = function () {
+                        this._clockRate = 0;
+                        this._payloadType = 0;
+                    };
                     /**<span id='method-fm.icelink.sdp.rtp.MapAttribute-fromAttributeValue'>&nbsp;</span>**/
                     /**
                      <div>
@@ -65197,18 +70246,18 @@ function makeMediaStream() {
                             var index = fm.icelink.StringExtensions.indexOf(value, " ");
                             var num2 = fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.substring(value, 0, index));
                             value = value.substring((index + 1));
-                            var length_36 = fm.icelink.StringExtensions.indexOf(value, "/");
-                            var str = fm.icelink.StringExtensions.substring(value, 0, length_36);
-                            value = value.substring((length_36 + 1));
-                            length_36 = fm.icelink.StringExtensions.indexOf(value, "/");
+                            var length_38 = fm.icelink.StringExtensions.indexOf(value, "/");
+                            var str = fm.icelink.StringExtensions.substring(value, 0, length_38);
+                            value = value.substring((length_38 + 1));
+                            length_38 = fm.icelink.StringExtensions.indexOf(value, "/");
                             var num4 = 0;
                             var str2 = null;
-                            if ((fm.icelink.Global.equals(length_36, -1))) {
+                            if ((fm.icelink.Global.equals(length_38, -1))) {
                                 num4 = fm.icelink.ParseAssistant.parseIntegerValue(value);
                             }
                             else {
-                                num4 = fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.substring(value, 0, length_36));
-                                str2 = value.substring((length_36 + 1));
+                                num4 = fm.icelink.ParseAssistant.parseIntegerValue(fm.icelink.StringExtensions.substring(value, 0, length_38));
+                                str2 = value.substring((length_38 + 1));
                             }
                             var attribute = new fm.icelink.sdp.rtp.MapAttribute();
                             attribute.setPayloadType(num2);
@@ -66113,6 +71162,7 @@ function makeMediaStream() {
                                 var attributeName_1 = __arguments[1];
                                 var attributeValue = __arguments[2];
                                 _this = _super.call(this) || this;
+                                _this.fmicelinksdprtpSsrcAttributeInit();
                                 _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtpSsrcAttribute);
                                 if (fm.icelink.StringExtensions.isNullOrEmpty(attributeName_1)) {
                                     throw new fm.icelink.Exception("attributeName cannot be null.");
@@ -66127,6 +71177,7 @@ function makeMediaStream() {
                             var attributeName = __arguments[1];
                             var attributeValue = __arguments[2];
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdprtpSsrcAttributeInit();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtpSsrcAttribute);
                             if (fm.icelink.StringExtensions.isNullOrEmpty(attributeName)) {
                                 throw new fm.icelink.Exception("attributeName cannot be null.");
@@ -66137,6 +71188,7 @@ function makeMediaStream() {
                         }
                         else if (__arguments.length == 0) {
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdprtpSsrcAttributeInit();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.RtpSsrcAttribute);
                         }
                         else {
@@ -66146,6 +71198,9 @@ function makeMediaStream() {
                     }
                     SsrcAttribute.prototype.getTypeString = function () {
                         return '[fm.icelink.sdp.rtp.SsrcAttribute]' + ',' + _super.prototype.getTypeString.call(this);
+                    };
+                    SsrcAttribute.prototype.fmicelinksdprtpSsrcAttributeInit = function () {
+                        this._synchronizationSource = 0;
                     };
                     /**<span id='method-fm.icelink.sdp.rtp.SsrcAttribute-fromAttributeValue'>&nbsp;</span>**/
                     /**
@@ -66161,15 +71216,15 @@ function makeMediaStream() {
                             var index = fm.icelink.StringExtensions.indexOf(value, " ");
                             var num2 = fm.icelink.ParseAssistant.parseLongValue(fm.icelink.StringExtensions.substring(value, 0, index));
                             value = value.substring((index + 1));
-                            var length_37 = fm.icelink.StringExtensions.indexOf(value, ":");
+                            var length_39 = fm.icelink.StringExtensions.indexOf(value, ":");
                             var str = null;
                             var str2 = null;
-                            if ((fm.icelink.Global.equals(length_37, -1))) {
+                            if ((fm.icelink.Global.equals(length_39, -1))) {
                                 str = value;
                             }
                             else {
-                                str = fm.icelink.StringExtensions.substring(value, 0, length_37);
-                                value = value.substring((length_37 + 1));
+                                str = fm.icelink.StringExtensions.substring(value, 0, length_39);
+                                value = value.substring((length_39 + 1));
                                 str2 = value;
                             }
                             var attribute = new fm.icelink.sdp.rtp.SsrcAttribute();
@@ -66480,6 +71535,7 @@ function makeMediaStream() {
                             var protocol = __arguments[1];
                             var streams = __arguments[2];
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdpsctpMapAttributeInit();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.SctpMapAttribute);
                             _this.setPort(port);
                             _this.setSctpProtocol(protocol);
@@ -66487,6 +71543,7 @@ function makeMediaStream() {
                         }
                         else if (__arguments.length == 0) {
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdpsctpMapAttributeInit();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.SctpMapAttribute);
                         }
                         else {
@@ -66496,6 +71553,10 @@ function makeMediaStream() {
                     }
                     MapAttribute.prototype.getTypeString = function () {
                         return '[fm.icelink.sdp.sctp.MapAttribute]' + ',' + _super.prototype.getTypeString.call(this);
+                    };
+                    MapAttribute.prototype.fmicelinksdpsctpMapAttributeInit = function () {
+                        this._port = 0;
+                        this._streams = 0;
                     };
                     /**<span id='method-fm.icelink.sdp.sctp.MapAttribute-fromAttributeValue'>&nbsp;</span>**/
                     /**
@@ -66669,11 +71730,13 @@ function makeMediaStream() {
                         if (__arguments.length == 1) {
                             var maxMessageSize = __arguments[0];
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdpsctpMaxMessageSizeAttributeInit();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.SctpMaxMessageSizeAttribute);
                             _this.setMaxMessageSize(maxMessageSize);
                         }
                         else if (__arguments.length == 0) {
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdpsctpMaxMessageSizeAttributeInit();
                             _super.prototype.setAttributeType.call(_this, fm.icelink.sdp.AttributeType.SctpMaxMessageSizeAttribute);
                         }
                         else {
@@ -66683,6 +71746,9 @@ function makeMediaStream() {
                     }
                     MaxMessageSizeAttribute.prototype.getTypeString = function () {
                         return '[fm.icelink.sdp.sctp.MaxMessageSizeAttribute]' + ',' + _super.prototype.getTypeString.call(this);
+                    };
+                    MaxMessageSizeAttribute.prototype.fmicelinksdpsctpMaxMessageSizeAttributeInit = function () {
+                        this._maxMessageSize = 0;
                     };
                     /**<span id='method-fm.icelink.sdp.sctp.MaxMessageSizeAttribute-fromAttributeValue'>&nbsp;</span>**/
                     /**
@@ -66971,10 +72037,12 @@ function makeMediaStream() {
                         if (__arguments.length == 1) {
                             var port = __arguments[0];
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdpsctpPortAttributeInit();
                             _this.setPort(port);
                         }
                         else if (__arguments.length == 0) {
                             _this = _super.call(this) || this;
+                            _this.fmicelinksdpsctpPortAttributeInit();
                         }
                         else {
                             throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -66983,6 +72051,9 @@ function makeMediaStream() {
                     }
                     PortAttribute.prototype.getTypeString = function () {
                         return '[fm.icelink.sdp.sctp.PortAttribute]' + ',' + _super.prototype.getTypeString.call(this);
+                    };
+                    PortAttribute.prototype.fmicelinksdpsctpPortAttributeInit = function () {
+                        this._port = 0;
                     };
                     /**<span id='method-fm.icelink.sdp.sctp.PortAttribute-fromAttributeValue'>&nbsp;</span>**/
                     /**
@@ -67808,6 +72879,7 @@ function makeMediaStream() {
                         var adjustmentTime_1 = __arguments[0];
                         var offset_1 = __arguments[1];
                         //super();
+                        this.fmicelinksdpTimeZoneInit();
                         this.setAdjustmentTime(adjustmentTime_1);
                         this.setOffset(offset_1);
                     }
@@ -67817,6 +72889,9 @@ function makeMediaStream() {
                 }
                 TimeZone.prototype.getTypeString = function () {
                     return '[fm.icelink.sdp.TimeZone]';
+                };
+                TimeZone.prototype.fmicelinksdpTimeZoneInit = function () {
+                    this._adjustmentTime = 0;
                 };
                 /**<span id='method-fm.icelink.sdp.TimeZone-parse'>&nbsp;</span>**/
                 /**
@@ -68089,6 +73164,7 @@ function makeMediaStream() {
                     }
                     if (__arguments.length == 0) {
                         //super();
+                        this.fmicelinksdpTimingInit();
                         this.setStartTime(0);
                         this.setStopTime(0);
                     }
@@ -68096,6 +73172,7 @@ function makeMediaStream() {
                         var startTime = __arguments[0];
                         var stopTime = __arguments[1];
                         //super();
+                        this.fmicelinksdpTimingInit();
                         this.setStartTime(startTime);
                         this.setStopTime(stopTime);
                     }
@@ -68105,6 +73182,10 @@ function makeMediaStream() {
                 }
                 Timing.prototype.getTypeString = function () {
                     return '[fm.icelink.sdp.Timing]';
+                };
+                Timing.prototype.fmicelinksdpTimingInit = function () {
+                    this._startTime = 0;
+                    this._stopTime = 0;
                 };
                 /**<span id='method-fm.icelink.sdp.Timing-parse'>&nbsp;</span>**/
                 /**
@@ -68726,6 +73807,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkSessionDescriptionInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -68733,6 +73815,9 @@ function makeMediaStream() {
             }
             SessionDescription.prototype.getTypeString = function () {
                 return '[fm.icelink.SessionDescription]';
+            };
+            SessionDescription.prototype.fmicelinkSessionDescriptionInit = function () {
+                this._renegotiation = false;
             };
             /**<span id='method-fm.icelink.SessionDescription-fromJson'>&nbsp;</span>**/
             /**
@@ -69133,11 +74218,13 @@ function makeMediaStream() {
                     var width = __arguments[0];
                     var height = __arguments[1];
                     //super();
+                    this.fmicelinkSizeInit();
                     this.setWidth(width);
                     this.setHeight(height);
                 }
                 else if (__arguments.length == 0) {
                     //super();
+                    this.fmicelinkSizeInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -69145,6 +74232,10 @@ function makeMediaStream() {
             }
             Size.prototype.getTypeString = function () {
                 return '[fm.icelink.Size]';
+            };
+            Size.prototype.fmicelinkSizeInit = function () {
+                this._height = 0;
+                this._width = 0;
             };
             /**<span id='method-fm.icelink.Size-fromJson'>&nbsp;</span>**/
             /**
@@ -69706,9 +74797,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.SourceInput-setId'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the identifier.
+             </div>
     
+    
+            @param {string} value
+            @return {void}
             */
             SourceInput.prototype.setId = function (value) {
                 if (arguments.length == 1) {
@@ -69718,9 +74815,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.SourceInput-setName'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the name.
+             </div>
     
+    
+            @param {string} value
+            @return {void}
             */
             SourceInput.prototype.setName = function (value) {
                 if (arguments.length == 1) {
@@ -69930,6 +75033,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkCodecStatsInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -69938,6 +75042,11 @@ function makeMediaStream() {
             }
             CodecStats.prototype.getTypeString = function () {
                 return '[fm.icelink.CodecStats]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            CodecStats.prototype.fmicelinkCodecStatsInit = function () {
+                this._channelCount = 0;
+                this._clockRate = 0;
+                this._payloadType = 0;
             };
             /**<span id='method-fm.icelink.CodecStats-fromJson'>&nbsp;</span>**/
             /**
@@ -70739,6 +75848,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkMediaComponentStatsInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -70747,6 +75857,13 @@ function makeMediaStream() {
             }
             MediaComponentStats.prototype.getTypeString = function () {
                 return '[fm.icelink.MediaComponentStats]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            MediaComponentStats.prototype.fmicelinkMediaComponentStatsInit = function () {
+                this._firCount = 0;
+                this._nackCount = 0;
+                this._pliCount = 0;
+                this._sliCount = 0;
+                this._synchronizationSource = 0;
             };
             /**<span id='method-fm.icelink.MediaComponentStats-deserializeProperties'>&nbsp;</span>**/
             /**
@@ -70956,9 +76073,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.MediaComponentStats-setCodec'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the codec stats.
+             </div>
     
+    
+            @param {fm.icelink.CodecStats} value
+            @return {void}
             */
             MediaComponentStats.prototype.setCodec = function (value) {
                 if (arguments.length == 1) {
@@ -70968,9 +76091,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.MediaComponentStats-setFirCount'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the FIR count.
+             </div>
     
+    
+            @param {number} value
+            @return {void}
             */
             MediaComponentStats.prototype.setFirCount = function (value) {
                 if (arguments.length == 1) {
@@ -70980,9 +76109,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.MediaComponentStats-setNackCount'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the NACK count.
+             </div>
     
+    
+            @param {number} value
+            @return {void}
             */
             MediaComponentStats.prototype.setNackCount = function (value) {
                 if (arguments.length == 1) {
@@ -70992,9 +76127,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.MediaComponentStats-setPliCount'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the PLI count.
+             </div>
     
+    
+            @param {number} value
+            @return {void}
             */
             MediaComponentStats.prototype.setPliCount = function (value) {
                 if (arguments.length == 1) {
@@ -71004,9 +76145,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.MediaComponentStats-setSliCount'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the SLI count.
+             </div>
     
+    
+            @param {number} value
+            @return {void}
             */
             MediaComponentStats.prototype.setSliCount = function (value) {
                 if (arguments.length == 1) {
@@ -71016,9 +76163,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.MediaComponentStats-setSynchronizationSource'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the synchronization source.
+             </div>
     
+    
+            @param {number} value
+            @return {void}
             */
             MediaComponentStats.prototype.setSynchronizationSource = function (value) {
                 if (arguments.length == 1) {
@@ -71028,9 +76181,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.MediaComponentStats-setTrack'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the track's stats.
+             </div>
     
+    
+            @param {fm.icelink.MediaTrackStats} value
+            @return {void}
             */
             MediaComponentStats.prototype.setTrack = function (value) {
                 if (arguments.length == 1) {
@@ -71248,6 +76407,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkMediaSenderStatsInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -71256,6 +76416,11 @@ function makeMediaStream() {
             }
             MediaSenderStats.prototype.getTypeString = function () {
                 return '[fm.icelink.MediaSenderStats]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            MediaSenderStats.prototype.fmicelinkMediaSenderStatsInit = function () {
+                this._bytesSent = 0;
+                this._packetsSent = 0;
+                this._roundTripTime = 0;
             };
             /**<span id='method-fm.icelink.MediaSenderStats-fromJson'>&nbsp;</span>**/
             /**
@@ -71481,6 +76646,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkMediaReceiverStatsInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -71489,6 +76655,13 @@ function makeMediaStream() {
             }
             MediaReceiverStats.prototype.getTypeString = function () {
                 return '[fm.icelink.MediaReceiverStats]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            MediaReceiverStats.prototype.fmicelinkMediaReceiverStatsInit = function () {
+                this._bytesReceived = 0;
+                this._jitter = 0;
+                this._packetsDiscarded = 0;
+                this._packetsLost = 0;
+                this._packetsReceived = 0;
             };
             /**<span id='method-fm.icelink.MediaReceiverStats-fromJson'>&nbsp;</span>**/
             /**
@@ -71784,6 +76957,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkMediaTrackStatsInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -71792,6 +76966,19 @@ function makeMediaStream() {
             }
             MediaTrackStats.prototype.getTypeString = function () {
                 return '[fm.icelink.MediaTrackStats]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            MediaTrackStats.prototype.fmicelinkMediaTrackStatsInit = function () {
+                this._detached = false;
+                this._frameHeight = 0;
+                this._frameRate = 0;
+                this._framesCorrupted = 0;
+                this._framesDecoded = 0;
+                this._framesDropped = 0;
+                this._framesEncoded = 0;
+                this._framesReceived = 0;
+                this._framesSent = 0;
+                this._frameWidth = 0;
+                this._stopped = false;
             };
             /**<span id='method-fm.icelink.MediaTrackStats-fromJson'>&nbsp;</span>**/
             /**
@@ -72413,6 +77600,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkCandidateStatsInit();
                     _this.__turnTransportProtocol = fm.icelink.ProtocolType.Unknown;
                 }
                 else {
@@ -72422,6 +77610,11 @@ function makeMediaStream() {
             }
             CandidateStats.prototype.getTypeString = function () {
                 return '[fm.icelink.CandidateStats]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            CandidateStats.prototype.fmicelinkCandidateStatsInit = function () {
+                this._port = 0;
+                this._priority = 0;
+                this._relatedPort = 0;
             };
             /**<span id='method-fm.icelink.CandidateStats-fromJson'>&nbsp;</span>**/
             /**
@@ -73041,6 +78234,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkCandidatePairStatsInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -73049,6 +78243,20 @@ function makeMediaStream() {
             }
             CandidatePairStats.prototype.getTypeString = function () {
                 return '[fm.icelink.CandidatePairStats]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            CandidatePairStats.prototype.fmicelinkCandidatePairStatsInit = function () {
+                this._bytesReceived = 0;
+                this._bytesSent = 0;
+                this._consentRequestsReceived = 0;
+                this._consentRequestsSent = 0;
+                this._consentResponsesReceived = 0;
+                this._consentResponsesSent = 0;
+                this._currentRoundTripTime = 0;
+                this._nominated = false;
+                this._priority = 0;
+                this._requestsSent = 0;
+                this._responsesReceived = 0;
+                this._totalRoundTripTime = 0;
             };
             /**<span id='method-fm.icelink.CandidatePairStats-fromJson'>&nbsp;</span>**/
             /**
@@ -74162,6 +79370,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkDataChannelStatsInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -74170,6 +79379,13 @@ function makeMediaStream() {
             }
             DataChannelStats.prototype.getTypeString = function () {
                 return '[fm.icelink.DataChannelStats]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            DataChannelStats.prototype.fmicelinkDataChannelStatsInit = function () {
+                this._bytesReceived = 0;
+                this._bytesSent = 0;
+                this._messagesReceived = 0;
+                this._messagesSent = 0;
+                this._ordered = false;
             };
             /**<span id='method-fm.icelink.DataChannelStats-fromJson'>&nbsp;</span>**/
             /**
@@ -74815,8 +80031,8 @@ function makeMediaStream() {
                     var list = new Array();
                     var mediaStreams = this.getMediaStreams();
                     if ((!fm.icelink.Global.equals(mediaStreams, null))) {
-                        for (var _i = 0, mediaStreams_3 = mediaStreams; _i < mediaStreams_3.length; _i++) {
-                            var stats = mediaStreams_3[_i];
+                        for (var _i = 0, mediaStreams_4 = mediaStreams; _i < mediaStreams_4.length; _i++) {
+                            var stats = mediaStreams_4[_i];
                             if ((fm.icelink.Global.equals(stats.getType(), fm.icelink.StreamType.Audio))) {
                                 fm.icelink.ArrayExtensions.add(list, stats);
                             }
@@ -74859,8 +80075,8 @@ function makeMediaStream() {
                 if (arguments.length == 0) {
                     var streams = this.getStreams();
                     if ((!fm.icelink.Global.equals(streams, null))) {
-                        for (var _i = 0, streams_3 = streams; _i < streams_3.length; _i++) {
-                            var stats = streams_3[_i];
+                        for (var _i = 0, streams_5 = streams; _i < streams_5.length; _i++) {
+                            var stats = streams_5[_i];
                             if (stats.getIsHost()) {
                                 return true;
                             }
@@ -74886,8 +80102,8 @@ function makeMediaStream() {
                 if (arguments.length == 0) {
                     var streams = this.getStreams();
                     if ((!fm.icelink.Global.equals(streams, null))) {
-                        for (var _i = 0, streams_4 = streams; _i < streams_4.length; _i++) {
-                            var stats = streams_4[_i];
+                        for (var _i = 0, streams_6 = streams; _i < streams_6.length; _i++) {
+                            var stats = streams_6[_i];
                             if (stats.getIsReflexive()) {
                                 return true;
                             }
@@ -74913,8 +80129,8 @@ function makeMediaStream() {
                 if (arguments.length == 0) {
                     var streams = this.getStreams();
                     if ((!fm.icelink.Global.equals(streams, null))) {
-                        for (var _i = 0, streams_5 = streams; _i < streams_5.length; _i++) {
-                            var stats = streams_5[_i];
+                        for (var _i = 0, streams_7 = streams; _i < streams_7.length; _i++) {
+                            var stats = streams_7[_i];
                             if (stats.getIsRelayed()) {
                                 return true;
                             }
@@ -74975,8 +80191,8 @@ function makeMediaStream() {
                     var list = new Array();
                     var mediaStreams = this.getMediaStreams();
                     if ((!fm.icelink.Global.equals(mediaStreams, null))) {
-                        for (var _i = 0, mediaStreams_4 = mediaStreams; _i < mediaStreams_4.length; _i++) {
-                            var stats = mediaStreams_4[_i];
+                        for (var _i = 0, mediaStreams_5 = mediaStreams; _i < mediaStreams_5.length; _i++) {
+                            var stats = mediaStreams_5[_i];
                             fm.icelink.ArrayExtensions.add(list, stats);
                         }
                     }
@@ -75021,8 +80237,8 @@ function makeMediaStream() {
                     var list = new Array();
                     var mediaStreams = this.getMediaStreams();
                     if ((!fm.icelink.Global.equals(mediaStreams, null))) {
-                        for (var _i = 0, mediaStreams_5 = mediaStreams; _i < mediaStreams_5.length; _i++) {
-                            var stats = mediaStreams_5[_i];
+                        for (var _i = 0, mediaStreams_6 = mediaStreams; _i < mediaStreams_6.length; _i++) {
+                            var stats = mediaStreams_6[_i];
                             if ((fm.icelink.Global.equals(stats.getType(), fm.icelink.StreamType.Video))) {
                                 fm.icelink.ArrayExtensions.add(list, stats);
                             }
@@ -75480,7 +80696,7 @@ function makeMediaStream() {
                 }
             };
             StreamDirectionHelper.isReceiveDisabled = function () {
-                if (arguments.length == 1 && (icelink.Util.isNullOrUndefined(arguments[0]) || icelink.Util.isObjectType(arguments[0], '[fm.icelink.StreamDirection]'))) {
+                if (arguments.length == 1 && (icelink.Util.isNullOrUndefined(arguments[0]) || icelink.Util.isNumber(arguments[0]))) {
                     var direction = arguments[0];
                     return ((fm.icelink.Global.equals(direction, fm.icelink.StreamDirection.Inactive)) || (fm.icelink.Global.equals(direction, fm.icelink.StreamDirection.SendOnly)));
                 }
@@ -75497,7 +80713,7 @@ function makeMediaStream() {
                     var stringDirection = arguments[0];
                     return ((fm.icelink.Global.equals(stringDirection, "inactive")) || (fm.icelink.Global.equals(stringDirection, "recvonly")));
                 }
-                else if (arguments.length == 1 && (icelink.Util.isNullOrUndefined(arguments[0]) || icelink.Util.isObjectType(arguments[0], '[fm.icelink.StreamDirection]'))) {
+                else if (arguments.length == 1 && (icelink.Util.isNullOrUndefined(arguments[0]) || icelink.Util.isNumber(arguments[0]))) {
                     var direction = arguments[0];
                     return ((fm.icelink.Global.equals(direction, fm.icelink.StreamDirection.Inactive)) || (fm.icelink.Global.equals(direction, fm.icelink.StreamDirection.ReceiveOnly)));
                 }
@@ -75612,6 +80828,7 @@ function makeMediaStream() {
                 }
                 if (__arguments.length == 0) {
                     _this = _super.call(this) || this;
+                    _this.fmicelinkTransportStatsInit();
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -75620,6 +80837,10 @@ function makeMediaStream() {
             }
             TransportStats.prototype.getTypeString = function () {
                 return '[fm.icelink.TransportStats]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            TransportStats.prototype.fmicelinkTransportStatsInit = function () {
+                this._bytesReceived = 0;
+                this._bytesSent = 0;
             };
             /**<span id='method-fm.icelink.TransportStats-fromJson'>&nbsp;</span>**/
             /**
@@ -76065,9 +81286,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.TransportStats-setActiveCandidatePair'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the active candidate pair's stats.
+             </div>
     
+    
+            @param {fm.icelink.CandidatePairStats} value
+            @return {void}
             */
             TransportStats.prototype.setActiveCandidatePair = function (value) {
                 if (arguments.length == 1) {
@@ -76077,9 +81304,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.TransportStats-setBytesReceived'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the number of bytes received.
+             </div>
     
+    
+            @param {number} value
+            @return {void}
             */
             TransportStats.prototype.setBytesReceived = function (value) {
                 if (arguments.length == 1) {
@@ -76089,9 +81322,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.TransportStats-setBytesSent'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the number of bytes sent.
+             </div>
     
+    
+            @param {number} value
+            @return {void}
             */
             TransportStats.prototype.setBytesSent = function (value) {
                 if (arguments.length == 1) {
@@ -76101,9 +81340,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.TransportStats-setCandidatePairs'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the candidate pairs' stats.
+             </div>
     
+    
+            @param {fm.icelink.CandidatePairStats[]} value
+            @return {void}
             */
             TransportStats.prototype.setCandidatePairs = function (value) {
                 if (arguments.length == 1) {
@@ -76113,9 +81358,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.TransportStats-setLocalCandidates'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the local candidates' stats.
+             </div>
     
+    
+            @param {fm.icelink.CandidateStats[]} value
+            @return {void}
             */
             TransportStats.prototype.setLocalCandidates = function (value) {
                 if (arguments.length == 1) {
@@ -76125,9 +81376,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.TransportStats-setLocalCertificate'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the local certificate's stats.
+             </div>
     
+    
+            @param {fm.icelink.CertificateStats} value
+            @return {void}
             */
             TransportStats.prototype.setLocalCertificate = function (value) {
                 if (arguments.length == 1) {
@@ -76137,9 +81394,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.TransportStats-setRemoteCandidates'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the remote candidates' stats.
+             </div>
     
+    
+            @param {fm.icelink.CandidateStats[]} value
+            @return {void}
             */
             TransportStats.prototype.setRemoteCandidates = function (value) {
                 if (arguments.length == 1) {
@@ -76149,9 +81412,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.TransportStats-setRemoteCertificate'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the remote certificate's stats.
+             </div>
     
+    
+            @param {fm.icelink.CertificateStats} value
+            @return {void}
             */
             TransportStats.prototype.setRemoteCertificate = function (value) {
                 if (arguments.length == 1) {
@@ -76161,9 +81430,15 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.TransportStats-setRtcpTransport'>&nbsp;</span>**/
             /**
-            @internal
+             <div>
+             Sets the RTCP transport's stats.
+             </div>
     
+    
+            @param {fm.icelink.TransportStats} value
+            @return {void}
             */
             TransportStats.prototype.setRtcpTransport = function (value) {
                 if (arguments.length == 1) {
@@ -76362,8 +81637,8 @@ function makeMediaStream() {
 (function (fm) {
     var icelink;
     (function (icelink) {
-        var StreamTypeWrapper = /** @class */ (function () {
-            function StreamTypeWrapper(value) {
+        var StreamStateWrapper = /** @class */ (function () {
+            function StreamStateWrapper(value) {
                 var __arguments = new Array(arguments.length);
                 for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
                     __arguments[__argumentIndex] = arguments[__argumentIndex];
@@ -76372,6 +81647,57 @@ function makeMediaStream() {
                     var value_46 = __arguments[0];
                     //super();
                     this._value = value_46;
+                }
+                else {
+                    throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
+                }
+            }
+            StreamStateWrapper.prototype.getTypeString = function () {
+                return '[fm.icelink.StreamStateWrapper]';
+            };
+            StreamStateWrapper.prototype.toString = function () {
+                if (arguments.length == 0) {
+                    if (this._value == fm.icelink.StreamState.New)
+                        return 'New';
+                    if (this._value == fm.icelink.StreamState.Initializing)
+                        return 'Initializing';
+                    if (this._value == fm.icelink.StreamState.Connecting)
+                        return 'Connecting';
+                    if (this._value == fm.icelink.StreamState.Connected)
+                        return 'Connected';
+                    if (this._value == fm.icelink.StreamState.Failing)
+                        return 'Failing';
+                    if (this._value == fm.icelink.StreamState.Failed)
+                        return 'Failed';
+                    if (this._value == fm.icelink.StreamState.Closing)
+                        return 'Closing';
+                    if (this._value == fm.icelink.StreamState.Closed)
+                        return 'Closed';
+                    return '';
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
+            return StreamStateWrapper;
+        }());
+        icelink.StreamStateWrapper = StreamStateWrapper;
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
+
+(function (fm) {
+    var icelink;
+    (function (icelink) {
+        var StreamTypeWrapper = /** @class */ (function () {
+            function StreamTypeWrapper(value) {
+                var __arguments = new Array(arguments.length);
+                for (var __argumentIndex = 0; __argumentIndex < __arguments.length; ++__argumentIndex) {
+                    __arguments[__argumentIndex] = arguments[__argumentIndex];
+                }
+                if (__arguments.length == 1) {
+                    var value_47 = __arguments[0];
+                    //super();
+                    this._value = value_47;
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -76417,9 +81743,9 @@ function makeMediaStream() {
                     __arguments[__argumentIndex] = arguments[__argumentIndex];
                 }
                 if (__arguments.length == 1) {
-                    var value_47 = __arguments[0];
+                    var value_48 = __arguments[0];
                     //super();
-                    this._value = value_47;
+                    this._value = value_48;
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -76468,9 +81794,9 @@ function makeMediaStream() {
                     __arguments[__argumentIndex] = arguments[__argumentIndex];
                 }
                 if (__arguments.length == 1) {
-                    var value_48 = __arguments[0];
+                    var value_49 = __arguments[0];
                     //super();
-                    this._value = value_48;
+                    this._value = value_49;
                 }
                 else {
                     throw new icelink.Exception('Constructor overload does not exist with specified parameter count/type combination.');
@@ -76628,6 +81954,22 @@ function makeMediaStream() {
                     throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
                 }
             };
+            /**<span id='method-fm.icelink.Utility-generateTieBreaker'>&nbsp;</span>**/
+            /**
+             <div>
+             Generates a Connection Tie-breaker.
+             </div>
+    
+            @return {string}
+            */
+            Utility.generateTieBreaker = function () {
+                if (arguments.length == 0) {
+                    return fm.icelink.StringExtensions.replace(fm.icelink.Guid.newGuid().toString(), "-", "");
+                }
+                else {
+                    throw new icelink.Exception('Method overload does not exist with specified parameter count/type combination.');
+                }
+            };
             Utility.lastOrDefault = function () {
                 if (arguments.length == 1 && (icelink.Util.isNullOrUndefined(arguments[0]) || icelink.Util.isObject(arguments[0]))) {
                     var list = arguments[0];
@@ -76763,6 +82105,7 @@ function makeMediaStream() {
                         var frameRate_2 = __arguments[2];
                         var clockRate = __arguments[3];
                         _this = _super.call(this, clockRate) || this;
+                        _this.fmicelinkVideoConfigInit();
                         _this.setWidth(width_1);
                         _this.setHeight(height_1);
                         _this.setFrameRate(frameRate_2);
@@ -76774,6 +82117,7 @@ function makeMediaStream() {
                     var frameRate = __arguments[2];
                     var clockRate = __arguments[3];
                     _this = _super.call(this, clockRate) || this;
+                    _this.fmicelinkVideoConfigInit();
                     _this.setWidth(width);
                     _this.setHeight(height);
                     _this.setFrameRate(frameRate);
@@ -76785,6 +82129,11 @@ function makeMediaStream() {
             }
             VideoConfig.prototype.getTypeString = function () {
                 return '[fm.icelink.VideoConfig]' + ',' + _super.prototype.getTypeString.call(this);
+            };
+            VideoConfig.prototype.fmicelinkVideoConfigInit = function () {
+                this._frameRate = 0;
+                this._height = 0;
+                this._width = 0;
             };
             /**<span id='method-fm.icelink.VideoConfig-getFrameRate'>&nbsp;</span>**/
             /**
@@ -77001,8 +82350,15 @@ function makeMediaStream() {
         })(vp9 = icelink.vp9 || (icelink.vp9 = {}));
     })(icelink = fm.icelink || (fm.icelink = {}));
 })(fm || (fm = {}));
-/// <reference path="Build.ts" />
+/// <reference path="Binary.ts" />
 
+/// <reference path="Binary.ts" />
+(function (fm) {
+    var icelink;
+    (function (icelink) {
+        fm.icelink.Binary.fmicelinkBinaryInitialize();
+    })(icelink = fm.icelink || (fm.icelink = {}));
+})(fm || (fm = {}));
 /// <reference path="Build.ts" />
 (function (fm) {
     var icelink;

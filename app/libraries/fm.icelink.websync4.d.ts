@@ -1,6 +1,6 @@
 //
 // Title: IceLink for JavaScript
-// Version: 3.2.1.456
+// Version: 3.2.3.684
 // Copyright Frozen Mountain Software 2011+
 //
 declare namespace fm {
@@ -321,76 +321,8 @@ declare namespace fm.websync.chat {
     }
 }
 declare namespace fm.icelink.websync4 {
-    /**
-    @internal
-    */
-    class PendingRenegotiationProperties {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private _channel;
-        /**
-        @internal
-        */
-        private _client;
-        /**
-        @internal
-        */
-        private _pendingPromise;
-        constructor(pendingPromise: fm.icelink.Promise<fm.icelink.SessionDescription>, client: fm.websync.Client, channel: string);
-        getChannel(): string;
-        getClient(): fm.websync.Client;
-        getPendingPromise(): fm.icelink.Promise<fm.icelink.SessionDescription>;
-        /**
-        @internal
-
-        */
-        private setChannel(value);
-        /**
-        @internal
-
-        */
-        private setClient(value);
-        /**
-        @internal
-
-        */
-        private setPendingPromise(value);
-    }
 }
 declare namespace fm.icelink.websync4 {
-    /**
-    @internal
-    */
-    class State {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private _connections;
-        /**
-        @internal
-        */
-        private _unlinkAllOnLeaveSuccess;
-        /**
-        @internal
-        */
-        private _unlinkExistingOnUserJoin;
-        /**
-        @internal
-        */
-        private _unlinkOnUserLeave;
-        constructor();
-        getConnections(): fm.icelink.websync4.ConnectionCollection;
-        getUnlinkAllOnLeaveSuccess(): boolean;
-        getUnlinkExistingOnUserJoin(): boolean;
-        getUnlinkOnUserLeave(): boolean;
-        setConnections(value: fm.icelink.websync4.ConnectionCollection): void;
-        setUnlinkAllOnLeaveSuccess(value: boolean): void;
-        setUnlinkExistingOnUserJoin(value: boolean): void;
-        setUnlinkOnUserLeave(value: boolean): void;
-    }
 }
 declare namespace fm.icelink.websync4 {
     /**
@@ -401,34 +333,7 @@ declare namespace fm.icelink.websync4 {
     */
     class JoinConferenceArgs extends fm.websync.BaseInputArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _conferenceChannel;
-        /**
-        @internal
-        */
-        private _onFailure;
-        /**
-        @internal
-        */
-        private _onReceive;
-        /**
-        @internal
-        */
-        private _onRemoteClient;
-        /**
-        @internal
-        */
-        private _onSuccess;
-        /**
-        @internal
-        */
-        private _unlinkExistingOnUserJoin;
-        /**
-        @internal
-        */
-        private _unlinkOnUserLeave;
+        private fmicelinkwebsync4JoinConferenceArgsInit();
         constructor();
         /**<span id='method-fm.icelink.websync4.JoinConferenceArgs-constructor'>&nbsp;</span>**/
         /**
@@ -614,10 +519,6 @@ declare namespace fm.icelink.websync4 {
     */
     class JoinConferenceFailureArgs extends fm.websync.BaseFailureArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        __conferenceChannel: string;
         constructor();
         /**<span id='method-fm.icelink.websync4.JoinConferenceFailureArgs-getConferenceChannel'>&nbsp;</span>**/
         /**
@@ -640,10 +541,6 @@ declare namespace fm.icelink.websync4 {
     */
     class JoinConferenceReceiveArgs extends fm.websync.SubscribeReceiveArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        __publishingPeer: fm.icelink.websync4.PeerClient;
         /**<span id='method-fm.icelink.websync4.JoinConferenceReceiveArgs-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -679,14 +576,6 @@ declare namespace fm.icelink.websync4 {
     */
     class JoinConferenceSuccessArgs extends fm.websync.BaseSuccessArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        __conferenceChannel: string;
-        /**
-        @internal
-        */
-        __users: fm.websync.chat.ChatUser[];
         constructor();
         /**<span id='method-fm.icelink.websync4.JoinConferenceSuccessArgs-getConferenceChannel'>&nbsp;</span>**/
         /**
@@ -719,22 +608,7 @@ declare namespace fm.icelink.websync4 {
     */
     class LeaveConferenceArgs extends fm.websync.BaseInputArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _conferenceChannel;
-        /**
-        @internal
-        */
-        private _onFailure;
-        /**
-        @internal
-        */
-        private _onSuccess;
-        /**
-        @internal
-        */
-        private _unlinkAllOnSuccess;
+        private fmicelinkwebsync4LeaveConferenceArgsInit();
         constructor();
         /**<span id='method-fm.icelink.websync4.LeaveConferenceArgs-constructor'>&nbsp;</span>**/
         /**
@@ -847,10 +721,6 @@ declare namespace fm.icelink.websync4 {
     */
     class LeaveConferenceFailureArgs extends fm.websync.BaseFailureArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        __conferenceChannel: string;
         constructor();
         /**<span id='method-fm.icelink.websync4.LeaveConferenceFailureArgs-getConferenceChannel'>&nbsp;</span>**/
         /**
@@ -873,10 +743,6 @@ declare namespace fm.icelink.websync4 {
     */
     class LeaveConferenceSuccessArgs extends fm.websync.BaseSuccessArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        __conferenceChannel: string;
         constructor();
         /**<span id='method-fm.icelink.websync4.LeaveConferenceSuccessArgs-getConferenceChannel'>&nbsp;</span>**/
         /**
@@ -899,64 +765,6 @@ declare namespace fm.icelink.websync4 {
     */
     abstract class ClientExtensions {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private static fm_icelink_websync4_ClientExtensions___connectionRetryLock;
-        /**
-        @internal
-        */
-        static fm_icelink_websync4_ClientExtensions__retriable: string;
-        /**
-        @internal
-
-        */
-        private static acceptAnswer(connection, remoteDescription);
-        /**
-        @internal
-
-        */
-        private static acceptOfferCreateAnswerAndSend(connection, client, remoteDescription, userId, channel, competingOffer, boundRecords, state);
-        /**
-        @internal
-
-        */
-        private static createAndSendOffer(connection, client, channel, userId, promise);
-        /**
-        @internal
-
-        */
-        private static createAndSendOffer(connection, client, channel, userId);
-        /**
-        @internal
-
-        */
-        private static createNewConnectionAndSend(userId, boundRecords, state, remoteDescription, client, channel);
-        /**
-        @internal
-
-        */
-        private static doJoinConference(client, args, state);
-        /**
-        @internal
-
-        */
-        private static doLeaveConference(client, args, state);
-        /**
-        @internal
-
-        */
-        private static doRenegotiateConference(client, state, promise, connections);
-        /**
-        @internal
-
-        */
-        private static getAndCacheConnection(remoteClient);
-        /**
-        @internal
-
-        */
-        private static getInstanceChannel(conferenceChannel, clientId);
         /**<span id='method-fm.icelink.websync4.ClientExtensions-joinConference'>&nbsp;</span>**/
         /**
          <div>
@@ -979,56 +787,6 @@ declare namespace fm.icelink.websync4 {
         @return {fm.websync.Client} The WebSync client.
         */
         static leaveConference(client: fm.websync.Client, args: fm.icelink.websync4.LeaveConferenceArgs): fm.websync.Client;
-        /**
-        @internal
-
-        */
-        private static preparePendingRenegotiationPromise(connection, client, channel, individualPromises, processed);
-        /**
-        @internal
-
-        */
-        private static processReadyForRenegotiation(connection);
-        /**
-        @internal
-
-        */
-        private static raiseJoinFailure(args, e, conferenceChannel);
-        /**
-        @internal
-
-        */
-        private static raiseJoinReceive(args, e, channel, remoteUserId, remoteBoundRecords);
-        /**
-        @internal
-
-        */
-        private static raiseJoinRemoteClient(args, remoteClient, userId);
-        /**
-        @internal
-
-        */
-        private static raiseJoinSuccess(args, e, conferenceChannel, users);
-        /**
-        @internal
-
-        */
-        private static raiseLeaveFailure(args, e, conferenceChannel);
-        /**
-        @internal
-
-        */
-        private static raiseLeaveSuccess(args, e, conferenceChannel);
-        /**
-        @internal
-
-        */
-        private static receiveRemoteCandidate(e, state, userId, boundRecords);
-        /**
-        @internal
-
-        */
-        private static receiveRemoteDescription(e, state, userId, boundRecords, client, conferenceChannel);
         /**<span id='method-fm.icelink.websync4.ClientExtensions-reconnectRemoteClient'>&nbsp;</span>**/
         /**
          <div>
@@ -1053,92 +811,9 @@ declare namespace fm.icelink.websync4 {
         @return {fm.icelink.Future<Object>}
         */
         static renegotiate(client: fm.websync.Client, conferenceChannel: string, connection: fm.icelink.Connection): fm.icelink.Future<Object>;
-        /**
-        @internal
-
-        */
-        private static renegotiateConnection(processed, client, channel, promise, connections, individualPromises);
-        /**
-        @internal
-
-        */
-        private static resolveNextConnection(processed, client, channel, promise, connections, individualPromises);
-        /**
-        @internal
-
-        */
-        private static sendLocalCandidate(client, conferenceChannel, userId, localCandidate);
-        /**
-        @internal
-
-        */
-        private static sendLocalDescription(client, conferenceChannel, userId, localDescription, promise);
-        /**
-        @internal
-
-        */
-        private static setRemoteDescription(connection, remoteDescription, client, channel, userId);
-        /** @internal */
-        private static __fmicelinkwebsync4ClientExtensionsInitialized;
-        /** @internal */
-        static fmicelinkwebsync4ClientExtensionsInitialize(): void;
     }
 }
 declare namespace fm.icelink.websync4 {
-    /**
-    @internal
-    */
-    class ConnectionCollection extends fm.icelink.ConnectionCollection {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private __lookupByRemoteUserId;
-        /**
-        @internal
-        */
-        private __lookupByRemoteUserIdLock;
-        /**
-        @internal
-        */
-        private __onLocalCandidate;
-        /**
-        @internal
-        */
-        private _joinArgs;
-        /**
-        @internal
-        */
-        private _onLocalCandidate;
-        /**
-        @internal
-        */
-        static fm_icelink_websync4_ConnectionCollection__remoteUserId: string;
-        private fmicelinkwebsync4ConnectionCollectionInit();
-        constructor(joinArgs: fm.icelink.websync4.JoinConferenceArgs);
-        add(value: fm.icelink.Connection): boolean;
-        addOnLocalCandidate(value: fm.icelink.IAction2<fm.icelink.Connection, fm.icelink.Candidate>): void;
-        protected addSuccess(value: fm.icelink.Connection): void;
-        getByRemoteUserId(remoteUserId: string): fm.icelink.Connection;
-        getJoinArgs(): fm.icelink.websync4.JoinConferenceArgs;
-        /**
-        @internal
-
-        */
-        private processLocalCandidate(connection, localCandidate);
-        removeOnLocalCandidate(value: fm.icelink.IAction2<fm.icelink.Connection, fm.icelink.Candidate>): void;
-        protected removeSuccess(value: fm.icelink.Connection): void;
-        /**
-        @internal
-
-        */
-        private setJoinArgs(value);
-        tryGetByRemoteUserId(remoteUserId: string, connection: fm.icelink.Holder<fm.icelink.Connection>): boolean;
-        /** @internal */
-        private static __fmicelinkwebsync4ConnectionCollectionInitialized;
-        /** @internal */
-        static fmicelinkwebsync4ConnectionCollectionInitialize(): void;
-    }
 }
 declare namespace fm.icelink.websync4 {
     /**
@@ -1149,18 +824,6 @@ declare namespace fm.icelink.websync4 {
     */
     class PeerClient {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _boundRecords;
-        /**
-        @internal
-        */
-        private _instanceId;
-        /**
-        @internal
-        */
-        private _state;
         /**<span id='method-fm.icelink.websync4.PeerClient-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -1172,11 +835,6 @@ declare namespace fm.icelink.websync4 {
         @return {}
         */
         constructor(instanceId: string, boundRecords: fm.icelink.Hash<string, fm.websync.Record>);
-        /**
-        @internal
-
-        */
-        static createPeerClient(instanceId: string, boundRecords: fm.icelink.Hash<string, fm.websync.Record>, state: fm.icelink.websync4.State): fm.icelink.websync4.PeerClient;
         /**<span id='method-fm.icelink.websync4.PeerClient-getBoundRecords'>&nbsp;</span>**/
         /**
          <div>
@@ -1197,11 +855,6 @@ declare namespace fm.icelink.websync4 {
         @return {string}
         */
         getInstanceId(): string;
-        /**
-        @internal
-
-        */
-        getState(): fm.icelink.websync4.State;
         /**<span id='method-fm.icelink.websync4.PeerClient-setBoundRecords'>&nbsp;</span>**/
         /**
          <div>
@@ -1224,11 +877,6 @@ declare namespace fm.icelink.websync4 {
         @return {void}
         */
         setInstanceId(value: string): void;
-        /**
-        @internal
-
-        */
-        private setState(value);
     }
 }
 declare namespace fm.icelink.websync4 {

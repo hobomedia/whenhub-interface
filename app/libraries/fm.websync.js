@@ -1,7 +1,7 @@
 
 /*
  * Title: WebSync Client for JavaScript
- * Version: 4.9.27
+ * Version: 4.9.32
  * Copyright Frozen Mountain Software 2011+
  */
 
@@ -25,7 +25,7 @@ if (!window.fm) { throw new Error("fm must be loaded before fm.websync."); }
 if (!window.fm.websync) { window.fm.websync = {}; }
 
 fm.websync.getVersion = function() {
-  return '4.9.27';
+  return '4.9.32';
 };
 
 
@@ -1519,8 +1519,9 @@ fm.websync.baseInputArgs = (function(superClass) {
 
   /**
   	 <div>
-  	 Gets the request timeout to use for this request. This will
-  	 override any client-level request timeout settings.
+  	 Gets the number of milliseconds for the request timeout to use
+  	 for this request. This will override any client-level request timeout
+  	 settings.
   	 </div>
   
   	@function getRequestTimeout
@@ -1600,8 +1601,9 @@ fm.websync.baseInputArgs = (function(superClass) {
 
   /**
   	 <div>
-  	 Sets the request timeout to use for this request. This will
-  	 override any client-level request timeout settings.
+  	 Sets the number of milliseconds for the request timeout to use
+  	 for this request. This will override any client-level request timeout
+  	 settings.
   	 </div>
   
   	@function setRequestTimeout
@@ -25658,7 +25660,13 @@ fm.websync.record = (function(superClass) {
    */
 
   record.prototype.duplicate = function() {
-    return new fm.websync.record(this.getKey(), this.getValueJson(), this.getPrivate());
+    var record;
+    record = new fm.websync.record(this.getKey());
+    record.setValidate(false);
+    record.setValueJson(this.getValueJson());
+    record.setPrivate(this.getPrivate());
+    record.setValidate(true);
+    return record;
   };
 
 
@@ -28171,6 +28179,7 @@ fm.websync.subscribedClient = (function(superClass) {
       _created = true;
       oldConstructor.apply(this, arguments);
       c = this;
+      c.setDisableWebSockets(false);
       fm.util.observe(window, 'beforeunload', function() {
         var autoDisconnect, autoDisconnectConfig;
         autoDisconnect = c._autoDisconnect;

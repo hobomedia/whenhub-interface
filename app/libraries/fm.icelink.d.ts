@@ -1,6 +1,6 @@
 //
 // Title: IceLink for JavaScript
-// Version: 3.2.1.456
+// Version: 3.2.3.684
 // Copyright Frozen Mountain Software 2011+
 //
 declare namespace fm.icelink {
@@ -14,6 +14,7 @@ declare namespace fm.icelink {
         static toArray<T>(array: T[]): T[];
         static clear<T>(array: T[]): void;
         static addRange<T>(array: T[], values: T[]): void;
+        static getRange<T>(array: T[], index: number, count: number): T[];
         static contains<T>(array: T[], value: T): boolean;
         static newArray<T>(values: T[]): T[];
         static clone<T>(array: T[]): T[];
@@ -21,40 +22,6 @@ declare namespace fm.icelink {
     }
 }
 declare namespace fm.icelink {
-    class AsyncLogger implements fm.icelink.ILog {
-        getTypeString(): string;
-        private _logLevel;
-        private _tag;
-        constructor(tag: string);
-        getIsVerboseEnabled(): boolean;
-        verbose(message: string): void;
-        verbose(message: string, ex: fm.icelink.Exception): void;
-        getIsDebugEnabled(): boolean;
-        isLogEnabled(level: fm.icelink.LogLevel): boolean;
-        debug(message: string): void;
-        debug(message: string, ex: fm.icelink.Exception): void;
-        private doLog(level, msg, ex);
-        getIsErrorEnabled(): boolean;
-        error(message: string): void;
-        error(message: string, ex: fm.icelink.Exception): void;
-        getIsFatalEnabled(): boolean;
-        fatal(message: string): void;
-        fatal(message: string, ex: fm.icelink.Exception): void;
-        getLogLevel(): fm.icelink.LogLevel;
-        getTag(): string;
-        getIsInfoEnabled(): boolean;
-        info(message: string): void;
-        info(message: string, ex: fm.icelink.Exception): void;
-        log(message: string): void;
-        private setLogLevel(value);
-        private setTag(value);
-        getIsWarnEnabled(): boolean;
-        warn(message: string): void;
-        warn(message: string, ex: fm.icelink.Exception): void;
-        private static __fmAsyncLoggerInitialized;
-        static fmAsyncLoggerInitialize(): void;
-        flush(): void;
-    }
 }
 declare namespace fm.icelink {
     class AtomicInteger {
@@ -147,14 +114,7 @@ declare namespace fm.icelink {
     */
     abstract class LogProvider {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _filter;
-        /**
-        @internal
-        */
-        private _level;
+        private fmicelinkLogProviderInit();
         /**<span id='method-fm.icelink.LogProvider-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -165,72 +125,26 @@ declare namespace fm.icelink {
         @return {}
         */
         constructor();
-        /**<span id='method-fm.icelink.LogProvider-getPrefix'>&nbsp;</span>**/
-        /**
-         <div>
-         Converts a log-level to a 5-character string for
-         consistently-spaced character sequences.
-         </div>
-
-        @param {fm.icelink.LogLevel} level The log level.
-        @return {string} The log level as an upper-case string
-         with right-side whitespace padding to ensure
-         a 5-character sequence.
-        */
-        protected static getPrefix(level: fm.icelink.LogLevel): string;
-        /**<span id='method-fm.icelink.LogProvider-getPrefix'>&nbsp;</span>**/
-        /**
-         <div>
-         Converts a log-level to a 5-character string for
-         consistently-spaced character sequences.
-         </div>
-
-        @param {fm.icelink.LogLevel} level The log level.
-        @param {boolean} includeTimestamp Whether to include a timestamp in the prefix.
-        @return {string} The log level as an upper-case string
-         with right-side whitespace padding to ensure
-         a 5-character sequence.
-        */
-        protected static getPrefix(level: fm.icelink.LogLevel, includeTimestamp: boolean): string;
-        /**<span id='method-fm.icelink.LogProvider-getPrefixTimestamp'>&nbsp;</span>**/
-        /**
-         <div>
-         Converts a timestamp to a string formatted for
-         rendering in a log message (yyyy/MM/dd-hh:mm:ss).
-         </div>
-
-        @param {fm.icelink.DateTime} timestamp The timestamp.
-        @return {string} The timestamp as a formatted string.
-        */
-        static getPrefixTimestamp(timestamp: fm.icelink.DateTime): string;
         /**<span id='method-fm.icelink.LogProvider-doLog'>&nbsp;</span>**/
         /**
          <div>
          Logs a message at the specified log level.
          </div>
 
-        @param {fm.icelink.DateTime} timestamp The timestamp when the event occurred.
-        @param {fm.icelink.LogLevel} level The log level.
-        @param {string} tag The logger tag.
-        @param {string} message The message.
-        @param {fm.icelink.Exception} ex The exception.
+        @param {fm.icelink.LogEvent} logItem The log event containing the details.
         @return {void}
         */
-        protected abstract doLog(timestamp: fm.icelink.DateTime, level: fm.icelink.LogLevel, tag: string, message: string, ex: fm.icelink.Exception): void;
+        protected abstract doLog(logItem: fm.icelink.LogEvent): void;
         /**<span id='method-fm.icelink.LogProvider-generateLogLine'>&nbsp;</span>**/
         /**
          <div>
          Generates a default log line.
          </div>
 
-        @param {fm.icelink.DateTime} timestamp When the event occurred.
-        @param {fm.icelink.LogLevel} level The log level,
-        @param {string} tag Which logger it came from.
-        @param {string} message The log message.
-        @param {fm.icelink.Exception} ex The exception if one is available.
+        @param {fm.icelink.LogEvent} logItem The log event containing the details.
         @return {string}
         */
-        protected generateLogLine(timestamp: fm.icelink.DateTime, level: fm.icelink.LogLevel, tag: string, message: string, ex: fm.icelink.Exception): string;
+        protected generateLogLine(logItem: fm.icelink.LogEvent): string;
         /**<span id='method-fm.icelink.LogProvider-getFilter'>&nbsp;</span>**/
         /**
          <div>
@@ -251,33 +165,74 @@ declare namespace fm.icelink {
         @return {fm.icelink.LogLevel}
         */
         getLevel(): fm.icelink.LogLevel;
-        /**<span id='method-fm.icelink.LogProvider-log'>&nbsp;</span>**/
+        /**<span id='method-fm.icelink.LogProvider-getLogLevelString'>&nbsp;</span>**/
         /**
          <div>
-         Log a message with no exception.
+         Converts a log-level to a 5-character string for
+         consistently-spaced character sequences.
          </div>
 
-        @param {fm.icelink.DateTime} timestamp The timestamp when the event occurred.
-        @param {fm.icelink.LogLevel} level The level of log message.
-        @param {string} tag The logger tag.
-        @param {string} message The log message.
-        @return {void}
+        @param {fm.icelink.LogLevel} level The log level.
+        @return {string} The log level as an upper-case string
+         with right-side whitespace padding to ensure
+         a 5-character sequence.
         */
-        log(timestamp: fm.icelink.DateTime, level: fm.icelink.LogLevel, tag: string, message: string): void;
+        protected getLogLevelString(level: fm.icelink.LogLevel): string;
+        /**<span id='method-fm.icelink.LogProvider-getPrefix'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a log-level to a 5-character string for
+         consistently-spaced character sequences.
+         </div>
+
+        @param {fm.icelink.LogLevel} level The log level.
+        @param {boolean} includeTimestamp Whether to include a timestamp in the prefix.
+        @return {string} The log level as an upper-case string
+         with right-side whitespace padding to ensure
+         a 5-character sequence.
+        */
+        protected getPrefix(level: fm.icelink.LogLevel, includeTimestamp: boolean): string;
+        /**<span id='method-fm.icelink.LogProvider-getPrefixTimestamp'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a timestamp to a string formatted for
+         rendering in a log message (yyyy/MM/dd-hh:mm:ss).
+         </div>
+
+        @param {fm.icelink.DateTime} timestamp The timestamp.
+        @return {string} The timestamp as a formatted string.
+        */
+        protected getPrefixTimestamp(timestamp: fm.icelink.DateTime): string;
+        /**<span id='method-fm.icelink.LogProvider-getProcessId'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the current process id.
+         </div>
+
+
+        @return {number}
+        */
+        protected getProcessId(): number;
+        /**<span id='method-fm.icelink.LogProvider-getProduct'>&nbsp;</span>**/
+        /**
+         <div>
+         Returns the name of the current product.
+         </div>
+
+
+        @return {string}
+        */
+        protected getProduct(): string;
         /**<span id='method-fm.icelink.LogProvider-log'>&nbsp;</span>**/
         /**
          <div>
          Log a message.
          </div>
 
-        @param {fm.icelink.DateTime} timestamp The timestamp when the event occurred.
-        @param {fm.icelink.LogLevel} level The level of log message.
-        @param {string} tag The logger tag.
-        @param {string} message The log message.
-        @param {fm.icelink.Exception} ex The exception that occured.
+        @param {fm.icelink.LogEvent} logItem The log event containing the details.
         @return {void}
         */
-        log(timestamp: fm.icelink.DateTime, level: fm.icelink.LogLevel, tag: string, message: string, ex: fm.icelink.Exception): void;
+        log(logItem: fm.icelink.LogEvent): void;
         /**<span id='method-fm.icelink.LogProvider-setFilter'>&nbsp;</span>**/
         /**
          <div>
@@ -307,7 +262,7 @@ declare namespace fm.icelink {
         getTypeString(): string;
         constructor(level?: LogLevel);
         writeLine(text: string): void;
-        doLog(timestamp: fm.icelink.DateTime, level: LogLevel, tag: string, message: string, ex?: Exception): void;
+        doLog(logItem: fm.icelink.LogEvent): void;
     }
 }
 declare namespace fm.icelink {
@@ -334,6 +289,7 @@ declare namespace fm.icelink {
         getHour(): number;
         getMinute(): number;
         getSecond(): number;
+        getMillisecond(): number;
         addSeconds(seconds: number): DateTime;
         addMilliseconds(milliseconds: number): DateTime;
     }
@@ -351,12 +307,22 @@ declare namespace fm.icelink {
     }
 }
 declare namespace fm.icelink {
+    class DispatchQueue<T> {
+        getTypeString(): string;
+        private _count;
+        private _action;
+        constructor(action: IAction1<T>);
+        getQueueCount(): number;
+        enqueue(item: T): void;
+    }
+}
+declare namespace fm.icelink {
     class DomLogProvider extends LogProvider {
         getTypeString(): string;
         private _container;
         constructor(container: HTMLElement, level?: LogLevel);
         writeLine(text: string): void;
-        doLog(timestamp: fm.icelink.DateTime, level: LogLevel, tag: string, message: string, ex?: Exception): void;
+        doLog(logItem: fm.icelink.LogEvent): void;
     }
 }
 declare namespace fm.icelink {
@@ -385,18 +351,6 @@ declare namespace fm.icelink {
     */
     abstract class FutureBase<T> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _exception;
-        /**
-        @internal
-        */
-        private _result;
-        /**
-        @internal
-        */
-        private _state;
         constructor();
         /**<span id='method-fm.icelink.FutureBase-getException'>&nbsp;</span>**/
         /**
@@ -512,10 +466,6 @@ declare namespace fm.icelink {
     */
     abstract class HashContextBase {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _type;
         /**<span id='method-fm.icelink.HashContextBase-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -608,11 +558,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.HashType}
         */
         getType(): fm.icelink.HashType;
-        /**
-        @internal
-
-        */
-        private setType(value);
     }
 }
 declare namespace fm.icelink {
@@ -655,26 +600,6 @@ declare namespace fm.icelink {
     */
     abstract class HttpTransfer {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private static fm_icelink_HttpTransfer___onSendFinish;
-        /**
-        @internal
-        */
-        private static fm_icelink_HttpTransfer___onSendStart;
-        /**
-        @internal
-        */
-        private static fm_icelink_HttpTransfer___wildcardCharacters;
-        /**
-        @internal
-        */
-        private static fm_icelink_HttpTransfer__onSendFinish;
-        /**
-        @internal
-        */
-        private static fm_icelink_HttpTransfer__onSendStart;
         constructor();
         /**<span id='method-fm.icelink.HttpTransfer-addOnSendFinish'>&nbsp;</span>**/
         /**
@@ -782,21 +707,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         static setWildcardCharacters(value: string): void;
-        /**
-        @internal
-
-        */
-        private finishRequest(responseArgs);
-        /**
-        @internal
-
-        */
-        private raiseOnSendFinish(responseArgs);
-        /**
-        @internal
-
-        */
-        private raiseOnSendStart(requestArgs);
         /**<span id='method-fm.icelink.HttpTransfer-send'>&nbsp;</span>**/
         /**
          <div>
@@ -870,17 +780,9 @@ declare namespace fm.icelink {
         @return {void}
         */
         abstract shutdown(): void;
-        /**
-        @internal
-
-        */
-        private startRequest(requestArgs);
-        /** @internal */
-        private static __fmicelinkHttpTransferInitialized;
-        /** @internal */
-        static fmicelinkHttpTransferInitialize(): void;
     }
 }
+declare let fmicelinkGlobalIsError: (obj: any) => boolean;
 declare namespace fm.icelink {
     class Util {
         getTypeString(): string;
@@ -902,6 +804,7 @@ declare namespace fm.icelink {
         static isUint8Array(obj: any): boolean;
         static isDate(obj: any): boolean;
         static isRegExp(obj: any): boolean;
+        static isError(obj: any): boolean;
         static isObject(obj: any): boolean;
         static isObjectType(obj: any, typeString: string): boolean;
         static isArrayType(obj: any, typeString: string): boolean;
@@ -1161,10 +1064,6 @@ declare namespace fm.icelink {
     */
     abstract class MacContextBase {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _type;
         /**<span id='method-fm.icelink.MacContextBase-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -1237,11 +1136,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.MacType}
         */
         getType(): fm.icelink.MacType;
-        /**
-        @internal
-
-        */
-        private setType(value);
     }
 }
 declare namespace fm.icelink {
@@ -1254,8 +1148,23 @@ declare namespace fm.icelink {
     }
 }
 declare namespace fm.icelink {
+    class ManagedStopwatch {
+        getTypeString(): string;
+        static dispatch(action: IAction0): void;
+        private startTime;
+        private stopTime;
+        static getTimestamp(): number;
+        getElapsedTicks(): number;
+        getElapsedMilliseconds(): number;
+        start(): void;
+        stop(): void;
+        restart(): void;
+    }
+}
+declare namespace fm.icelink {
     class ManagedThread {
         getTypeString(): string;
+        static getCurrentThreadId(): number;
         static dispatch(action: IAction0): void;
     }
 }
@@ -1279,6 +1188,7 @@ declare namespace fm.icelink {
         static max(val1: number, val2: number): number;
         static min(val1: number, val2: number): number;
         static pow(x: number, y: number): number;
+        static round(value: number): number;
         static sin(val: number): number;
         static sinh(val: number): number;
         static sqrt(val: number): number;
@@ -1343,6 +1253,7 @@ declare namespace fm.icelink {
         getIsLittleEndian(): boolean;
         getIsMobile(): boolean;
         getOperatingSystem(): fm.icelink.OperatingSystem;
+        getProcessId(): number;
         getSourceLanguage(): fm.icelink.SourceLanguage;
         setIsMobile(value: boolean): void;
     }
@@ -1362,6 +1273,7 @@ declare namespace fm.icelink {
         getArchitecture(): Architecture;
         getSourceLanguage(): SourceLanguage;
         getDirectorySeparator(): string;
+        getProcessId(): number;
     }
 }
 declare namespace fm.icelink {
@@ -1411,30 +1323,6 @@ declare namespace fm.icelink {
     */
     abstract class PromiseBase<T> extends fm.icelink.Future<T> implements fm.icelink.IPromise {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __id;
-        /**
-        @internal
-        */
-        private __pendingPromisesToReject;
-        /**
-        @internal
-        */
-        private __pendingPromisesToResolve;
-        /**
-        @internal
-        */
-        private __pendingRejects;
-        /**
-        @internal
-        */
-        private __pendingResolves;
-        /**
-        @internal
-        */
-        private __stateLock;
         /**<span id='method-fm.icelink.PromiseBase-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -1498,16 +1386,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.Future<R>}
         */
         static wrapPromise<R extends Object>(callback: fm.icelink.IFunction0<fm.icelink.Future<R>>): fm.icelink.Future<R>;
-        /**
-        @internal
-
-        */
-        private addReject(promise, reject);
-        /**
-        @internal
-
-        */
-        private addResolve(promise, resolve);
         /**<span id='method-fm.icelink.PromiseBase-doAll'>&nbsp;</span>**/
         /**
          <div>
@@ -1520,16 +1398,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected doAll<R extends Object>(promises: fm.icelink.Future<R>[], counter: fm.icelink.AtomicInteger): void;
-        /**
-        @internal
-
-        */
-        private doRejectAsync(promise, exception);
-        /**
-        @internal
-
-        */
-        private doResolveAsync(promise, result);
         /**<span id='method-fm.icelink.PromiseBase-getId'>&nbsp;</span>**/
         /**
          <div>
@@ -1552,26 +1420,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected process(promise: fm.icelink.IPromise, resolve: fm.icelink.IAction1<T>, reject: fm.icelink.IAction1<fm.icelink.Exception>): void;
-        /**
-        @internal
-
-        */
-        private raiseReject(callback, exception, promise);
-        /**
-        @internal
-
-        */
-        private raiseRejects(exception);
-        /**
-        @internal
-
-        */
-        private raiseResolve(callback, result, promise);
-        /**
-        @internal
-
-        */
-        private raiseResolves(result);
         /**<span id='method-fm.icelink.PromiseBase-reject'>&nbsp;</span>**/
         /**
          <div>
@@ -1592,11 +1440,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.Future<Object>}
         */
         rejectAsync(exception: fm.icelink.Exception): fm.icelink.Future<Object>;
-        /**
-        @internal
-
-        */
-        private reset();
         /**<span id='method-fm.icelink.PromiseBase-resolve'>&nbsp;</span>**/
         /**
          <div>
@@ -1918,18 +1761,7 @@ declare namespace fm.icelink {
     */
     abstract class Serializable {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __serialized;
-        /**
-        @internal
-        */
-        private _isDirty;
-        /**
-        @internal
-        */
-        private _isSerialized;
+        private fmicelinkSerializableInit();
         /**<span id='method-fm.icelink.Serializable-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -1940,51 +1772,6 @@ declare namespace fm.icelink {
         @return {}
         */
         constructor();
-        /**<span id='method-fm.icelink.Serializable-getIsDirty'>&nbsp;</span>**/
-        /**
-         <div>
-         Gets a value indicating whether this instance is dirty.
-         </div>
-
-
-        @return {boolean}
-        @internal
-
-        */
-        getIsDirty(): boolean;
-        /**
-        @internal
-
-        */
-        getIsSerialized(): boolean;
-        /**
-        @internal
-
-        */
-        getSerialized(): string;
-        /**<span id='method-fm.icelink.Serializable-setIsDirty'>&nbsp;</span>**/
-        /**
-         <div>
-         Sets a value indicating whether this instance is dirty.
-         </div>
-
-
-        @param {boolean} value
-        @return {void}
-        @internal
-
-        */
-        setIsDirty(value: boolean): void;
-        /**
-        @internal
-
-        */
-        setIsSerialized(value: boolean): void;
-        /**
-        @internal
-
-        */
-        setSerialized(value: string): void;
     }
 }
 declare namespace fm.icelink {
@@ -1997,14 +1784,6 @@ declare namespace fm.icelink {
     */
     abstract class Dynamic extends fm.icelink.Serializable {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __dynamicProperties;
-        /**
-        @internal
-        */
-        private __dynamicPropertiesLock;
         constructor();
         /**<span id='method-fm.icelink.Dynamic-getDynamicProperties'>&nbsp;</span>**/
         /**
@@ -2026,11 +1805,6 @@ declare namespace fm.icelink {
         @return {Object} The stored value, if found; otherwise null.
         */
         getDynamicValue(key: string): Object;
-        /**
-        @internal
-
-        */
-        setDynamicProperties(value: fm.icelink.Hash<string, Object>): void;
         /**<span id='method-fm.icelink.Dynamic-setDynamicValue'>&nbsp;</span>**/
         /**
          <div>
@@ -2042,11 +1816,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         setDynamicValue(key: string, value: Object): void;
-        /**
-        @internal
-
-        */
-        private tryInitDynamicProperties();
         /**<span id='method-fm.icelink.Dynamic-unsetDynamicValue'>&nbsp;</span>**/
         /**
          <div>
@@ -2066,8 +1835,9 @@ declare namespace fm.icelink {
     }
     abstract class Stream extends Dynamic implements IExternalStream {
         getTypeString(): string;
-        /** @internal */
-        abstract _getInternal(): IInternalStream;
+        getState(): StreamState;
+        addOnStateChange(value: IAction0): void;
+        removeOnStateChange(value: IAction0): void;
         changeDirection(newDirection: StreamDirection): Error;
         getDirection(): StreamDirection;
         getLocalReceive(): boolean;
@@ -2082,7 +1852,6 @@ declare namespace fm.icelink {
         getLocalDirection(): StreamDirection;
         getTag(): string;
         getType(): StreamType;
-        setId(value: string): void;
         setLocalDirection(value: StreamDirection): void;
         setTag(value: string): void;
         addOnDirectionChange(value: IAction0): void;
@@ -2096,13 +1865,7 @@ declare namespace fm.icelink {
     }
     abstract class MediaStream<TTrack> extends Stream implements IMediaStream, IExternalMediaStream {
         getTypeString(): string;
-        /** @internal */
-        abstract _getInternal(): IInternalMediaStream;
-        /** @internal */
-        private localTrack;
         getLocalTrack(): TTrack;
-        /** @internal */
-        private remoteTrack;
         getRemoteTrack(): TTrack;
         getLocalBandwidth(): number;
         getMuted(): boolean;
@@ -2119,15 +1882,7 @@ declare namespace fm.icelink {
     }
     class AudioStream extends MediaStream<AudioTrack> implements IAudioStream, IExternalAudioStream {
         getTypeString(): string;
-        /** @internal */
-        private _internal;
-        /** @internal */
-        _getInternal(): IInternalAudioStream;
-        /** @internal */
-        private localMedia;
         getLocalMedia(): LocalMedia;
-        /** @internal */
-        private remoteMedia;
         getRemoteMedia(): RemoteMedia;
         constructor(localTrack: AudioTrack);
         constructor(localTrack: AudioTrack, remoteTrack: AudioTrack);
@@ -2153,10 +1908,6 @@ declare namespace fm.icelink {
     }
     abstract class MediaTrack extends Dynamic implements IMediaTrack, IExternalMediaTrack {
         getTypeString(): string;
-        /** @internal */
-        abstract _getInternal(): IInternalMediaTrack;
-        /** @internal */
-        private media;
         getMedia(): Media;
         constructor(media: Media);
         addOnStarted(value: IAction0): void;
@@ -2185,10 +1936,6 @@ declare namespace fm.icelink {
     }
     class AudioTrack extends MediaTrack implements IAudioTrack, IExternalAudioTrack {
         getTypeString(): string;
-        /** @internal */
-        private _internal;
-        /** @internal */
-        _getInternal(): IInternalAudioTrack;
         constructor(media: Media, internalMedia?: IInternalMedia);
         addOnLevel(value: IAction1<number>): void;
         getGain(): number;
@@ -2205,29 +1952,6 @@ declare namespace fm.icelink {
     }
     class Connection extends Dynamic implements IConnection<Connection, Stream, AudioStream, VideoStream, DataStream>, IExternalConnection {
         getTypeString(): string;
-        /** @internal */
-        private _internal;
-        /** @internal */
-        _getInternal(): IInternalConnection;
-        /** @internal */
-        private _onGatheringStateChangeValues;
-        /** @internal */
-        private _onIceConnectionStateChangeValues;
-        /** @internal */
-        private _onLocalCandidateValues;
-        /** @internal */
-        private _onLocalDescriptionValues;
-        /** @internal */
-        private _onRemoteCandidateValues;
-        /** @internal */
-        private _onRemoteDescriptionValues;
-        /** @internal */
-        private _onSignallingStateChangeValues;
-        /** @internal */
-        private _onStateChangeValues;
-        /** @internal */
-        private _remoteMedia;
-        constructor();
         constructor(stream: Stream);
         constructor(streams: Stream[]);
         addIceServer(iceServer: IceServer): void;
@@ -2246,6 +1970,7 @@ declare namespace fm.icelink {
         createOffer(): Future<SessionDescription>;
         getDeadStreamTimeout(): number;
         getError(): Error;
+        getExternalId(): string;
         getIceGatherPolicy(): IceGatherPolicy;
         getIceServer(): IceServer;
         getGatheringState(): IceGatheringState;
@@ -2281,14 +2006,15 @@ declare namespace fm.icelink {
         removeOnSignallingStateChange(value: IAction1<Connection>): void;
         removeOnStateChange(value: IAction1<Connection>): void;
         setDeadStreamTimeout(value: number): void;
+        setExternalId(value: string): void;
         setIceGatherPolicy(value: IceGatherPolicy): void;
         setIceServer(value: IceServer): void;
         setIceServers(value: IceServer[]): void;
-        setId(value: string): void;
         setLocalDescription(localDescription: SessionDescription): Future<SessionDescription>;
         setRemoteDescription(remoteDescription: SessionDescription): Future<SessionDescription>;
         setTimeout(value: number): void;
         setTrickleIcePolicy(value: TrickleIcePolicy): void;
+        setTieBreaker(value: string): void;
         getRemoteMedia(): RemoteMedia;
         private externalsToInternals(externals);
         private externalToInternal(external);
@@ -2303,20 +2029,15 @@ declare namespace fm.icelink {
     }
     class DataChannel extends Dynamic implements IDataChannel<DataChannel>, IExternalDataChannel {
         getTypeString(): string;
-        /** @internal */
-        private _internal;
-        /** @internal */
-        _getInternal(): IInternalDataChannel;
-        /** @internal */
-        private _onStateChangeValues;
         constructor(label: string, ordered?: boolean, subprotocol?: string);
         setOnReceive(value: IAction1<DataChannelReceiveArgs>): void;
         getSubprotocol(): string;
         getOnReceive(): IAction1<DataChannelReceiveArgs>;
-        sendDataString(dataString: string): void;
-        sendDataBytes(dataBytes: DataBuffer): void;
+        sendDataString(dataString: string): fm.icelink.Future<Object>;
+        sendDataBytes(dataBytes: DataBuffer): fm.icelink.Future<Object>;
         getState(): DataChannelState;
         getLabel(): string;
+        getId(): string;
         getOrdered(): boolean;
         addOnStateChange(value: IAction1<DataChannel>): void;
         removeOnStateChange(value: IAction1<DataChannel>): void;
@@ -2329,10 +2050,6 @@ declare namespace fm.icelink {
     }
     class DataStream extends Stream implements IDataStream<DataChannel>, IExternalDataStream {
         getTypeString(): string;
-        /** @internal */
-        private _internal;
-        /** @internal */
-        _getInternal(): IInternalDataStream;
         constructor(channel: DataChannel);
         constructor(channels: DataChannel[]);
         getChannels(): DataChannel[];
@@ -2345,10 +2062,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class DomAudioSink extends Dynamic {
         getTypeString(): string;
-        /** @internal */
-        private _internal;
-        /** @internal */
-        _getInternal(): Dynamic;
         constructor(track: AudioTrack);
     }
 }
@@ -2361,86 +2074,7 @@ declare namespace fm.icelink {
     */
     class LayoutPreset extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __blockHeight;
-        /**
-        @internal
-        */
-        private __blockHeightPercent;
-        /**
-        @internal
-        */
-        private __blockMarginX;
-        /**
-        @internal
-        */
-        private __blockMarginXPercent;
-        /**
-        @internal
-        */
-        private __blockMarginY;
-        /**
-        @internal
-        */
-        private __blockMarginYPercent;
-        /**
-        @internal
-        */
-        private __blockWidth;
-        /**
-        @internal
-        */
-        private __blockWidthPercent;
-        /**
-        @internal
-        */
-        private __floatHeight;
-        /**
-        @internal
-        */
-        private __floatHeightPercent;
-        /**
-        @internal
-        */
-        private __floatMarginX;
-        /**
-        @internal
-        */
-        private __floatMarginXPercent;
-        /**
-        @internal
-        */
-        private __floatMarginY;
-        /**
-        @internal
-        */
-        private __floatMarginYPercent;
-        /**
-        @internal
-        */
-        private __floatWidth;
-        /**
-        @internal
-        */
-        private __floatWidthPercent;
-        /**
-        @internal
-        */
-        private _alignment;
-        /**
-        @internal
-        */
-        private _direction;
-        /**
-        @internal
-        */
-        private _inlineMargin;
-        /**
-        @internal
-        */
-        private _mode;
+        private fmicelinkLayoutPresetInit();
         /**<span id='method-fm.icelink.LayoutPreset-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -2451,16 +2085,6 @@ declare namespace fm.icelink {
         @return {}
         */
         constructor();
-        /**
-        @internal
-
-        */
-        private static calculateTable(tableWidth, tableHeight, count);
-        /**
-        @internal
-
-        */
-        private static divideByTwo(value);
         /**<span id='method-fm.icelink.LayoutPreset-getFacetime'>&nbsp;</span>**/
         /**
          <div>
@@ -2483,11 +2107,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.LayoutPreset}
         */
         static getGoogleHangouts(): fm.icelink.LayoutPreset;
-        /**
-        @internal
-
-        */
-        private static getSingleLayout(layoutWidth, layoutHeight);
         /**<span id='method-fm.icelink.LayoutPreset-getSkype'>&nbsp;</span>**/
         /**
          <div>
@@ -2500,56 +2119,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.LayoutPreset}
         */
         static getSkype(): fm.icelink.LayoutPreset;
-        /**
-        @internal
-
-        */
-        private static getXMax(frames);
-        /**
-        @internal
-
-        */
-        private static getXMid(frames);
-        /**
-        @internal
-
-        */
-        private static getXMin(frames);
-        /**
-        @internal
-
-        */
-        private static getYMax(frames);
-        /**
-        @internal
-
-        */
-        private static getYMid(frames);
-        /**
-        @internal
-
-        */
-        private static getYMin(frames);
-        /**
-        @internal
-
-        */
-        private static mergeLayoutFrames(firstFrames, lastFrames);
-        /**
-        @internal
-
-        */
-        private static spliceLayoutFrame(frames, index);
-        /**
-        @internal
-
-        */
-        private static takeLayoutFrames(frames, start, length);
-        /**
-        @internal
-
-        */
-        static transformFrame(frame: fm.icelink.LayoutFrame, origin: fm.icelink.LayoutOrigin, layoutWidth: number, layoutHeight: number): void;
         /**<span id='method-fm.icelink.LayoutPreset-applyPreset'>&nbsp;</span>**/
         /**
          <div>
@@ -2560,36 +2129,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         applyPreset(preset: fm.icelink.LayoutPreset): void;
-        /**
-        @internal
-
-        */
-        private calculateBlockFrame(layoutWidth, layoutHeight, marginX, marginY);
-        /**
-        @internal
-
-        */
-        private calculateFillFrame(layoutWidth, layoutHeight);
-        /**
-        @internal
-
-        */
-        private calculateFloatFrame(layoutWidth, layoutHeight);
-        /**
-        @internal
-
-        */
-        private calculateFloatFrames(layoutWidth, layoutHeight, count);
-        /**
-        @internal
-
-        */
-        private calculateInlineFrame(cellX, cellY, cellWidth, cellHeight);
-        /**
-        @internal
-
-        */
-        private calculateInlineFrames(layoutWidth, layoutHeight, count, baseX, baseY);
         /**<span id='method-fm.icelink.LayoutPreset-calculateLayout'>&nbsp;</span>**/
         /**
          <div>
@@ -2647,11 +2186,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         getBlockHeightPercent(): number;
-        /**
-        @internal
-
-        */
-        private getBlockLayout(layoutWidth, layoutHeight, remoteCount);
         /**<span id='method-fm.icelink.LayoutPreset-getBlockMarginX'>&nbsp;</span>**/
         /**
          <div>
@@ -2723,21 +2257,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         getBlockWidthPercent(): number;
-        /**
-        @internal
-
-        */
-        private getBottomRowIndexes(frames);
-        /**
-        @internal
-
-        */
-        private getCenterColumnIndexes(frames);
-        /**
-        @internal
-
-        */
-        private getCenterRowIndexes(frames);
         /**<span id='method-fm.icelink.LayoutPreset-getDirection'>&nbsp;</span>**/
         /**
          <div>
@@ -2772,11 +2291,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         getFloatHeightPercent(): number;
-        /**
-        @internal
-
-        */
-        private getFloatLocalLayout(layoutWidth, layoutHeight, remoteCount);
         /**<span id='method-fm.icelink.LayoutPreset-getFloatMarginX'>&nbsp;</span>**/
         /**
          <div>
@@ -2825,11 +2339,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         getFloatMarginYPercent(): number;
-        /**
-        @internal
-
-        */
-        private getFloatRemoteLayout(layoutWidth, layoutHeight, remoteCount);
         /**<span id='method-fm.icelink.LayoutPreset-getFloatWidth'>&nbsp;</span>**/
         /**
          <div>
@@ -2853,11 +2362,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         getFloatWidthPercent(): number;
-        /**
-        @internal
-
-        */
-        private getInlineLayout(layoutWidth, layoutHeight, remoteCount);
         /**<span id='method-fm.icelink.LayoutPreset-getInlineMargin'>&nbsp;</span>**/
         /**
          <div>
@@ -2869,11 +2373,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         getInlineMargin(): number;
-        /**
-        @internal
-
-        */
-        private getLeftColumnIndexes(frames);
         /**<span id='method-fm.icelink.LayoutPreset-getMode'>&nbsp;</span>**/
         /**
          <div>
@@ -2885,16 +2384,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.LayoutMode}
         */
         getMode(): fm.icelink.LayoutMode;
-        /**
-        @internal
-
-        */
-        private getRightColumnIndexes(frames);
-        /**
-        @internal
-
-        */
-        private getTopRowIndexes(frames);
         /**<span id='method-fm.icelink.LayoutPreset-setAlignment'>&nbsp;</span>**/
         /**
          <div>
@@ -3158,34 +2647,6 @@ declare namespace fm.icelink {
     */
     abstract class LayoutManager<T> extends fm.icelink.LayoutPreset {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __onLayout;
-        /**
-        @internal
-        */
-        private _inBatch;
-        /**
-        @internal
-        */
-        private _layoutOrigin;
-        /**
-        @internal
-        */
-        private _localView;
-        /**
-        @internal
-        */
-        private _onLayout;
-        /**
-        @internal
-        */
-        private _remoteViewsLock;
-        /**
-        @internal
-        */
-        private _remoteViewsTable;
         private fmicelinkLayoutManagerInit();
         /**<span id='method-fm.icelink.LayoutManager-constructor'>&nbsp;</span>**/
         /**
@@ -3252,16 +2713,6 @@ declare namespace fm.icelink {
         @return {boolean} true if successful; otherwise, false. Check the logs for additional information.
         */
         addRemoteViews(ids: string[], views: T[]): boolean;
-        /**
-        @internal
-
-        */
-        private addRemoteViewsUI(idsObj, viewsObj);
-        /**
-        @internal
-
-        */
-        private addRemoteViewUI(idObj, viewObj);
         /**<span id='method-fm.icelink.LayoutManager-addView'>&nbsp;</span>**/
         /**
          <div>
@@ -3284,16 +2735,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected abstract dispatchToMainThread(action: fm.icelink.IAction2<Object, Object>, arg1: Object, arg2: Object): void;
-        /**
-        @internal
-
-        */
-        private doSwapRemoteView(idToRemove, viewToRemove, idToAdd, viewToAdd);
-        /**
-        @internal
-
-        */
-        private doSwapRemoteViews(idsToRemove, viewsToRemove, idsToAdd, viewsToAdd);
         /**<span id='method-fm.icelink.LayoutManager-getLayout'>&nbsp;</span>**/
         /**
          <div>
@@ -3339,16 +2780,6 @@ declare namespace fm.icelink {
         @return {T} The local view.
         */
         getLocalView(): T;
-        /**
-        @internal
-
-        */
-        private getNewestRemoteView(id);
-        /**
-        @internal
-
-        */
-        private getOldestRemoteView(id);
         /**<span id='method-fm.icelink.LayoutManager-getRemoteView'>&nbsp;</span>**/
         /**
          <div>
@@ -3387,11 +2818,6 @@ declare namespace fm.icelink {
         @return {Array<T>} The remote views.
         */
         getRemoteViews(): Array<T>;
-        /**
-        @internal
-
-        */
-        private getRemoteViewsInternal(id);
         /**<span id='method-fm.icelink.LayoutManager-layout'>&nbsp;</span>**/
         /**
          <div>
@@ -3413,11 +2839,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         layoutOnMainThread(): void;
-        /**
-        @internal
-
-        */
-        private layoutOnMainThreadUI(unused1, unused2);
         /**<span id='method-fm.icelink.LayoutManager-removeOnLayout'>&nbsp;</span>**/
         /**
          <div>
@@ -3470,16 +2891,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         removeRemoteViews(): void;
-        /**
-        @internal
-
-        */
-        private removeRemoteViewsUI(idsObj, viewsObj);
-        /**
-        @internal
-
-        */
-        private removeRemoteViewUI(idObj, viewObj);
         /**<span id='method-fm.icelink.LayoutManager-removeView'>&nbsp;</span>**/
         /**
          <div>
@@ -3533,11 +2944,6 @@ declare namespace fm.icelink {
         @return {boolean} true if successful; otherwise, false. Check the logs for additional information.
         */
         setLocalView(view: T): boolean;
-        /**
-        @internal
-
-        */
-        private setLocalViewUI(viewObj, unused);
         /**<span id='method-fm.icelink.LayoutManager-swapRemoteMedia'>&nbsp;</span>**/
         /**
          <div>
@@ -3582,32 +2988,11 @@ declare namespace fm.icelink {
         @return {boolean} true if successful; otherwise, false. Check the logs for additional information.
         */
         unsetLocalView(): boolean;
-        /**
-        @internal
-
-        */
-        private unsetLocalViewUI(viewObj, unused);
     }
 }
 declare namespace fm.icelink {
     class DomLayoutManager extends LayoutManager<HTMLElement> {
         getTypeString(): string;
-        /** @internal */
-        private _container;
-        /** @internal */
-        private _innerContainer;
-        /** @internal */
-        private _resizeInterval;
-        /** @internal */
-        private _parentMissing;
-        /** @internal */
-        private _parentMissingMax;
-        /** @internal */
-        private _lastWidth;
-        /** @internal */
-        private _lastHeight;
-        /** @internal */
-        private _remoteVideosTable;
         getContainer(): HTMLElement;
         constructor(container: HTMLElement, preset?: LayoutPreset);
         protected addView(view: HTMLElement): void;
@@ -3623,10 +3008,6 @@ declare namespace fm.icelink {
     }
     class DomVideoSink extends Dynamic implements IExternalDomVideoSink {
         getTypeString(): string;
-        /** @internal */
-        private _internal;
-        /** @internal */
-        _getInternal(): IInternalDomVideoSink;
         getView(): HTMLElement;
         getViewScale(): LayoutScale;
         setViewScale(viewScale: LayoutScale): void;
@@ -3649,14 +3030,10 @@ declare namespace fm.icelink {
 }
 declare namespace fm.icelink {
     interface IExternal<TInternal> {
-        /** @internal */
-        _getInternal(): TInternal;
     }
 }
 declare namespace fm.icelink {
     interface IInternal<TExternal> {
-        /** @internal */
-        _getExternal(): TExternal;
     }
 }
 declare namespace fm.icelink {
@@ -3666,8 +3043,6 @@ declare namespace fm.icelink {
     }
     abstract class Media extends Dynamic implements IMedia<AudioTrack, VideoTrack>, IExternalMedia {
         getTypeString(): string;
-        /** @internal */
-        abstract _getInternal(): IInternalMedia;
         addOnAudioDestroyed(value: IAction0): void;
         addOnVideoDestroyed(value: IAction0): void;
         removeOnAudioDestroyed(value: IAction0): void;
@@ -3708,8 +3083,6 @@ declare namespace fm.icelink {
     class LocalMedia extends Media implements ILocalMedia<LocalMedia, AudioTrack, VideoTrack>, IExternalLocalMedia {
         getTypeString(): string;
         private _internal;
-        /** @internal */
-        _getInternal(): IInternalLocalMedia;
         addOnAudioStarted(value: IAction0): void;
         addOnAudioStopped(value: IAction0): void;
         addOnVideoStarted(value: IAction0): void;
@@ -3718,11 +3091,29 @@ declare namespace fm.icelink {
         removeOnAudioStopped(value: IAction0): void;
         removeOnVideoStarted(value: IAction0): void;
         removeOnVideoStopped(value: IAction0): void;
+        /**
+         * Deprecated: Use fm.icelink.Plugin.getChromeExtensionId()
+         */
         static getChromeExtensionId(): string;
+        /**
+         * Deprecated: Use fm.icelink.Plugin.setChromeExtensionId()
+         */
         static setChromeExtensionId(chromeExtensionId: string): void;
+        /**
+         * Deprecated: Use fm.icelink.Plugin.getChromeExtensionUrl()
+         */
         static getChromeExtensionUrl(): string;
+        /**
+         * Deprecated: Use fm.icelink.Plugin.getChromeExtensionInstalled()
+         */
         static getChromeExtensionInstalled(): boolean;
+        /**
+         * Deprecated: Use fm.icelink.Plugin.getChromeExtensionRequiresUserGesture()
+         */
         static getChromeExtensionRequiresUserGesture(): boolean;
+        /**
+         * Deprecated: Use fm.icelink.Plugin.setChromeExtensionRequiresUserGesture()
+         */
         static setChromeExtensionRequiresUserGesture(chromeExtensionRequiresUserGesture: boolean): void;
         constructor(audio: any, video: any, screen?: boolean);
         changeAudioSourceInput(audioSourceInput: SourceInput): Future<Object>;
@@ -3763,26 +3154,38 @@ interface LoaderActiveXObject extends HTMLObjectElement {
 }
 declare namespace fm.icelink {
     class Plugin {
-        /** @internal */
-        private static _pluginConfig;
-        /** @internal */
-        private static _hasActiveX;
         static install(pluginConfig: PluginConfig): Future<Object>;
         static getPluginConfig(): PluginConfig;
-        static hasWebRtc(): boolean;
-        static hasOrtc(): boolean;
-        static hasNative(): boolean;
+        static hasRtcPeerConnection(): boolean;
+        static hasRtcDataChannel(): boolean;
+        static hasGetUserMedia(): boolean;
+        static hasRtcIceGatherer(): boolean;
+        static hasRtcIceTransport(): boolean;
+        static hasRtcDtlsTransport(): boolean;
+        static hasRtcRtpSender(): boolean;
+        static hasRtcRtpReceiver(): boolean;
+        static hasWebRtc(localMedia?: boolean, dataChannels?: boolean): boolean;
+        static hasOrtc(localMedia?: boolean, dataChannels?: boolean): boolean;
+        static hasNative(localMedia?: boolean, dataChannels?: boolean): boolean;
         static hasActiveX(): boolean;
-        static useActiveX(): boolean;
-        static useNative(): boolean;
+        static isReady(localMedia?: boolean, dataChannels?: boolean): boolean;
+        static useActiveX(localMedia?: boolean, dataChannels?: boolean): boolean;
+        static useNative(localMedia?: boolean, dataChannels?: boolean): boolean;
         private static checkForActiveX(promise, object, startTime);
+        static getChromeExtensionId(): string;
+        static setChromeExtensionId(chromeExtensionId: string): void;
+        static getChromeExtensionUrl(): string;
+        static getChromeExtensionInstalled(): boolean;
+        static getChromeExtensionRequiresUserGesture(): boolean;
+        static setChromeExtensionRequiresUserGesture(chromeExtensionRequiresUserGesture: boolean): void;
     }
 }
 declare namespace fm.icelink {
     abstract class PluginStream extends Dynamic implements IStream, IInternalStream {
         getTypeString(): string;
-        /** @internal */
-        abstract _getExternal(): IExternalStream;
+        abstract getState(): StreamState;
+        abstract addOnStateChange(value: IAction0): void;
+        abstract removeOnStateChange(value: IAction0): void;
         abstract getLocalReceive(): boolean;
         abstract setLocalReceive(localReceiveEnabled: boolean): void;
         abstract getLocalSend(): boolean;
@@ -3800,7 +3203,6 @@ declare namespace fm.icelink {
         abstract getLocalDirection(): StreamDirection;
         abstract getTag(): string;
         abstract getType(): StreamType;
-        abstract setId(value: string): void;
         abstract setLocalDirection(value: StreamDirection): void;
         abstract setTag(value: string): void;
     }
@@ -3808,13 +3210,7 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     abstract class PluginMediaStream<TTrack extends PluginMediaTrack> extends PluginStream implements IMediaStream, IInternalMediaStream {
         getTypeString(): string;
-        /** @internal */
-        abstract _getExternal(): IExternalMediaStream;
-        /** @internal */
-        private _localTrack;
         getLocalTrack(): TTrack;
-        /** @internal */
-        private _remoteTrack;
         getRemoteTrack(): TTrack;
         abstract getLocalBandwidth(): number;
         abstract setLocalBandwidth(value: number): void;
@@ -3846,11 +3242,11 @@ declare namespace fm.icelink {
         GetRemoteDirection(): number;
         GetRemoteReceive(): boolean;
         GetRemoteSend(): boolean;
+        GetState(): number;
         GetTag(): string;
         Initialize(localMediaHandle: number, remoteMediaHandle: number): void;
         InsertDtmfTone(dtmfToneJson: string): boolean;
         InsertDtmfTones(dtmfTonesJson: string): boolean;
-        SetId(id: string): void;
         SetLocalBandwidth(bandwidth: number): void;
         SetLocalDirection(direction: number): void;
         SetLocalReceive(localReceiveEnabled: boolean): void;
@@ -3861,6 +3257,7 @@ declare namespace fm.icelink {
         SetOnReceiveDtmfToneChange(callback: Object): void;
         SetOnSendDtmfTone(callback: Object): void;
         SetOnSendDtmfToneChange(callback: Object): void;
+        SetOnStateChange(callback: Object): void;
         SetTag(tag: string): void;
     }
 }
@@ -3873,18 +3270,18 @@ declare namespace fm.icelink.dtmf {
     */
     class Tone {
         getTypeString(): string;
+        private fmicelinkdtmfToneInit();
+        constructor();
+        /**<span id='method-fm.icelink.dtmf.Tone-constructor'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Initializes a new instance of the `fm.icelink.dtmf.tone` class.
+         </div>
+
+        @param {string} value The value.
+        @return {}
         */
-        private _duration;
-        /**
-        @internal
-        */
-        private _remainingDuration;
-        /**
-        @internal
-        */
-        private _value;
+        constructor(value: string);
         /**<span id='method-fm.icelink.dtmf.Tone-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -3896,22 +3293,6 @@ declare namespace fm.icelink.dtmf {
         @return {}
         */
         constructor(value: string, duration: number);
-        /**<span id='method-fm.icelink.dtmf.Tone-constructor'>&nbsp;</span>**/
-        /**
-         <div>
-         Initializes a new instance of the `fm.icelink.dtmf.tone` class.
-         </div>
-
-        @param {string} value The value.
-        @return {}
-        */
-        constructor(value: string);
-        constructor();
-        /**
-        @internal
-
-        */
-        private static eventCodeFromValue(eventString);
         /**<span id='method-fm.icelink.dtmf.Tone-fromJson'>&nbsp;</span>**/
         /**
          <div>
@@ -4368,11 +3749,6 @@ declare namespace fm.icelink.dtmf {
         @return {string}
         */
         static toToneString(tones: fm.icelink.dtmf.Tone[]): string;
-        /**
-        @internal
-
-        */
-        private static valueFromEventCode(eventCode);
         /**<span id='method-fm.icelink.dtmf.Tone-clone'>&nbsp;</span>**/
         /**
          <div>
@@ -4393,11 +3769,6 @@ declare namespace fm.icelink.dtmf {
         @return {number}
         */
         getDuration(): number;
-        /**
-        @internal
-
-        */
-        getRemainingDuration(): number;
         /**<span id='method-fm.icelink.dtmf.Tone-getValue'>&nbsp;</span>**/
         /**
          <div>
@@ -4408,21 +3779,6 @@ declare namespace fm.icelink.dtmf {
         @return {string}
         */
         getValue(): string;
-        /**
-        @internal
-
-        */
-        setDuration(value: number): void;
-        /**
-        @internal
-
-        */
-        setRemainingDuration(value: number): void;
-        /**
-        @internal
-
-        */
-        private setValue(value);
         /**<span id='method-fm.icelink.dtmf.Tone-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -4448,25 +3804,10 @@ interface AudioStreamActiveXObject extends ActiveXObject, fm.icelink.IPluginAudi
 declare namespace fm.icelink {
     class PluginAudioStream extends PluginMediaStream<PluginAudioTrack> implements IAudioStream, IInternalAudioStream {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalAudioStream;
-        /** @internal */
-        private _onDirectionChangeValues;
-        /** @internal */
-        private _onReceiveDtmfToneValues;
-        /** @internal */
-        private _onReceiveDtmfToneChangeValues;
-        /** @internal */
-        private _onSendDtmfToneValues;
-        /** @internal */
-        private _onSendDtmfToneChangeValues;
-        /** @internal */
-        private _axo;
-        /** @internal */
-        protected _getAxo(): AudioStreamActiveXObject;
         constructor(external: IExternalAudioStream, localTrack: PluginAudioTrack, remoteTrack: PluginAudioTrack);
+        getState(): StreamState;
+        addOnStateChange(value: IAction0): void;
+        removeOnStateChange(value: IAction0): void;
         getLocalReceive(): boolean;
         getLocalSend(): boolean;
         getRemoteReceive(): boolean;
@@ -4485,7 +3826,6 @@ declare namespace fm.icelink {
         getRemoteBandwidth(): number;
         getTag(): string;
         getType(): StreamType;
-        setId(value: string): void;
         setLocalDirection(value: StreamDirection): void;
         setLocalBandwidth(value: number): void;
         setMuted(value: boolean): void;
@@ -4507,10 +3847,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     abstract class PluginMediaTrack extends Dynamic implements IMediaTrack, IInternalMediaTrack {
         getTypeString(): string;
-        /** @internal */
-        abstract _getExternal(): IExternalMediaTrack;
-        /** @internal */
-        private _media;
         getMedia(): PluginMedia;
         constructor(media: PluginMedia);
         abstract changeSinkOutput(sinkOutput: SinkOutput): Future<Object>;
@@ -4535,10 +3871,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class PluginAudioTrack extends PluginMediaTrack implements IAudioTrack, IInternalAudioTrack {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalAudioTrack;
         constructor(external: IExternalAudioTrack, media: PluginMedia);
         private isLocal();
         addOnStarted(value: IAction0): void;
@@ -4594,6 +3926,7 @@ declare namespace fm.icelink {
         CreateOffer(promise: Object): void;
         GetDeadStreamTimeout(): number;
         GetError(): string;
+        GetExternalId(): string;
         GetGatheringState(): number;
         GetHandle(): number;
         GetIceConnectionState(): number;
@@ -4613,10 +3946,10 @@ declare namespace fm.icelink {
         RemoveIceServer(iceServer: string): void;
         RemoveIceServers(iceServers: string): void;
         SetDeadStreamTimeout(deadStreamTimeout: number): void;
+        SetExternalId(externalId: string): void;
         SetIceGatherPolicy(iceGatherPolicy: number): void;
         SetIceServer(iceServer: string): void;
         SetIceServers(iceServers: string): void;
-        SetId(id: string): void;
         SetLocalDescription(localDescription: string, promise: Object): void;
         SetOnGatheringStateChange(callback: Object): void;
         SetOnIceConnectionStateChange(callback: Object): void;
@@ -4627,6 +3960,7 @@ declare namespace fm.icelink {
         SetOnSignallingStateChange(callback: Object): void;
         SetOnStateChange(callback: Object): void;
         SetRemoteDescription(remoteDescription: string, promise: Object): void;
+        SetTieBreaker(tieBreaker: string): void;
         SetTimeout(timeout: number): void;
         SetTrickleIcePolicy(trickleIcePolicy: number): void;
     }
@@ -4636,32 +3970,6 @@ interface ConnectionActiveXObject extends ActiveXObject, fm.icelink.IPluginConne
 declare namespace fm.icelink {
     class PluginConnection extends Dynamic implements IConnection<PluginConnection, PluginStream, PluginAudioStream, PluginVideoStream, PluginDataStream>, IInternalConnection {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalConnection;
-        /** @internal */
-        private _axo;
-        /** @internal */
-        protected _getAxo(): ConnectionActiveXObject;
-        /** @internal */
-        private _streams;
-        /** @internal */
-        private _onLocalCandidateValues;
-        /** @internal */
-        private _onLocalDescriptionValues;
-        /** @internal */
-        private _onRemoteCandidateValues;
-        /** @internal */
-        private _onRemoteDescriptionValues;
-        /** @internal */
-        private _onSignallingStateChangeValues;
-        /** @internal */
-        private _onIceConnectionStateChangeValues;
-        /** @internal */
-        private _onStateChangeValues;
-        /** @internal */
-        private _onGatheringStateChangeValues;
         constructor(external: IExternalConnection, streams: PluginStream[]);
         addIceServer(iceServer: IceServer): void;
         addIceServers(iceServers: IceServer[]): void;
@@ -4687,6 +3995,7 @@ declare namespace fm.icelink {
         getDataStream(): PluginDataStream;
         getDataStreams(): PluginDataStream[];
         getDeadStreamTimeout(): number;
+        getExternalId(): string;
         getError(): Error;
         getIceGatherPolicy(): IceGatherPolicy;
         getIceServer(): IceServer;
@@ -4714,10 +4023,11 @@ declare namespace fm.icelink {
         removeOnSignallingStateChange(value: IAction1<PluginConnection>): void;
         removeOnStateChange(value: IAction1<PluginConnection>): void;
         setDeadStreamTimeout(value: number): void;
+        setExternalId(value: string): void;
         setIceGatherPolicy(value: IceGatherPolicy): void;
         setIceServer(value: IceServer): void;
         setIceServers(value: IceServer[]): void;
-        setId(value: string): void;
+        setTieBreaker(value: string): void;
         setLocalDescription(localDescription: SessionDescription): Future<SessionDescription>;
         setRemoteDescription(remoteDescription: SessionDescription): Future<SessionDescription>;
         setTimeout(value: number): void;
@@ -4733,13 +4043,14 @@ declare namespace fm.icelink {
     */
     interface IPluginDataChannel {
         GetHandle(): number;
+        GetId(): string;
         GetLabel(): string;
         GetOrdered(): boolean;
         GetState(): number;
         GetSubprotocol(): string;
         Initialize(label: string, ordered: boolean, subprotocol: string): void;
-        SendDataBytes(data: string): void;
-        SendDataString(dataString: string): void;
+        PromisedSendDataBytes(data: string, promise: Object): void;
+        PromisedSendDataString(dataString: string, promise: Object): void;
         SetOnReceive(callback: Object): void;
         SetOnStateChange(callback: Object): void;
     }
@@ -4749,29 +4060,18 @@ interface DataChannelActiveXObject extends ActiveXObject, fm.icelink.IPluginData
 declare namespace fm.icelink {
     class PluginDataChannel extends Dynamic implements IDataChannel<PluginDataChannel>, IInternalDataChannel {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalDataChannel;
-        /** @internal */
-        private _axo;
-        /** @internal */
-        protected _getAxo(): DataChannelActiveXObject;
         getHandle(): number;
-        /** @internal */
-        private _onStateChangeValues;
-        /** @internal */
-        private _onReceive;
         constructor(external: IExternalDataChannel, label: string, ordered?: boolean, subprotocol?: string);
         addOnStateChange(value: IAction1<PluginDataChannel>): void;
         getLabel(): string;
         getOnReceive(): IAction1<DataChannelReceiveArgs>;
         getOrdered(): boolean;
+        getId(): string;
         getState(): DataChannelState;
         getSubprotocol(): string;
         removeOnStateChange(value: IAction1<PluginDataChannel>): void;
-        sendDataBytes(dataBytes: DataBuffer): void;
-        sendDataString(dataString: string): void;
+        sendDataBytes(dataBytes: DataBuffer): fm.icelink.Future<Object>;
+        sendDataString(dataString: string): fm.icelink.Future<Object>;
         setOnReceive(value: IAction1<DataChannelReceiveArgs>): void;
     }
 }
@@ -4794,13 +4094,14 @@ declare namespace fm.icelink {
         GetRemoteDirection(): number;
         GetRemoteReceive(): boolean;
         GetRemoteSend(): boolean;
+        GetState(): number;
         GetTag(): string;
         Initialize(channelHandles: Object): void;
-        SetId(id: string): void;
         SetLocalDirection(direction: number): void;
         SetLocalReceive(localReceiveEnabled: boolean): void;
         SetLocalSend(localSendEnabled: boolean): void;
         SetOnDirectionChange(callback: Object): void;
+        SetOnStateChange(callback: Object): void;
         SetTag(tag: string): void;
     }
 }
@@ -4809,19 +4110,10 @@ interface DataStreamActiveXObject extends ActiveXObject, fm.icelink.IPluginDataS
 declare namespace fm.icelink {
     class PluginDataStream extends PluginStream implements IDataStream<PluginDataChannel>, IInternalDataStream {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalDataStream;
-        /** @internal */
-        private _onDirectionChangeValues;
-        /** @internal */
-        private _axo;
-        /** @internal */
-        protected _getAxo(): DataStreamActiveXObject;
-        /** @internal */
-        private _channels;
         constructor(external: IExternalDataStream, channels: PluginDataChannel[]);
+        getState(): StreamState;
+        addOnStateChange(value: IAction0): void;
+        removeOnStateChange(value: IAction0): void;
         getLocalReceive(): boolean;
         getLocalSend(): boolean;
         getRemoteReceive(): boolean;
@@ -4837,7 +4129,6 @@ declare namespace fm.icelink {
         getLocalDirection(): StreamDirection;
         getTag(): string;
         getType(): StreamType;
-        setId(value: string): void;
         setLocalDirection(value: StreamDirection): void;
         setTag(value: string): void;
         addOnDirectionChange(callback: Object): void;
@@ -4848,14 +4139,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class PluginDomAudioSink extends Dynamic implements IInternal<DomAudioSink> {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): DomAudioSink;
-        /** @internal */
-        private _track;
-        /** @internal */
-        private _local;
         getTrack(): PluginAudioTrack;
         getLocal(): boolean;
         constructor(external: DomAudioSink, track: PluginAudioTrack);
@@ -4875,24 +4158,8 @@ interface VideoElementActiveXObject extends HTMLObjectElement {
 declare namespace fm.icelink {
     class PluginDomVideoSink extends Dynamic implements IInternalDomVideoSink {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalDomVideoSink;
-        /** @internal */
-        private _axo;
-        /** @internal */
-        _getAxo(): VideoElementActiveXObject;
-        /** @internal */
-        private _track;
-        /** @internal */
-        private _local;
         getTrack(): PluginVideoTrack;
         getLocal(): boolean;
-        /** @internal */
-        private _container;
-        /** @internal */
-        private _underlay;
         getView(): HTMLElement;
         getViewScale(): LayoutScale;
         setViewScale(viewScale: LayoutScale): void;
@@ -4901,8 +4168,6 @@ declare namespace fm.icelink {
         getViewMirror(): boolean;
         setViewMirror(viewMirror: boolean): void;
         constructor(external: IExternalDomVideoSink, track: PluginVideoTrack);
-        /** @internal */
-        private _axoLoaded;
         setTrack(track: PluginVideoTrack): boolean;
         private checkifLoaded(object);
     }
@@ -4927,14 +4192,6 @@ interface MediaActiveXObject extends ActiveXObject {
 declare namespace fm.icelink {
     abstract class PluginMedia extends Dynamic implements IMedia<PluginAudioTrack, PluginVideoTrack>, IInternalMedia {
         getTypeString(): string;
-        /** @internal */
-        abstract _getExternal(): IExternalMedia;
-        /** @internal */
-        protected abstract _getAxo(): MediaActiveXObject;
-        /** @internal */
-        private _onAudioLevelValues;
-        /** @internal */
-        private _onVideoSizeValues;
         getHandle(): number;
         abstract addOnAudioDestroyed(value: IAction0): void;
         abstract addOnVideoDestroyed(value: IAction0): void;
@@ -4962,10 +4219,6 @@ declare namespace fm.icelink {
         setVideoMuted(value: boolean): void;
         getView(): HTMLElement;
         getViewSink(): PluginDomVideoSink;
-        /** @internal */
-        private _audioTrack;
-        /** @internal */
-        private _videoTrack;
         protected _videoSink: PluginDomVideoSink;
         constructor(external: IExternalMedia);
     }
@@ -5019,36 +4272,10 @@ interface LocalMediaActiveXObject extends ActiveXObject, fm.icelink.IPluginLocal
 declare namespace fm.icelink {
     class PluginLocalMedia extends PluginMedia implements ILocalMedia<PluginLocalMedia, PluginAudioTrack, PluginVideoTrack>, IInternalLocalMedia {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalLocalMedia;
-        /** @internal */
-        private _axo;
-        /** @internal */
-        protected _getAxo(): LocalMediaActiveXObject;
-        /** @internal */
-        private _onAudioStartedValues;
-        /** @internal */
-        private _onVideoStartedValues;
-        /** @internal */
-        private _onAudioStoppedValues;
-        /** @internal */
-        private _onVideoStoppedValues;
-        /** @internal */
-        private _onAudioDestroyedValues;
-        /** @internal */
-        private _onVideoDestroyedValues;
-        /** @internal */
-        private _audio;
         getAudio(): any;
         setAudio(audio: any): void;
-        /** @internal */
-        private _video;
         getVideo(): any;
         setVideo(video: any): void;
-        /** @internal */
-        private _screen;
         getScreen(): boolean;
         setScreen(screen: boolean): void;
         getState(): LocalMediaState;
@@ -5129,18 +4356,6 @@ interface RemoteMediaActiveXObject extends ActiveXObject, fm.icelink.IPluginRemo
 declare namespace fm.icelink {
     class PluginRemoteMedia extends PluginMedia implements IRemoteMedia<PluginAudioTrack, PluginVideoTrack>, IInternalRemoteMedia {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalRemoteMedia;
-        /** @internal */
-        private _axo;
-        /** @internal */
-        protected _getAxo(): RemoteMediaActiveXObject;
-        /** @internal */
-        private _onAudioDestroyedValues;
-        /** @internal */
-        private _onVideoDestroyedValues;
         constructor(external: IExternalRemoteMedia);
         private checkifLoaded(object);
         getHandle(): number;
@@ -5188,15 +4403,16 @@ declare namespace fm.icelink {
         GetRemoteDirection(): number;
         GetRemoteReceive(): boolean;
         GetRemoteSend(): boolean;
+        GetState(): number;
         GetTag(): string;
         Initialize(localMediaHandle: number, remoteMediaHandle: number): void;
-        SetId(id: string): void;
         SetLocalBandwidth(bandwidth: number): void;
         SetLocalDirection(direction: number): void;
         SetLocalReceive(localReceiveEnabled: boolean): void;
         SetLocalSend(localSendEnabled: boolean): void;
         SetMuted(muted: boolean): void;
         SetOnDirectionChange(callback: Object): void;
+        SetOnStateChange(callback: Object): void;
         SetTag(tag: string): void;
     }
 }
@@ -5205,17 +4421,10 @@ interface VideoStreamActiveXObject extends ActiveXObject, fm.icelink.IPluginVide
 declare namespace fm.icelink {
     class PluginVideoStream extends PluginMediaStream<PluginVideoTrack> implements IVideoStream, IInternalVideoStream {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalVideoStream;
-        /** @internal */
-        private _onDirectionChangeValues;
-        /** @internal */
-        private _axo;
-        /** @internal */
-        protected _getAxo(): VideoStreamActiveXObject;
         constructor(external: IExternalVideoStream, localTrack: PluginVideoTrack, remoteTrack: PluginVideoTrack);
+        getState(): StreamState;
+        addOnStateChange(value: IAction0): void;
+        removeOnStateChange(value: IAction0): void;
         getLocalReceive(): boolean;
         getLocalSend(): boolean;
         getRemoteReceive(): boolean;
@@ -5234,7 +4443,6 @@ declare namespace fm.icelink {
         getRemoteBandwidth(): number;
         getTag(): string;
         getType(): StreamType;
-        setId(value: string): void;
         setLocalDirection(value: StreamDirection): void;
         setLocalBandwidth(value: number): void;
         setMuted(value: boolean): void;
@@ -5246,10 +4454,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class PluginVideoTrack extends PluginMediaTrack implements IVideoTrack, IInternalVideoTrack {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalVideoTrack;
         constructor(external: IExternalVideoTrack, media: PluginMedia);
         private isLocal();
         addOnStarted(value: IAction0): void;
@@ -5281,10 +4485,6 @@ declare namespace fm.icelink {
     }
     class RemoteMedia extends Media implements IRemoteMedia<AudioTrack, VideoTrack>, IExternalRemoteMedia {
         getTypeString(): string;
-        /** @internal */
-        private _internal;
-        /** @internal */
-        _getInternal(): IInternalRemoteMedia;
         constructor();
         changeAudioSinkOutput(audioSinkOutput: SinkOutput): Future<Object>;
         changeVideoSinkOutput(videoSinkOutput: SinkOutput): Future<Object>;
@@ -5303,15 +4503,7 @@ declare namespace fm.icelink {
     }
     class VideoStream extends MediaStream<VideoTrack> implements IVideoStream, IExternalVideoStream {
         getTypeString(): string;
-        /** @internal */
-        private _internal;
-        /** @internal */
-        _getInternal(): IInternalVideoStream;
-        /** @internal */
-        private localMedia;
         getLocalMedia(): LocalMedia;
-        /** @internal */
-        private remoteMedia;
         getRemoteMedia(): RemoteMedia;
         constructor(localTrack: VideoTrack);
         constructor(localTrack: VideoTrack, remoteTrack: VideoTrack);
@@ -5327,10 +4519,6 @@ declare namespace fm.icelink {
     }
     class VideoTrack extends MediaTrack implements IVideoTrack, IExternalVideoTrack {
         getTypeString(): string;
-        /** @internal */
-        private _internal;
-        /** @internal */
-        _getInternal(): IInternalVideoTrack;
         constructor(media: Media, internalMedia?: IInternalMedia);
         addOnSize(value: IAction1<Size>): void;
         getSize(): Size;
@@ -5347,30 +4535,6 @@ declare namespace fm.icelink {
     */
     abstract class WebRtcStreamBase extends fm.icelink.Dynamic implements fm.icelink.IStream {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __onDirectionChange;
-        /**
-        @internal
-        */
-        private __remoteSupportsTrickleIce;
-        /**
-        @internal
-        */
-        private _id;
-        /**
-        @internal
-        */
-        private _onDirectionChange;
-        /**
-        @internal
-        */
-        private _tag;
-        /**
-        @internal
-        */
-        private _type;
         private fmicelinkWebRtcStreamBaseInit();
         /**<span id='method-fm.icelink.WebRtcStreamBase-constructor'>&nbsp;</span>**/
         /**
@@ -5393,6 +4557,17 @@ declare namespace fm.icelink {
         @return {void}
         */
         addOnDirectionChange(value: fm.icelink.IAction0): void;
+        /**<span id='method-fm.icelink.WebRtcStreamBase-addOnStateChange'>&nbsp;</span>**/
+        /**
+         <div>
+         Adds a handler that is raised when the stream state changes.
+         </div>
+
+
+        @param {fm.icelink.IAction0} value
+        @return {void}
+        */
+        addOnStateChange(value: fm.icelink.IAction0): void;
         /**<span id='method-fm.icelink.WebRtcStreamBase-changeDirection'>&nbsp;</span>**/
         /**
          <div>
@@ -5404,6 +4579,27 @@ declare namespace fm.icelink {
         @return {fm.icelink.Error}
         */
         abstract changeDirection(newDirection: fm.icelink.StreamDirection): fm.icelink.Error;
+        /**<span id='method-fm.icelink.WebRtcStreamBase-getConnectedTimestamp'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the ManagedStopwatch.GetTimestamp() value representing the ticks that
+         passed when this stream's connection state changed to connected.
+         </div>
+
+
+        @return {number}
+        */
+        protected getConnectedTimestamp(): number;
+        /**<span id='method-fm.icelink.WebRtcStreamBase-getConnectionId'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the connection identifier.
+         </div>
+
+
+        @return {string}
+        */
+        getConnectionId(): string;
         /**<span id='method-fm.icelink.WebRtcStreamBase-getDirection'>&nbsp;</span>**/
         /**
          <div>
@@ -5414,11 +4610,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.StreamDirection}
         */
         abstract getDirection(): fm.icelink.StreamDirection;
-        /**
-        @internal
-
-        */
-        abstract getDirectionCapabilities(): fm.icelink.StreamDirection;
         /**<span id='method-fm.icelink.WebRtcStreamBase-getId'>&nbsp;</span>**/
         /**
          <div>
@@ -5429,6 +4620,36 @@ declare namespace fm.icelink {
         @return {string}
         */
         getId(): string;
+        /**<span id='method-fm.icelink.WebRtcStreamBase-getIsTerminated'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets a value indicating whether the stream is currently closed or failed.
+         </div>
+
+
+        @return {boolean}
+        */
+        getIsTerminated(): boolean;
+        /**<span id='method-fm.icelink.WebRtcStreamBase-getIsTerminating'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets a value indicating whether the stream is currently closing or failing.
+         </div>
+
+
+        @return {boolean}
+        */
+        getIsTerminating(): boolean;
+        /**<span id='method-fm.icelink.WebRtcStreamBase-getIsTerminatingOrTerminated'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets a value indicating whether the stream is currently closing, failing, closed, or failed.
+         </div>
+
+
+        @return {boolean}
+        */
+        getIsTerminatingOrTerminated(): boolean;
         /**<span id='method-fm.icelink.WebRtcStreamBase-getLabel'>&nbsp;</span>**/
         /**
          <div>
@@ -5499,11 +4720,16 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         getRemoteSend(): boolean;
+        /**<span id='method-fm.icelink.WebRtcStreamBase-getState'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Gets the state of the stream.
+         </div>
 
+
+        @return {fm.icelink.StreamState}
         */
-        getRemoteSupportsTrickleIce(): boolean;
+        getState(): fm.icelink.StreamState;
         /**<span id='method-fm.icelink.WebRtcStreamBase-getTag'>&nbsp;</span>**/
         /**
          <div>
@@ -5524,16 +4750,26 @@ declare namespace fm.icelink {
         @return {fm.icelink.StreamType}
         */
         getType(): fm.icelink.StreamType;
+        /**<span id='method-fm.icelink.WebRtcStreamBase-processStateChange'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Processes a state change.
+         </div>
 
+
+        @return {void}
         */
-        processSdpMediaDescription(sdpMessage: fm.icelink.sdp.Message, sdpMediaDescription: fm.icelink.sdp.MediaDescription, isLocalDescription: boolean, isOffer: boolean, isRenegotiation: boolean): fm.icelink.Error;
+        protected processStateChange(): void;
+        /**<span id='method-fm.icelink.WebRtcStreamBase-processStateLockChange'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Processes a state lock change.
+         </div>
 
+
+        @return {void}
         */
-        raiseDirectionChange(): void;
+        protected processStateLockChange(): void;
         /**<span id='method-fm.icelink.WebRtcStreamBase-removeOnDirectionChange'>&nbsp;</span>**/
         /**
          <div>
@@ -5545,17 +4781,17 @@ declare namespace fm.icelink {
         @return {void}
         */
         removeOnDirectionChange(value: fm.icelink.IAction0): void;
-        /**<span id='method-fm.icelink.WebRtcStreamBase-setId'>&nbsp;</span>**/
+        /**<span id='method-fm.icelink.WebRtcStreamBase-removeOnStateChange'>&nbsp;</span>**/
         /**
          <div>
-         Sets the identifier.
+         Removes a handler that is raised when the stream state changes.
          </div>
 
 
-        @param {string} value
+        @param {fm.icelink.IAction0} value
         @return {void}
         */
-        setId(value: string): void;
+        removeOnStateChange(value: fm.icelink.IAction0): void;
         /**<span id='method-fm.icelink.WebRtcStreamBase-setLocalDirection'>&nbsp;</span>**/
         /**
          <div>
@@ -5600,11 +4836,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected abstract setRemoteDirection(value: fm.icelink.StreamDirection): void;
-        /**
-        @internal
-
-        */
-        setRemoteSupportsTrickleIce(value: boolean): void;
         /**<span id='method-fm.icelink.WebRtcStreamBase-setTag'>&nbsp;</span>**/
         /**
          <div>
@@ -5616,11 +4847,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         setTag(value: string): void;
-        /**
-        @internal
-
-        */
-        private setType(value);
         /**<span id='method-fm.icelink.WebRtcStreamBase-toString'>&nbsp;</span>**/
         /**
          <div>
@@ -5631,22 +4857,13 @@ declare namespace fm.icelink {
         @return {string}
         */
         toString(): string;
-        /**
-        @internal
-
-        */
-        private trickleIceSupported(iceOptions);
     }
 }
 declare namespace fm.icelink {
     abstract class WebRtcStream extends WebRtcStreamBase implements IInternalStream {
         getTypeString(): string;
-        /** @internal */
-        private _connection;
         getConnection(): WebRtcConnection;
         setConnection(remoteTrack: WebRtcConnection): void;
-        /** @internal */
-        abstract _getExternal(): IExternalStream;
         processSdpMediaDescription(sdpMessage: sdp.Message, sdpMediaDescription: sdp.MediaDescription, isLocalDescription: boolean, isOffer: boolean, isRenegotiation: boolean): Error;
     }
 }
@@ -5659,34 +4876,7 @@ declare namespace fm.icelink {
     */
     abstract class WebRtcMediaStreamBase extends fm.icelink.WebRtcStream implements fm.icelink.IMediaStream, fm.icelink.IStream {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __localDirection;
-        /**
-        @internal
-        */
-        private __pendingLocalDirection;
-        /**
-        @internal
-        */
-        private __remoteDirection;
-        /**
-        @internal
-        */
-        private _localBandwidth;
-        /**
-        @internal
-        */
-        private _remoteBandwidth;
-        /**
-        @internal
-        */
-        private _renegotiationLock;
-        /**
-        @internal
-        */
-        private _renegotiationPending;
+        private fmicelinkWebRtcMediaStreamBaseInit();
         /**<span id='method-fm.icelink.WebRtcMediaStreamBase-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -5769,18 +4959,6 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         abstract getMuted(): boolean;
-        /**<span id='method-fm.icelink.WebRtcMediaStreamBase-getPendingLocalDirection'>&nbsp;</span>**/
-        /**
-         <div>
-         Gets the pending local direction.
-         </div>
-
-
-        @return {fm.icelink.StreamDirection}
-        @internal
-
-        */
-        getPendingLocalDirection(): fm.icelink.StreamDirection;
         /**<span id='method-fm.icelink.WebRtcMediaStreamBase-getRemoteBandwidth'>&nbsp;</span>**/
         /**
          <div>
@@ -5844,19 +5022,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         abstract setMuted(value: boolean): void;
-        /**<span id='method-fm.icelink.WebRtcMediaStreamBase-setPendingLocalDirection'>&nbsp;</span>**/
-        /**
-         <div>
-         Sets the pending local direction.
-         </div>
-
-
-        @param {fm.icelink.StreamDirection} value
-        @return {void}
-        @internal
-
-        */
-        setPendingLocalDirection(value: fm.icelink.StreamDirection): void;
         /**<span id='method-fm.icelink.WebRtcMediaStreamBase-setRemoteBandwidth'>&nbsp;</span>**/
         /**
          <div>
@@ -5895,13 +5060,8 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     abstract class WebRtcMediaStream<TTrack extends WebRtcMediaTrack> extends WebRtcMediaStreamBase implements IInternalMediaStream {
         getTypeString(): string;
-        /** @internal */
-        abstract _getExternal(): IExternalMediaStream;
-        /** @internal */
-        private _localTrack;
         getLocalTrack(): TTrack;
-        /** @internal */
-        private _remoteTrack;
+        setLocalTrack(localTrack: TTrack): void;
         getRemoteTrack(): TTrack;
         setRemoteTrack(remoteTrack: TTrack): void;
         setMuted(muted: boolean): void;
@@ -5916,16 +5076,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class WebRtcAudioStream extends WebRtcMediaStream<WebRtcAudioTrack> implements IAudioStream, IInternalAudioStream {
         getTypeString(): string;
-        /** @internal */
-        private _dtmfSender;
-        /** @internal */
-        private _onSendDtmfToneValues;
-        /** @internal */
-        private _onSendDtmfToneChangeValues;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalAudioStream;
         constructor(external: IExternalAudioStream, localTrack: WebRtcAudioTrack, remoteTrack: WebRtcAudioTrack);
         addOnReceiveDtmfTone(value: IAction1<dtmf.Tone>): void;
         addOnReceiveDtmfToneChange(value: IAction1<dtmf.Tone>): void;
@@ -6147,32 +5297,12 @@ declare var MediaStreamTrack: {
 declare namespace fm.icelink {
     abstract class WebRtcMediaTrack extends WebRtcMediaTrackBase implements IMediaTrack, IInternalMediaTrack {
         getTypeString(): string;
-        /** @internal */
-        abstract _getExternal(): IExternalMediaTrack;
-        /** @internal */
-        private _onStartedValues;
-        /** @internal */
-        private _onStoppedValues;
-        /** @internal */
-        private _onDestroyedValues;
-        /** @internal */
-        private _mediaStreamTrack;
-        /** @internal */
-        _getMediaStreamTrack(): MediaStreamTrack;
-        /** @internal */
-        _setMediaStreamTrack(mediaStreamTrack: MediaStreamTrack): void;
-        /** @internal */
-        private _mediaStreamTrackDisabled;
-        /** @internal */
-        _getMediaStreamTrackDisabled(): boolean;
         addOnStarted(value: IAction0): void;
         addOnStopped(value: IAction0): void;
         addOnDestroyed(value: IAction0): void;
         removeOnStarted(value: IAction0): void;
         removeOnStopped(value: IAction0): void;
         removeOnDestroyed(value: IAction0): void;
-        /** @internal */
-        private _media;
         getMedia(): WebRtcMedia<WebRtcAudioTrack, WebRtcVideoTrack>;
         constructor(external: IExternalMediaTrack, media: WebRtcMedia<WebRtcAudioTrack, WebRtcVideoTrack>);
         getMuted(): boolean;
@@ -6186,10 +5316,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class WebRtcAudioTrack extends WebRtcMediaTrack implements IAudioTrack, IInternalAudioTrack {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalAudioTrack;
         constructor(external: IExternalAudioTrack, media: WebRtcMedia<WebRtcAudioTrack, WebRtcVideoTrack>);
         private isLocal();
         changeSinkOutput(sinkOutput: SinkOutput): Future<Object>;
@@ -6217,137 +5343,6 @@ declare namespace fm.icelink {
     */
     abstract class WebRtcConnectionBase<TConnection extends fm.icelink.WebRtcConnectionBase<TConnection, TStream, TAudioStream, TVideoStream, TDataStream, TDataChannel>, TStream extends fm.icelink.WebRtcStreamBase, TAudioStream extends fm.icelink.IAudioStream, TVideoStream extends fm.icelink.IVideoStream, TDataStream extends fm.icelink.IDataStream<TDataChannel>, TDataChannel extends fm.icelink.IDataChannel<TDataChannel>> extends fm.icelink.Dynamic implements fm.icelink.IConnection<TConnection, TStream, TAudioStream, TVideoStream, TDataStream> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __iceServers;
-        /**
-        @internal
-        */
-        private __onGatheringStateChange;
-        /**
-        @internal
-        */
-        private __onIceConnectionStateChange;
-        /**
-        @internal
-        */
-        private __onLocalCandidate;
-        /**
-        @internal
-        */
-        private __onLocalDescription;
-        /**
-        @internal
-        */
-        private __onRemoteCandidate;
-        /**
-        @internal
-        */
-        private __onRemoteDescription;
-        /**
-        @internal
-        */
-        private __onSignallingStateChange;
-        /**
-        @internal
-        */
-        private __onStateChange;
-        /**
-        @internal
-        */
-        private __signallingState;
-        /**
-        @internal
-        */
-        private __state;
-        /**
-        @internal
-        */
-        private __stateTimestamp;
-        /**
-        @internal
-        */
-        private __trickleIcePolicy;
-        /**
-        @internal
-        */
-        private __useTrickleIce;
-        /** <span id='prop-fm.icelink.WebRtcConnectionBase-_connectionLock'>&nbsp;</span> **/
-        /**
-         <div>
-         The state lock.
-         </div>
-
-        @field _connectionLock
-        @type {Object}
-        @internal
-        */
-        _connectionLock: Object;
-        /**
-        @internal
-        */
-        private _deadStreamTimeout;
-        /**
-        @internal
-        */
-        private _earlyRemoteCandidatePromises;
-        /**
-        @internal
-        */
-        private _error;
-        /**
-        @internal
-        */
-        private _iceGatherPolicy;
-        /**
-        @internal
-        */
-        private _id;
-        /**
-        @internal
-        */
-        private _internalId;
-        /**
-        @internal
-        */
-        private _onGatheringStateChange;
-        /**
-        @internal
-        */
-        private _onIceConnectionStateChange;
-        /**
-        @internal
-        */
-        private _onLocalCandidate;
-        /**
-        @internal
-        */
-        private _onLocalDescription;
-        /**
-        @internal
-        */
-        private _onRemoteCandidate;
-        /**
-        @internal
-        */
-        private _onRemoteDescription;
-        /**
-        @internal
-        */
-        private _onSignallingStateChange;
-        /**
-        @internal
-        */
-        private _onStateChange;
-        /**
-        @internal
-        */
-        private _tieBreaker;
-        /**
-        @internal
-        */
-        private _timeout;
         private fmicelinkWebRtcConnectionBaseInit();
         /**<span id='method-fm.icelink.WebRtcConnectionBase-constructor'>&nbsp;</span>**/
         /**
@@ -6478,11 +5473,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.Future<fm.icelink.Candidate>}
         */
         addRemoteCandidate(remoteCandidate: fm.icelink.Candidate): fm.icelink.Future<fm.icelink.Candidate>;
-        /**
-        @internal
-
-        */
-        private addRemoteCandidatePromise(remoteCandidatePromise);
         /**<span id='method-fm.icelink.WebRtcConnectionBase-close'>&nbsp;</span>**/
         /**
          <div>
@@ -6546,6 +5536,17 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         protected abstract doCreateOffer(promise: fm.icelink.Promise<fm.icelink.SessionDescription>): boolean;
+        /**<span id='method-fm.icelink.WebRtcConnectionBase-doProcessDescription'>&nbsp;</span>**/
+        /**
+         <div>
+         Processes a session description.
+         </div>
+
+        @param {fm.icelink.SessionDescription} description The session description.
+        @param {boolean} isLocalDescription Whether this is a local session description.
+        @return {fm.icelink.Error}
+        */
+        protected doProcessDescription(description: fm.icelink.SessionDescription, isLocalDescription: boolean): fm.icelink.Error;
         /**<span id='method-fm.icelink.WebRtcConnectionBase-doSendCachedLocalCandidates'>&nbsp;</span>**/
         /**
          <div>
@@ -6641,6 +5642,16 @@ declare namespace fm.icelink {
         @return {fm.icelink.Error}
         */
         getError(): fm.icelink.Error;
+        /**<span id='method-fm.icelink.WebRtcConnectionBase-getExternalId'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the external identifier.
+         </div>
+
+
+        @return {string}
+        */
+        getExternalId(): string;
         /**<span id='method-fm.icelink.WebRtcConnectionBase-getGatheringState'>&nbsp;</span>**/
         /**
          <div>
@@ -6741,16 +5752,36 @@ declare namespace fm.icelink {
         @return {TConnection}
         */
         protected abstract getInstance(): TConnection;
+        /**<span id='method-fm.icelink.WebRtcConnectionBase-getIsTerminated'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Gets a value indicating whether the connection is currently closed or failed.
+         </div>
 
+
+        @return {boolean}
         */
-        getInternalId(): string;
+        getIsTerminated(): boolean;
+        /**<span id='method-fm.icelink.WebRtcConnectionBase-getIsTerminating'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Gets a value indicating whether the connection is currently closing or failing.
+         </div>
 
+
+        @return {boolean}
         */
-        getIsInTerminatingOrTerminatedState(): boolean;
+        getIsTerminating(): boolean;
+        /**<span id='method-fm.icelink.WebRtcConnectionBase-getIsTerminatingOrTerminated'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets a value indicating whether the connection is currently closing, failing, closed, or failed.
+         </div>
+
+
+        @return {boolean}
+        */
+        getIsTerminatingOrTerminated(): boolean;
         /**<span id='method-fm.icelink.WebRtcConnectionBase-getLocalDescription'>&nbsp;</span>**/
         /**
          <div>
@@ -6852,11 +5883,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.TrickleIcePolicy}
         */
         getTrickleIcePolicy(): fm.icelink.TrickleIcePolicy;
-        /**
-        @internal
-
-        */
-        getUseTrickleIce(): boolean;
         /**<span id='method-fm.icelink.WebRtcConnectionBase-getVideoStream'>&nbsp;</span>**/
         /**
          <div>
@@ -6877,11 +5903,6 @@ declare namespace fm.icelink {
         @return {TVideoStream[]}
         */
         abstract getVideoStreams(): TVideoStream[];
-        /**
-        @internal
-
-        */
-        private initializeBase();
         /**<span id='method-fm.icelink.WebRtcConnectionBase-processDescription'>&nbsp;</span>**/
         /**
          <div>
@@ -6907,16 +5928,16 @@ declare namespace fm.icelink {
         @return {fm.icelink.Error}
         */
         protected abstract processSdpMediaDescription(stream: TStream, sdpMediaDescription: fm.icelink.sdp.MediaDescription, sdpMediaIndex: number, isLocalDescription: boolean, isRenegotiation: boolean): fm.icelink.Error;
+        /**<span id='method-fm.icelink.WebRtcConnectionBase-processStateChange'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Processes a state change.
+         </div>
 
-        */
-        abstract processStateChange(): void;
-        /**
-        @internal
 
+        @return {void}
         */
-        raiseCachedCandidates(): void;
+        protected processStateChange(): void;
         /**<span id='method-fm.icelink.WebRtcConnectionBase-raiseGatheringStateChange'>&nbsp;</span>**/
         /**
          <div>
@@ -6949,26 +5970,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected raiseLocalCandidate(localCandidate: fm.icelink.Candidate): void;
-        /**
-        @internal
-
-        */
-        private raiseLocalDescription(localDescription);
-        /**
-        @internal
-
-        */
-        private raiseRemoteCandidate(remoteCandidate);
-        /**
-        @internal
-
-        */
-        private raiseRemoteDescription(remoteDescription);
-        /**
-        @internal
-
-        */
-        private raiseStateChange();
         /**<span id='method-fm.icelink.WebRtcConnectionBase-removeIceServer'>&nbsp;</span>**/
         /**
          <div>
@@ -7091,17 +6092,17 @@ declare namespace fm.icelink {
         @return {void}
         */
         setDeadStreamTimeout(value: number): void;
-        /**<span id='method-fm.icelink.WebRtcConnectionBase-setError'>&nbsp;</span>**/
+        /**<span id='method-fm.icelink.WebRtcConnectionBase-setExternalId'>&nbsp;</span>**/
         /**
          <div>
-         Sets the error.
+         Sets the external identifier.
          </div>
 
 
-        @param {fm.icelink.Error} value
+        @param {string} value
         @return {void}
         */
-        protected setError(value: fm.icelink.Error): void;
+        setExternalId(value: string): void;
         /**<span id='method-fm.icelink.WebRtcConnectionBase-setGatheringState'>&nbsp;</span>**/
         /**
          <div>
@@ -7157,22 +6158,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         setIceServers(value: fm.icelink.IceServer[]): void;
-        /**<span id='method-fm.icelink.WebRtcConnectionBase-setId'>&nbsp;</span>**/
-        /**
-         <div>
-         Sets the identifier.
-         </div>
-
-
-        @param {string} value
-        @return {void}
-        */
-        setId(value: string): void;
-        /**
-        @internal
-
-        */
-        private setInternalId(value);
         /**<span id='method-fm.icelink.WebRtcConnectionBase-setLocalDescription'>&nbsp;</span>**/
         /**
          <div>
@@ -7204,22 +6189,17 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected setSignallingState(value: fm.icelink.SignallingState): void;
-        /**<span id='method-fm.icelink.WebRtcConnectionBase-setState'>&nbsp;</span>**/
+        /**<span id='method-fm.icelink.WebRtcConnectionBase-setTieBreaker'>&nbsp;</span>**/
         /**
          <div>
-         Sets the state of the connection.
+         Sets the tie breaker.
          </div>
 
 
-        @param {fm.icelink.ConnectionState} value
+        @param {string} value
         @return {void}
         */
-        protected setState(value: fm.icelink.ConnectionState): void;
-        /**
-        @internal
-
-        */
-        private setTieBreaker(value);
+        setTieBreaker(value: string): void;
         /**<span id='method-fm.icelink.WebRtcConnectionBase-setTimeout'>&nbsp;</span>**/
         /**
          <div>
@@ -7244,90 +6224,22 @@ declare namespace fm.icelink {
         @return {void}
         */
         setTrickleIcePolicy(value: fm.icelink.TrickleIcePolicy): void;
-        /**
-        @internal
-
-        */
-        setUseTrickleIce(value: boolean): void;
-        /**
-        @internal
-
-        */
-        private verifySessionIdAndVersion(promise, remoteDescription);
     }
 }
 declare function makeMediaStream(): MediaStream;
 declare namespace fm.icelink {
     class WebRtcConnection extends WebRtcConnectionBase<WebRtcConnection, WebRtcStream, WebRtcAudioStream, WebRtcVideoStream, WebRtcDataStream, WebRtcDataChannel> implements IInternalConnection {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalConnection;
-        /** @internal */
-        private _streams;
-        /** @internal */
-        private _mediaStreams;
-        /** @internal */
-        private _audioStreams;
-        /** @internal */
-        private _videoStreams;
-        /** @internal */
-        private _dataStreams;
-        /** @internal */
-        private _offerer;
-        /** @internal */
-        private _initialized;
-        /** @internal */
-        private _localDescription;
-        /** @internal */
-        private _remoteDescription;
-        /** @internal */
-        private _gatheringState;
-        /** @internal */
-        private _iceConnectionState;
-        /** @internal */
-        private _remoteMedia;
-        /** @internal */
-        private _isRenegotiation;
         getRemoteMedia(): WebRtcRemoteMedia;
-        /** @internal */
-        private _nativePeerConnection;
         getNativePeerConnection(): RTCPeerConnection;
-        /** @internal */
-        private _discoveredCandidates;
         private _remoteMediaTrackCount;
-        /** @internal */
-        private _nativeIceGatherers;
+        private _dataStreamsReady;
+        private _mediaStreamsReady;
         getNativeIceGatherers(): RTCIceGatherer[];
-        /** @internal */
-        private _nativeIceTransports;
         getNativeIceTransports(): RTCIceTransport[];
-        /** @internal */
-        private _nativeDtlsTransports;
         getNativeDtlsTransports(): RTCDtlsTransport[];
-        /** @internal */
-        private _nativeRtpSenders;
         getNativeRtpSenders(): RTCRtpSender[];
-        /** @internal */
-        private _nativeRtpReceivers;
         getNativeRtpReceivers(): RTCRtpReceiver[];
-        /** @internal */
-        private _remoteNativeMediaStream;
-        /** @internal */
-        private _rtpKinds;
-        /** @internal */
-        private _ortcLocalDescription;
-        /** @internal */
-        private _ortcRemoteDescription;
-        /** @internal */
-        private _remoteCandidatesTimer;
-        /** @internal */
-        private _remoteCandidatesDone;
-        /** @internal */
-        private _transportsRemaining;
-        /** @internal */
-        private _ortcSupportsTcp;
         constructor(external: IExternalConnection, streams: WebRtcStream[], remoteMedia: WebRtcRemoteMedia);
         getInstance(): WebRtcConnection;
         private addStreamInternal(stream);
@@ -7338,16 +6250,6 @@ declare namespace fm.icelink {
         getAudioStreams(): WebRtcAudioStream[];
         getVideoStreams(): WebRtcVideoStream[];
         getDataStreams(): WebRtcDataStream[];
-        /** @internal */
-        private _connectingTimer;
-        private setInitializing();
-        private setConnecting();
-        private setConnected();
-        private setClosing();
-        private setClosed();
-        private setFailing(error);
-        private setFailed();
-        private clearConnectingTimer();
         getStats(): Future<ConnectionStats>;
         private getMediaSenderStats(mediaSenderId, report);
         private getMediaReceiverStats(mediaReceiverId, report);
@@ -7375,8 +6277,6 @@ declare namespace fm.icelink {
         private ortcSessionDescriptionFromSessionDescription(sessionDescription);
         private applyMediaFormatParametersAttributes(codecCap, mediaFormatParametersList);
         private applyMediaFeedbackAttributes(codecCap, mediaFeedbackAttributeList);
-        /** @internal */
-        private _iceCandidateProcessingTimeout;
         /**<span id='method-fm.icelink.Connection-getIceCandidateProcessingTimeout'>&nbsp;</span>**/
         /**
          <div>
@@ -7427,15 +6327,15 @@ declare namespace fm.icelink {
         private selectEncodings(mediaIndex, send);
         private selectRtcp(mediaIndex, send);
         protected doAddRemoteCandidate(promise: Promise<Candidate>, remoteCandidate: Candidate): void;
+        private setRemoteCandidatesDoneTimer();
         protected assignRemoteDescriptionInternal(sessionDescription: SessionDescription): void;
         close(): void;
         private doClose();
         private dtmfSender;
         getDtmfSender(): RTCDtmfSender;
-        /** @internal */
-        private static __webRtcConnectionInitialized;
-        /** @internal */
-        static webRtcConnectionInitialize(): void;
+        replaceLocalTrack(localTrack: WebRtcMediaTrack, mediaStream: WebRtcMediaStream<WebRtcMediaTrack>): Future<object>;
+        replaceRemoteTrack(remoteTrack: WebRtcMediaTrack, mediaStream: WebRtcMediaStream<WebRtcMediaTrack>): Future<object>;
+        private getRtpSender(mediaStreamIndex);
     }
 }
 declare namespace fm.icelink {
@@ -7447,49 +6347,6 @@ declare namespace fm.icelink {
     */
     abstract class WebRtcDataChannelBase<TDataChannel> extends fm.icelink.Dynamic implements fm.icelink.IDataChannel<TDataChannel> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __onStateChange;
-        /**
-        @internal
-        */
-        private __state;
-        /**
-        @internal
-        */
-        private _id;
-        /**
-        @internal
-        */
-        private _label;
-        /**
-        @internal
-        */
-        private _onReceive;
-        /**
-        @internal
-        */
-        private _onStateChange;
-        /**
-        @internal
-        */
-        private _ordered;
-        /** <span id='prop-fm.icelink.WebRtcDataChannelBase-_stateLock'>&nbsp;</span> **/
-        /**
-         <div>
-         The state lock.
-         </div>
-
-        @field _stateLock
-        @type {Object}
-        @internal
-        */
-        _stateLock: Object;
-        /**
-        @internal
-        */
-        private _subprotocol;
         private fmicelinkWebRtcDataChannelBaseInit();
         /**<span id='method-fm.icelink.WebRtcDataChannelBase-constructor'>&nbsp;</span>**/
         /**
@@ -7506,7 +6363,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebRtcDataChannelBase-addOnStateChange'>&nbsp;</span>**/
         /**
          <div>
-         Adds a handler that is raised when the state changes.
+         Adds a handler that is raised when the data channel state changes.
          </div>
 
 
@@ -7514,6 +6371,16 @@ declare namespace fm.icelink {
         @return {void}
         */
         addOnStateChange(value: fm.icelink.IAction1<TDataChannel>): void;
+        /**<span id='method-fm.icelink.WebRtcDataChannelBase-getConnectionId'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the connection identifier.
+         </div>
+
+
+        @return {string}
+        */
+        getConnectionId(): string;
         /**<span id='method-fm.icelink.WebRtcDataChannelBase-getId'>&nbsp;</span>**/
         /**
          <div>
@@ -7534,6 +6401,36 @@ declare namespace fm.icelink {
         @return {TDataChannel}
         */
         protected abstract getInstance(): TDataChannel;
+        /**<span id='method-fm.icelink.WebRtcDataChannelBase-getIsTerminated'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets a value indicating whether the data channel is currently closed or failed.
+         </div>
+
+
+        @return {boolean}
+        */
+        getIsTerminated(): boolean;
+        /**<span id='method-fm.icelink.WebRtcDataChannelBase-getIsTerminating'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets a value indicating whether the data channel is currently closing.
+         </div>
+
+
+        @return {boolean}
+        */
+        getIsTerminating(): boolean;
+        /**<span id='method-fm.icelink.WebRtcDataChannelBase-getIsTerminatingOrTerminated'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets a value indicating whether the data channel is currently closing, closed, or failed.
+         </div>
+
+
+        @return {boolean}
+        */
+        getIsTerminatingOrTerminated(): boolean;
         /**<span id='method-fm.icelink.WebRtcDataChannelBase-getLabel'>&nbsp;</span>**/
         /**
          <div>
@@ -7574,6 +6471,16 @@ declare namespace fm.icelink {
         @return {fm.icelink.DataChannelState}
         */
         getState(): fm.icelink.DataChannelState;
+        /**<span id='method-fm.icelink.WebRtcDataChannelBase-getStreamId'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the stream identifier.
+         </div>
+
+
+        @return {string}
+        */
+        getStreamId(): string;
         /**<span id='method-fm.icelink.WebRtcDataChannelBase-getSubprotocol'>&nbsp;</span>**/
         /**
          <div>
@@ -7584,6 +6491,26 @@ declare namespace fm.icelink {
         @return {string}
         */
         getSubprotocol(): string;
+        /**<span id='method-fm.icelink.WebRtcDataChannelBase-processStateChange'>&nbsp;</span>**/
+        /**
+         <div>
+         Processes a state change.
+         </div>
+
+
+        @return {void}
+        */
+        protected processStateChange(): void;
+        /**<span id='method-fm.icelink.WebRtcDataChannelBase-processStateLockChange'>&nbsp;</span>**/
+        /**
+         <div>
+         Processes a state lock change.
+         </div>
+
+
+        @return {void}
+        */
+        protected processStateLockChange(): void;
         /**<span id='method-fm.icelink.WebRtcDataChannelBase-raiseDataBytes'>&nbsp;</span>**/
         /**
          <div>
@@ -7607,7 +6534,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebRtcDataChannelBase-removeOnStateChange'>&nbsp;</span>**/
         /**
          <div>
-         Removes a handler that is raised when the state changes.
+         Removes a handler that is raised when the data channel state changes.
          </div>
 
 
@@ -7622,9 +6549,9 @@ declare namespace fm.icelink {
          </div>
 
         @param {fm.icelink.DataBuffer} dataBytes The data bytes.
-        @return {void}
+        @return {fm.icelink.Future<Object>}
         */
-        abstract sendDataBytes(dataBytes: fm.icelink.DataBuffer): void;
+        abstract sendDataBytes(dataBytes: fm.icelink.DataBuffer): fm.icelink.Future<Object>;
         /**<span id='method-fm.icelink.WebRtcDataChannelBase-sendDataString'>&nbsp;</span>**/
         /**
          <div>
@@ -7632,25 +6559,9 @@ declare namespace fm.icelink {
          </div>
 
         @param {string} dataString The data string.
-        @return {void}
+        @return {fm.icelink.Future<Object>}
         */
-        abstract sendDataString(dataString: string): void;
-        /**<span id='method-fm.icelink.WebRtcDataChannelBase-setId'>&nbsp;</span>**/
-        /**
-         <div>
-         Sets the identifier.
-         </div>
-
-
-        @param {string} value
-        @return {void}
-        */
-        setId(value: string): void;
-        /**
-        @internal
-
-        */
-        private setLabel(value);
+        abstract sendDataString(dataString: string): fm.icelink.Future<Object>;
         /**<span id='method-fm.icelink.WebRtcDataChannelBase-setOnReceive'>&nbsp;</span>**/
         /**
          <div>
@@ -7662,27 +6573,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         setOnReceive(value: fm.icelink.IAction1<fm.icelink.DataChannelReceiveArgs>): void;
-        /**
-        @internal
-
-        */
-        private setOrdered(value);
-        /**<span id='method-fm.icelink.WebRtcDataChannelBase-setState'>&nbsp;</span>**/
-        /**
-         <div>
-         Sets the state.
-         </div>
-
-
-        @param {fm.icelink.DataChannelState} value
-        @return {void}
-        */
-        protected setState(value: fm.icelink.DataChannelState): void;
-        /**
-        @internal
-
-        */
-        private setSubprotocol(value);
     }
 }
 interface RTCMessageEvent {
@@ -7711,18 +6601,12 @@ declare var RTCDataChannel: {
 declare namespace fm.icelink {
     class WebRtcDataChannel extends WebRtcDataChannelBase<WebRtcDataChannel> implements IInternalDataChannel {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalDataChannel;
-        /** @internal */
-        private _nativeDataChannel;
         getNativeDataChannel(): RTCDataChannel;
         setNativeDataChannel(nativeDataChannel: RTCDataChannel): void;
         constructor(external: IExternalDataChannel, label: string, ordered?: boolean, subprotocol?: string);
         getInstance(): WebRtcDataChannel;
-        sendDataString(dataString: string): void;
-        sendDataBytes(dataBytes: DataBuffer): void;
+        sendDataString(dataString: string): fm.icelink.Future<Object>;
+        sendDataBytes(dataBytes: DataBuffer): fm.icelink.Future<Object>;
     }
 }
 declare namespace fm.icelink {
@@ -7775,11 +6659,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.StreamDirection}
         */
         getDirection(): fm.icelink.StreamDirection;
-        /**
-        @internal
-
-        */
-        getDirectionCapabilities(): fm.icelink.StreamDirection;
         /**<span id='method-fm.icelink.WebRtcDataStreamBase-getLabel'>&nbsp;</span>**/
         /**
          <div>
@@ -7810,6 +6689,26 @@ declare namespace fm.icelink {
         @return {fm.icelink.StreamDirection}
         */
         getRemoteDirection(): fm.icelink.StreamDirection;
+        /**<span id='method-fm.icelink.WebRtcDataStreamBase-processStateChange'>&nbsp;</span>**/
+        /**
+         <div>
+         Processes a state change.
+         </div>
+
+
+        @return {void}
+        */
+        protected processStateChange(): void;
+        /**<span id='method-fm.icelink.WebRtcDataStreamBase-processStateLockChange'>&nbsp;</span>**/
+        /**
+         <div>
+         Processes a state lock change.
+         </div>
+
+
+        @return {void}
+        */
+        protected processStateLockChange(): void;
         /**<span id='method-fm.icelink.WebRtcDataStreamBase-setLocalDirection'>&nbsp;</span>**/
         /**
          <div>
@@ -7837,12 +6736,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class WebRtcDataStream extends WebRtcDataStreamBase<WebRtcDataChannel> implements IInternalDataStream {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalDataStream;
-        /** @internal */
-        private _channels;
         constructor(external: IExternalDataStream, channels: WebRtcDataChannel[]);
         getChannels(): WebRtcDataChannel[];
     }
@@ -7850,16 +6743,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class WebRtcDomAudioSink extends Dynamic implements IInternal<DomAudioSink> {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): DomAudioSink;
-        /** @internal */
-        private _audio;
-        /** @internal */
-        private _track;
-        /** @internal */
-        private _local;
         getTrack(): WebRtcAudioTrack;
         getLocal(): boolean;
         getAudio(): HTMLAudioElement;
@@ -7874,22 +6757,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class WebRtcDomVideoSink extends Dynamic implements IInternalDomVideoSink {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalDomVideoSink;
-        /** @internal */
-        private _container;
-        /** @internal */
-        private _video;
-        /** @internal */
-        private _track;
-        /** @internal */
-        private _local;
-        /** @internal */
-        private _viewScale;
-        /** @internal */
-        private _viewMirror;
         getTrack(): WebRtcVideoTrack;
         getLocal(): boolean;
         getView(): HTMLElement;
@@ -7918,10 +6785,6 @@ declare namespace fm.icelink {
     */
     abstract class WebRtcMediaBase<TIAudioTrack extends fm.icelink.IAudioTrack, TIVideoTrack extends fm.icelink.IVideoTrack> extends fm.icelink.Dynamic implements fm.icelink.IMedia<TIAudioTrack, TIVideoTrack> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __id;
         constructor();
         /**<span id='method-fm.icelink.WebRtcMediaBase-addOnAudioDestroyed'>&nbsp;</span>**/
         /**
@@ -8188,52 +7051,12 @@ declare namespace fm.icelink {
         setVideoMuted(value: boolean): void;
     }
 }
-declare type GlobalMediaStream = MediaStream;
+declare type fmicelinkGlobalMediaStream = MediaStream;
 declare namespace fm.icelink {
     abstract class WebRtcMedia<TAudioTrack extends WebRtcAudioTrack, TVideoTrack extends WebRtcVideoTrack> extends WebRtcMediaBase<WebRtcAudioTrack, WebRtcVideoTrack> implements IMedia<WebRtcAudioTrack, WebRtcVideoTrack>, IInternalMedia {
         getTypeString(): string;
-        /** @internal */
-        abstract _getExternal(): IExternalMedia;
-        /** @internal */
-        private _audioMediaStream;
-        /** @internal */
-        private _videoMediaStream;
-        /** @internal */
-        _getAudioMediaStream(): GlobalMediaStream;
-        /** @internal */
-        _getVideoMediaStream(): GlobalMediaStream;
-        private _setAudioMediaStream(audioMediaStream);
-        private _setVideoMediaStream(videoMediaStream);
-        /** @internal */
-        _setMediaStreams(audioMediaStream: GlobalMediaStream, videoMediaStream: GlobalMediaStream): void;
-        /** @internal */
-        _setMediaStream(mediaStream: GlobalMediaStream): void;
-        /** @internal */
-        protected _audioTrack: WebRtcAudioTrack;
-        /** @internal */
-        protected _videoTrack: WebRtcVideoTrack;
-        /** @internal */
-        protected _audioSink: WebRtcDomAudioSink;
-        /** @internal */
-        protected _videoSink: WebRtcDomVideoSink;
-        /** @internal */
-        private _onAudioLevelValues;
-        /** @internal */
-        private _onVideoSizeValues;
-        /** @internal */
-        private _onAudioDestroyedValues;
-        /** @internal */
-        private _onVideoDestroyedValues;
-        /** @internal */
-        private _audioContext;
-        /** @internal */
-        private _audioMicrophone;
-        /** @internal */
-        private _audioAnalyser;
-        /** @internal */
-        private _audioScriptNode;
-        /** @internal */
-        private _videoSizeEventsAttached;
+        protected _setAudioMediaStream(audioMediaStream: fmicelinkGlobalMediaStream): boolean;
+        protected _setVideoMediaStream(videoMediaStream: fmicelinkGlobalMediaStream): boolean;
         constructor(external: any | IExternalMedia);
         addOnAudioDestroyed(value: IAction0): void;
         addOnVideoDestroyed(value: IAction0): void;
@@ -8254,7 +7077,8 @@ declare namespace fm.icelink {
         removeOnVideoSize(value: IAction1<Size>): void;
         setAudioGain(value: number): void;
         setAudioVolume(value: number): void;
-        protected cleanupAudioContext(): void;
+        protected initializeAudioContext(): void;
+        protected destroyAudioContext(): void;
     }
 }
 declare namespace fm.icelink {
@@ -8266,14 +7090,6 @@ declare namespace fm.icelink {
     */
     abstract class WebRtcLocalMediaBase<TLocalMedia extends fm.icelink.WebRtcLocalMediaBase<TLocalMedia, TAudioTrack, TVideoTrack>, TAudioTrack extends fm.icelink.WebRtcAudioTrack, TVideoTrack extends fm.icelink.WebRtcVideoTrack> extends fm.icelink.WebRtcMedia<TAudioTrack, TVideoTrack> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __stateLock;
-        /**
-        @internal
-        */
-        private _state;
         /**<span id='method-fm.icelink.WebRtcLocalMediaBase-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -8323,11 +7139,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.LocalMediaState}
         */
         getState(): fm.icelink.LocalMediaState;
-        /**
-        @internal
-
-        */
-        private setState(value);
         /**<span id='method-fm.icelink.WebRtcLocalMediaBase-start'>&nbsp;</span>**/
         /**
          <div>
@@ -8338,11 +7149,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.Future<TLocalMedia>}
         */
         start(): fm.icelink.Future<TLocalMedia>;
-        /**
-        @internal
-
-        */
-        private startInternal(promise);
         /**<span id='method-fm.icelink.WebRtcLocalMediaBase-stop'>&nbsp;</span>**/
         /**
          <div>
@@ -8353,48 +7159,11 @@ declare namespace fm.icelink {
         @return {fm.icelink.Future<TLocalMedia>}
         */
         stop(): fm.icelink.Future<TLocalMedia>;
-        /**
-        @internal
-
-        */
-        private stopInternal(promise);
     }
 }
 declare namespace fm.icelink {
     class WebRtcLocalMedia extends WebRtcLocalMediaBase<WebRtcLocalMedia, WebRtcAudioTrack, WebRtcVideoTrack> implements ILocalMedia<WebRtcLocalMedia, WebRtcAudioTrack, WebRtcVideoTrack>, IInternalLocalMedia {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalLocalMedia;
-        /** @internal */
-        private static _chromeExtensionId;
-        /** @internal */
-        private static _chromeExtensionUrl;
-        /** @internal */
-        private static _chromeExtensionInstalled;
-        /** @internal */
-        private static _chromeExtensionRequiresUserGesture;
-        /** @internal */
-        static getChromeExtensionId(): string;
-        /** @internal */
-        static setChromeExtensionId(chromeExtensionId: string): void;
-        /** @internal */
-        static getChromeExtensionUrl(): string;
-        /** @internal */
-        static getChromeExtensionInstalled(): boolean;
-        /** @internal */
-        static getChromeExtensionRequiresUserGesture(): boolean;
-        /** @internal */
-        static setChromeExtensionRequiresUserGesture(chromeExtensionRequiresUserGesture: boolean): void;
-        /** @internal */
-        private _onAudioStartedValues;
-        /** @internal */
-        private _onAudioStoppedValues;
-        /** @internal */
-        private _onVideoStartedValues;
-        /** @internal */
-        private _onVideoStoppedValues;
         addOnAudioStarted(value: IAction0): void;
         addOnAudioStopped(value: IAction0): void;
         addOnVideoStarted(value: IAction0): void;
@@ -8412,60 +7181,34 @@ declare namespace fm.icelink {
         private _videoInput;
         getVideoSourceInput(): SourceInput;
         setVideoSourceInput(videoInput: SourceInput): void;
-        changeAudioSourceInput(audioInput: SourceInput): Future<Object>;
-        changeVideoSourceInput(videoInput: SourceInput): Future<Object>;
-        /** @internal */
-        private _audio;
         getAudio(): any;
         setAudio(audio: any): void;
-        /** @internal */
-        private _video;
         getVideo(): any;
         setVideo(video: any): void;
-        /** @internal */
-        private _screen;
         getScreen(): boolean;
         setScreen(screen: boolean): void;
-        /** @internal */
-        private _audioConstraints;
         getAudioConstraints(): MediaTrackConstraints;
-        /** @internal */
-        private _videoConstraints;
         getVideoConstraints(): MediaTrackConstraints;
         changeAudioConstraints(audioConstraints: MediaTrackConstraints): Future<Object>;
         changeVideoConstraints(videoConstraints: MediaTrackConstraints): Future<Object>;
-        /** @internal */
-        private _chromeScreenStreamId;
-        /** @internal */
-        private _chromeScreenEventListener;
+        changeAudioSourceInput(audioInput: SourceInput): Future<Object>;
+        changeVideoSourceInput(videoInput: SourceInput): Future<Object>;
         constructor(external: IExternalLocalMedia, audio: any, video: any, screen?: boolean);
         doStart(): Future<WebRtcLocalMedia>;
-        private doStartInternal(promise, deprecated?);
+        private doStartInternal(promise);
         doStop(): Future<WebRtcLocalMedia>;
-        /** @internal */
-        private static __webRtcLocalMediaInitialized;
-        /** @internal */
-        static webRtcLocalMediaInitialize(): void;
     }
 }
 declare namespace fm.icelink {
     class WebRtcRemoteMedia extends WebRtcMedia<WebRtcAudioTrack, WebRtcVideoTrack> implements IRemoteMedia<WebRtcAudioTrack, WebRtcVideoTrack>, IInternalRemoteMedia {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalRemoteMedia;
         constructor(external: IExternalRemoteMedia);
         getAudioSinkOutputs(): Future<SinkOutput[]>;
         getVideoSinkOutputs(): Future<SinkOutput[]>;
         private getSinkOutputs(kind);
-        /** @internal */
-        private _audioSinkOutput;
         getAudioSinkOutput(): SinkOutput;
         setAudioSinkOutput(audioSinkOutput: SinkOutput): void;
         private attachAudioSinkOutput(audioSinkOutput, element);
-        /** @internal */
-        private _videoSinkOutput;
         getVideoSinkOutput(): SinkOutput;
         setVideoSinkOutput(videoSinkOutput: SinkOutput): void;
         changeAudioSinkOutput(audioInput: SinkOutput): Future<Object>;
@@ -8475,20 +7218,12 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class WebRtcVideoStream extends WebRtcMediaStream<WebRtcVideoTrack> implements IVideoStream, IInternalVideoStream {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalVideoStream;
         constructor(external: IExternalVideoStream, localTrack: WebRtcVideoTrack, remoteTrack: WebRtcVideoTrack);
     }
 }
 declare namespace fm.icelink {
     class WebRtcVideoTrack extends WebRtcMediaTrack implements IVideoTrack, IInternalVideoTrack {
         getTypeString(): string;
-        /** @internal */
-        private _external;
-        /** @internal */
-        _getExternal(): IExternalVideoTrack;
         constructor(external: IExternalVideoTrack, media: WebRtcMedia<WebRtcAudioTrack, WebRtcVideoTrack>);
         setConfig(config: VideoConfig): void;
         private isLocal();
@@ -8534,19 +7269,19 @@ declare namespace fm.icelink {
         @type {fm.icelink.AddressType}
         */
         IPv6 = 2,
+        /** <span id='prop-fm.icelink.AddressType-Unknown'>&nbsp;</span> **/
+        /**
+         <div>
+         Indicates an unknown address type.
+         </div>
+
+        @field Unknown
+        @type {fm.icelink.AddressType}
+        */
+        Unknown = 3,
     }
 }
 declare namespace fm.icelink {
-    /**
-    @internal
-    */
-    enum JsonCheckerMode {
-        Array = 1,
-        Done = 2,
-        Key = 3,
-        Object = 4,
-        String = 5,
-    }
 }
 declare namespace fm.icelink {
     /**
@@ -8779,14 +7514,6 @@ declare namespace fm.icelink {
     }
 }
 declare namespace fm.icelink {
-    /**
-    @internal
-    */
-    enum StringType {
-        None = 1,
-        Single = 2,
-        Double = 3,
-    }
 }
 declare namespace fm.icelink {
     /**
@@ -11735,6 +10462,96 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     /**
      <div>
+     The state of a stream.
+     </div>
+
+    */
+    enum StreamState {
+        /** <span id='prop-fm.icelink.StreamState-New'>&nbsp;</span> **/
+        /**
+         <div>
+         Indicates that the stream is new and has not been started.
+         </div>
+
+        @field New
+        @type {fm.icelink.StreamState}
+        */
+        New = 1,
+        /** <span id='prop-fm.icelink.StreamState-Initializing'>&nbsp;</span> **/
+        /**
+         <div>
+         Indicates that the stream is being initialized but no connecting attempts have been made.
+         </div>
+
+        @field Initializing
+        @type {fm.icelink.StreamState}
+        */
+        Initializing = 2,
+        /** <span id='prop-fm.icelink.StreamState-Connecting'>&nbsp;</span> **/
+        /**
+         <div>
+         Indicates that the stream is currently connecting.
+         </div>
+
+        @field Connecting
+        @type {fm.icelink.StreamState}
+        */
+        Connecting = 3,
+        /** <span id='prop-fm.icelink.StreamState-Connected'>&nbsp;</span> **/
+        /**
+         <div>
+         Indicates that the stream is currently connected.
+         </div>
+
+        @field Connected
+        @type {fm.icelink.StreamState}
+        */
+        Connected = 4,
+        /** <span id='prop-fm.icelink.StreamState-Failing'>&nbsp;</span> **/
+        /**
+         <div>
+         Indicates that the stream has encountered an error and is cleaning up.
+         </div>
+
+        @field Failing
+        @type {fm.icelink.StreamState}
+        */
+        Failing = 5,
+        /** <span id='prop-fm.icelink.StreamState-Failed'>&nbsp;</span> **/
+        /**
+         <div>
+         Indicates that the stream has encountered an error and has cleaned up.
+         </div>
+
+        @field Failed
+        @type {fm.icelink.StreamState}
+        */
+        Failed = 6,
+        /** <span id='prop-fm.icelink.StreamState-Closing'>&nbsp;</span> **/
+        /**
+         <div>
+         Indicates that the stream has been instructed to close and is cleaning up.
+         </div>
+
+        @field Closing
+        @type {fm.icelink.StreamState}
+        */
+        Closing = 7,
+        /** <span id='prop-fm.icelink.StreamState-Closed'>&nbsp;</span> **/
+        /**
+         <div>
+         Indicates that the stream has been instructed to close and has cleaned up.
+         </div>
+
+        @field Closed
+        @type {fm.icelink.StreamState}
+        */
+        Closed = 8,
+    }
+}
+declare namespace fm.icelink {
+    /**
+     <div>
      A stream type.
      </div>
 
@@ -11793,19 +10610,6 @@ declare namespace fm.icelink {
     }
 }
 declare namespace fm.icelink {
-    /**
-    @internal
-    */
-    enum TransportType {
-        Gatherer = 1,
-        IceTransport = 2,
-        DtlsTransport = 3,
-        SctpTransport = 4,
-        ReliableDataTransport = 5,
-        SrtpTransport = 6,
-        Unset = 7,
-        MediaTransport = 8,
-    }
 }
 declare namespace fm.icelink {
     /**
@@ -11865,10 +10669,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class AddressTypeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.AddressType);
         toString(): string;
     }
@@ -11937,10 +10737,6 @@ declare namespace fm.icelink {
     */
     class AtomicMutex {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __lock;
         /**<span id='method-fm.icelink.AtomicMutex-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -11992,20 +10788,111 @@ declare namespace fm.icelink {
     class Binary {
         getTypeString(): string;
         constructor();
+        /**<span id='method-fm.icelink.Binary-bitStringToBytes'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a bit-string to bytes.
+         </div>
+
+        @param {string} bitString The bit-string.
+        @param {boolean} padLeft Whether to pad extra zero-bits to the left.
+        @return {Uint8Array}
+        */
+        static bitStringToBytes(bitString: string, padLeft: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-bitStringToBytes'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a bit-string to bytes.
+         </div>
+
+        @param {string} bitString The bit-string.
+        @param {boolean} padLeft Whether to pad extra zero-bits to the left.
+        @param {fm.icelink.Holder<number>} numberOfUnusedBits The number of unused bits.
+        @return {Uint8Array}
+        */
+        static bitStringToBytes(bitString: string, padLeft: boolean, numberOfUnusedBits: fm.icelink.Holder<number>): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-bitStringToBytes'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a bit-string to bytes.
+         </div>
+
+        @param {string} bitString The bit-string.
+        @param {fm.icelink.Holder<number>} numberOfUnusedBits The number of unused bits.
+        @return {Uint8Array}
+        */
+        static bitStringToBytes(bitString: string, numberOfUnusedBits: fm.icelink.Holder<number>): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-bitStringToBytes'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a bit-string to bytes.
+         </div>
+
+        @param {string} bitString The bit-string.
+        @return {Uint8Array}
+        */
+        static bitStringToBytes(bitString: string): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-bytesToBitString'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts bytes to a bit-string.
+         </div>
+
+        @param {Uint8Array} bytes The bytes.
+        @param {number} offset The offset.
+        @param {number} length The length.
+        @param {number} numberOfUnusedBits The number of unused bits.
+        @return {string}
+        */
+        static bytesToBitString(bytes: Uint8Array, offset: number, length: number, numberOfUnusedBits: number): string;
+        /**<span id='method-fm.icelink.Binary-bytesToBitString'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts bytes to a bit-string.
+         </div>
+
+        @param {Uint8Array} bytes The bytes.
+        @param {number} offset The offset.
+        @param {number} length The length.
+        @param {number} numberOfUnusedBits The number of unused bits.
+        @param {boolean} trimLeft Whether to trim unused bits from the left.
+        @return {string}
+        */
+        static bytesToBitString(bytes: Uint8Array, offset: number, length: number, numberOfUnusedBits: number, trimLeft: boolean): string;
+        /**<span id='method-fm.icelink.Binary-bytesToBitString'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts bytes to a bit-string.
+         </div>
+
+        @param {Uint8Array} bytes The bytes.
+        @param {number} offset The offset.
+        @param {number} length The length.
+        @return {string}
+        */
+        static bytesToBitString(bytes: Uint8Array, offset: number, length: number): string;
+        /**<span id='method-fm.icelink.Binary-bytesToBitString'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts bytes to a bit-string.
+         </div>
+
+        @param {Uint8Array} bytes The bytes.
+        @return {string}
+        */
+        static bytesToBitString(bytes: Uint8Array): string;
         /**<span id='method-fm.icelink.Binary-deinterleave'>&nbsp;</span>**/
         /**
          <div>
-         Deinterleaves a byte array
+         Deinterleaves a byte array i.e.
+         XYXYXYXY -&gt; XXXXYYYY
          </div>
 
         @param {Uint8Array} inputFrame The inputFrame.
         @param {Uint8Array} outputFrame The outputFrame.
-        @param {number} start The start.
-        @param {number} length The length.
-        @param {boolean} reversePlanes The reversePlanes.
         @return {void}
         */
-        static deinterleave(inputFrame: Uint8Array, outputFrame: Uint8Array, start: number, length: number, reversePlanes: boolean): void;
+        static deinterleave(inputFrame: Uint8Array, outputFrame: Uint8Array): void;
         /**<span id='method-fm.icelink.Binary-deinterleave'>&nbsp;</span>**/
         /**
          <div>
@@ -12023,15 +10910,17 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.Binary-deinterleave'>&nbsp;</span>**/
         /**
          <div>
-         Deinterleaves a byte array i.e.
-         XYXYXYXY -&gt; XXXXYYYY
+         Deinterleaves a byte array
          </div>
 
         @param {Uint8Array} inputFrame The inputFrame.
         @param {Uint8Array} outputFrame The outputFrame.
+        @param {number} start The start.
+        @param {number} length The length.
+        @param {boolean} reversePlanes The reversePlanes.
         @return {void}
         */
-        static deinterleave(inputFrame: Uint8Array, outputFrame: Uint8Array): void;
+        static deinterleave(inputFrame: Uint8Array, outputFrame: Uint8Array, start: number, length: number, reversePlanes: boolean): void;
         /**<span id='method-fm.icelink.Binary-deinterleaveTransform'>&nbsp;</span>**/
         /**
          <div>
@@ -12061,10 +10950,9 @@ declare namespace fm.icelink {
         @param {number} height The height.
         @param {number} stride The stride.
         @param {number} rotation Values 0, 90, 180, 270.
-        @param {number} start The start.
         @return {void}
         */
-        static deinterleaveTransform(inputFrame: Uint8Array, outputFrame: Uint8Array, width: number, height: number, stride: number, rotation: number, start: number): void;
+        static deinterleaveTransform(inputFrame: Uint8Array, outputFrame: Uint8Array, width: number, height: number, stride: number, rotation: number): void;
         /**<span id='method-fm.icelink.Binary-deinterleaveTransform'>&nbsp;</span>**/
         /**
          <div>
@@ -12077,9 +10965,10 @@ declare namespace fm.icelink {
         @param {number} height The height.
         @param {number} stride The stride.
         @param {number} rotation Values 0, 90, 180, 270.
+        @param {number} start The start.
         @return {void}
         */
-        static deinterleaveTransform(inputFrame: Uint8Array, outputFrame: Uint8Array, width: number, height: number, stride: number, rotation: number): void;
+        static deinterleaveTransform(inputFrame: Uint8Array, outputFrame: Uint8Array, width: number, height: number, stride: number, rotation: number, start: number): void;
         /**<span id='method-fm.icelink.Binary-fromBytes1'>&nbsp;</span>**/
         /**
          <div>
@@ -12092,6 +10981,30 @@ declare namespace fm.icelink {
         @return {boolean} The value.
         */
         static fromBytes1(input: Uint8Array, inputIndex: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.Binary-fromBytes10'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 10-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {number} The value.
+        */
+        static fromBytes10(input: Uint8Array, inputIndex: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.Binary-fromBytes11'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 11-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {number} The value.
+        */
+        static fromBytes11(input: Uint8Array, inputIndex: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.Binary-fromBytes12'>&nbsp;</span>**/
         /**
          <div>
@@ -12101,10 +11014,9 @@ declare namespace fm.icelink {
         @param {Uint8Array} input The input byte array.
         @param {number} inputIndex The index to start reading.
         @param {number} bitOffset The offset of the value within the byte.
-        @param {boolean} littleEndian Whether to use little-endian format
         @return {number} The value.
         */
-        static fromBytes12(input: Uint8Array, inputIndex: number, bitOffset: number, littleEndian: boolean): number;
+        static fromBytes12(input: Uint8Array, inputIndex: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.Binary-fromBytes13'>&nbsp;</span>**/
         /**
          <div>
@@ -12114,10 +11026,21 @@ declare namespace fm.icelink {
         @param {Uint8Array} input The input byte array.
         @param {number} inputIndex The index to start reading.
         @param {number} bitOffset The offset of the value within the byte.
-        @param {boolean} littleEndian Whether to use little-endian format
         @return {number} The value.
         */
-        static fromBytes13(input: Uint8Array, inputIndex: number, bitOffset: number, littleEndian: boolean): number;
+        static fromBytes13(input: Uint8Array, inputIndex: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.Binary-fromBytes14'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 14-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {number} The value.
+        */
+        static fromBytes14(input: Uint8Array, inputIndex: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.Binary-fromBytes15'>&nbsp;</span>**/
         /**
          <div>
@@ -12127,10 +11050,9 @@ declare namespace fm.icelink {
         @param {Uint8Array} input The input byte array.
         @param {number} inputIndex The index to start reading.
         @param {number} bitOffset The offset of the value within the byte.
-        @param {boolean} littleEndian Whether to use little-endian format
         @return {number} The value.
         */
-        static fromBytes15(input: Uint8Array, inputIndex: number, bitOffset: number, littleEndian: boolean): number;
+        static fromBytes15(input: Uint8Array, inputIndex: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.Binary-fromBytes16'>&nbsp;</span>**/
         /**
          <div>
@@ -12143,6 +11065,18 @@ declare namespace fm.icelink {
         @return {number} The value.
         */
         static fromBytes16(input: Uint8Array, inputIndex: number, littleEndian: boolean): number;
+        /**<span id='method-fm.icelink.Binary-fromBytes17'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads an 17-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {number} The value.
+        */
+        static fromBytes17(input: Uint8Array, inputIndex: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.Binary-fromBytes18'>&nbsp;</span>**/
         /**
          <div>
@@ -12152,10 +11086,21 @@ declare namespace fm.icelink {
         @param {Uint8Array} input The input byte array.
         @param {number} inputIndex The index to start reading.
         @param {number} bitOffset The offset of the value within the byte.
-        @param {boolean} littleEndian Whether to use little-endian format.
         @return {number} The value.
         */
-        static fromBytes18(input: Uint8Array, inputIndex: number, bitOffset: number, littleEndian: boolean): number;
+        static fromBytes18(input: Uint8Array, inputIndex: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.Binary-fromBytes19'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads an 19-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {number} The value.
+        */
+        static fromBytes19(input: Uint8Array, inputIndex: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.Binary-fromBytes2'>&nbsp;</span>**/
         /**
          <div>
@@ -12168,6 +11113,54 @@ declare namespace fm.icelink {
         @return {number} The value.
         */
         static fromBytes2(input: Uint8Array, inputIndex: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.Binary-fromBytes20'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads an 20-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {number} The value.
+        */
+        static fromBytes20(input: Uint8Array, inputIndex: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.Binary-fromBytes21'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads an 21-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {number} The value.
+        */
+        static fromBytes21(input: Uint8Array, inputIndex: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.Binary-fromBytes22'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads an 22-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {number} The value.
+        */
+        static fromBytes22(input: Uint8Array, inputIndex: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.Binary-fromBytes23'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads an 23-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {number} The value.
+        */
+        static fromBytes23(input: Uint8Array, inputIndex: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.Binary-fromBytes24'>&nbsp;</span>**/
         /**
          <div>
@@ -12311,6 +11304,32 @@ declare namespace fm.icelink {
         @return {number} The value.
         */
         static fromBytes8(input: Uint8Array, inputIndex: number): number;
+        /**<span id='method-fm.icelink.Binary-fromBytes9'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 9-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {number} The value.
+        */
+        static fromBytes9(input: Uint8Array, inputIndex: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.Binary-interleave'>&nbsp;</span>**/
+        /**
+         <div>
+         Interleaves a byte array i.e.
+         XXXXYYYY -&gt; XYXYXYXY
+         </div>
+
+        @param {Uint8Array} inputFrame The inputFrame.
+        @param {Uint8Array} outputFrame The outputFrame.
+        @param {number} start The start.
+        @param {number} length The length.
+        @return {void}
+        */
+        static interleave(inputFrame: Uint8Array, outputFrame: Uint8Array, start: number, length: number): void;
         /**<span id='method-fm.icelink.Binary-interleave'>&nbsp;</span>**/
         /**
          <div>
@@ -12326,20 +11345,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         static interleave(inputFrame: Uint8Array, outputFrame: Uint8Array, start: number, length: number, reversePlanes: boolean): void;
-        /**<span id='method-fm.icelink.Binary-interleave'>&nbsp;</span>**/
-        /**
-         <div>
-         Interleaves a byte array i.e.
-         XXXXYYYY -&gt; XYXYXYXY
-         </div>
-
-        @param {Uint8Array} inputFrame The inputFrame.
-        @param {Uint8Array} outputFrame The outputFrame.
-        @param {number} start The start.
-        @param {number} length The length.
-        @return {void}
-        */
-        static interleave(inputFrame: Uint8Array, outputFrame: Uint8Array, start: number, length: number): void;
         /**<span id='method-fm.icelink.Binary-interleave'>&nbsp;</span>**/
         /**
          <div>
@@ -12424,6 +11429,84 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes1(value: boolean, bitOffset: number, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes10'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 10-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes10(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes10'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 10-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes10(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes11'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 11-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes11(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes11'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 11-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes11(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes12'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 12-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes12(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes12'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 12-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes12(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes13'>&nbsp;</span>**/
         /**
          <div>
@@ -12450,6 +11533,58 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes13(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes14'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 14-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes14(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes14'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 14-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes14(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes15'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 15-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes15(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes15'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 15-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes15(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes16'>&nbsp;</span>**/
         /**
          <div>
@@ -12474,6 +11609,32 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes16(value: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes17'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 17-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes17(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes17'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 17-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes17(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes18'>&nbsp;</span>**/
         /**
          <div>
@@ -12488,6 +11649,44 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes18(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes18'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts an 18-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes18(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes19'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 19-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes19(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes19'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 19-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes19(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes2'>&nbsp;</span>**/
         /**
          <div>
@@ -12512,17 +11711,110 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes2(value: number, bitOffset: number): Uint8Array;
-        /**<span id='method-fm.icelink.Binary-toBytes24'>&nbsp;</span>**/
+        /**<span id='method-fm.icelink.Binary-toBytes20'>&nbsp;</span>**/
         /**
          <div>
-         Converts a 24-bit value to a byte array.
+         Writes a 20-bit value to a byte array.
          </div>
 
         @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes20(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes20'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 20-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
         @param {boolean} littleEndian Whether to use little-endian format.
         @return {Uint8Array} The output byte array.
         */
-        static toBytes24(value: number, littleEndian: boolean): Uint8Array;
+        static toBytes20(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes21'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 21-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes21(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes21'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 21-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes21(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes22'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 22-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes22(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes22'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 22-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes22(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes23'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 23-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes23(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes23'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 23-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes23(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes24'>&nbsp;</span>**/
         /**
          <div>
@@ -12536,6 +11828,28 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes24(value: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes24'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 24-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes24(value: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes3'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 3-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes3(value: number, bitOffset: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes3'>&nbsp;</span>**/
         /**
          <div>
@@ -12549,17 +11863,6 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes3(value: number, bitOffset: number, output: Uint8Array, outputIndex: number): Uint8Array;
-        /**<span id='method-fm.icelink.Binary-toBytes3'>&nbsp;</span>**/
-        /**
-         <div>
-         Converts a 3-bit value to a byte array.
-         </div>
-
-        @param {number} value The value to write.
-        @param {number} bitOffset The offset of the value within the byte.
-        @return {Uint8Array} The output byte array.
-        */
-        static toBytes3(value: number, bitOffset: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes32'>&nbsp;</span>**/
         /**
          <div>
@@ -12587,17 +11890,6 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.Binary-toBytes4'>&nbsp;</span>**/
         /**
          <div>
-         Converts a 4-bit value to a byte array.
-         </div>
-
-        @param {number} value The value to write.
-        @param {number} bitOffset The offset of the value within the byte.
-        @return {Uint8Array} The output byte array.
-        */
-        static toBytes4(value: number, bitOffset: number): Uint8Array;
-        /**<span id='method-fm.icelink.Binary-toBytes4'>&nbsp;</span>**/
-        /**
-         <div>
          Writes a 4-bit value to a byte array.
          </div>
 
@@ -12608,6 +11900,17 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes4(value: number, bitOffset: number, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes4'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 4-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes4(value: number, bitOffset: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes40'>&nbsp;</span>**/
         /**
          <div>
@@ -12635,6 +11938,17 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.Binary-toBytes48'>&nbsp;</span>**/
         /**
          <div>
+         Converts a 48-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes48(value: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes48'>&nbsp;</span>**/
+        /**
+         <div>
          Writes a 48-bit value to a byte array.
          </div>
 
@@ -12645,17 +11959,6 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes48(value: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
-        /**<span id='method-fm.icelink.Binary-toBytes48'>&nbsp;</span>**/
-        /**
-         <div>
-         Converts a 48-bit value to a byte array.
-         </div>
-
-        @param {number} value The value to write.
-        @param {boolean} littleEndian Whether to use little-endian format.
-        @return {Uint8Array} The output byte array.
-        */
-        static toBytes48(value: number, littleEndian: boolean): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes5'>&nbsp;</span>**/
         /**
          <div>
@@ -12683,6 +11986,17 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.Binary-toBytes56'>&nbsp;</span>**/
         /**
          <div>
+         Converts a 56-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes56(value: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes56'>&nbsp;</span>**/
+        /**
+         <div>
          Writes a 56-bit value to a byte array.
          </div>
 
@@ -12693,17 +12007,17 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes56(value: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
-        /**<span id='method-fm.icelink.Binary-toBytes56'>&nbsp;</span>**/
+        /**<span id='method-fm.icelink.Binary-toBytes6'>&nbsp;</span>**/
         /**
          <div>
-         Converts a 56-bit value to a byte array.
+         Converts a 6-bit value to a byte array.
          </div>
 
         @param {number} value The value to write.
-        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {number} bitOffset The offset of the value within the byte.
         @return {Uint8Array} The output byte array.
         */
-        static toBytes56(value: number, littleEndian: boolean): Uint8Array;
+        static toBytes6(value: number, bitOffset: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes6'>&nbsp;</span>**/
         /**
          <div>
@@ -12717,17 +12031,17 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes6(value: number, bitOffset: number, output: Uint8Array, outputIndex: number): Uint8Array;
-        /**<span id='method-fm.icelink.Binary-toBytes6'>&nbsp;</span>**/
+        /**<span id='method-fm.icelink.Binary-toBytes64'>&nbsp;</span>**/
         /**
          <div>
-         Converts a 6-bit value to a byte array.
+         Converts a 64-bit value to a byte array.
          </div>
 
         @param {number} value The value to write.
-        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
         @return {Uint8Array} The output byte array.
         */
-        static toBytes6(value: number, bitOffset: number): Uint8Array;
+        static toBytes64(value: number, littleEndian: boolean): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes64'>&nbsp;</span>**/
         /**
          <div>
@@ -12741,17 +12055,17 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes64(value: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
-        /**<span id='method-fm.icelink.Binary-toBytes64'>&nbsp;</span>**/
+        /**<span id='method-fm.icelink.Binary-toBytes7'>&nbsp;</span>**/
         /**
          <div>
-         Converts a 64-bit value to a byte array.
+         Converts a 7-bit value to a byte array.
          </div>
 
         @param {number} value The value to write.
-        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {number} bitOffset The offset of the value within the byte.
         @return {Uint8Array} The output byte array.
         */
-        static toBytes64(value: number, littleEndian: boolean): Uint8Array;
+        static toBytes7(value: number, bitOffset: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes7'>&nbsp;</span>**/
         /**
          <div>
@@ -12765,27 +12079,6 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes7(value: number, bitOffset: number, output: Uint8Array, outputIndex: number): Uint8Array;
-        /**<span id='method-fm.icelink.Binary-toBytes7'>&nbsp;</span>**/
-        /**
-         <div>
-         Converts a 7-bit value to a byte array.
-         </div>
-
-        @param {number} value The value to write.
-        @param {number} bitOffset The offset of the value within the byte.
-        @return {Uint8Array} The output byte array.
-        */
-        static toBytes7(value: number, bitOffset: number): Uint8Array;
-        /**<span id='method-fm.icelink.Binary-toBytes8'>&nbsp;</span>**/
-        /**
-         <div>
-         Converts an 8-bit value to a byte array.
-         </div>
-
-        @param {number} value The value to write.
-        @return {Uint8Array} The output byte array.
-        */
-        static toBytes8(value: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-toBytes8'>&nbsp;</span>**/
         /**
          <div>
@@ -12798,6 +12091,42 @@ declare namespace fm.icelink {
         @return {Uint8Array} The output byte array.
         */
         static toBytes8(value: number, output: Uint8Array, outputIndex: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes8'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts an 8-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes8(value: number): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes9'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a 9-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes9(value: number, bitOffset: number, littleEndian: boolean): Uint8Array;
+        /**<span id='method-fm.icelink.Binary-toBytes9'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 9-bit value to a byte array.
+         </div>
+
+        @param {number} value The value to write.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {boolean} littleEndian Whether to use little-endian format.
+        @param {Uint8Array} output The output byte array.
+        @param {number} outputIndex The index to start writing.
+        @return {Uint8Array} The output byte array.
+        */
+        static toBytes9(value: number, bitOffset: number, littleEndian: boolean, output: Uint8Array, outputIndex: number): Uint8Array;
         /**<span id='method-fm.icelink.Binary-transform'>&nbsp;</span>**/
         /**
          <div>
@@ -12845,10 +12174,11 @@ declare namespace fm.icelink {
         @param {number} height The height.
         @param {number} stride The stride.
         @param {number} rotation The rotation.
-        @param {number} start Start position for both input and output frame
+        @param {number} inputStart The inputStart.
+        @param {number} outputStart The outputStart.
         @return {void}
         */
-        static transform(inputFrame: Uint8Array, outputFrame: Uint8Array, width: number, height: number, stride: number, rotation: number, start: number): void;
+        static transform(inputFrame: Uint8Array, outputFrame: Uint8Array, width: number, height: number, stride: number, rotation: number, inputStart: number, outputStart: number): void;
         /**<span id='method-fm.icelink.Binary-transform'>&nbsp;</span>**/
         /**
          <div>
@@ -12861,11 +12191,10 @@ declare namespace fm.icelink {
         @param {number} height The height.
         @param {number} stride The stride.
         @param {number} rotation The rotation.
-        @param {number} inputStart The inputStart.
-        @param {number} outputStart The outputStart.
+        @param {number} start Start position for both input and output frame
         @return {void}
         */
-        static transform(inputFrame: Uint8Array, outputFrame: Uint8Array, width: number, height: number, stride: number, rotation: number, inputStart: number, outputStart: number): void;
+        static transform(inputFrame: Uint8Array, outputFrame: Uint8Array, width: number, height: number, stride: number, rotation: number, start: number): void;
         /**<span id='method-fm.icelink.Binary-tryFromBytes1'>&nbsp;</span>**/
         /**
          <div>
@@ -12879,6 +12208,32 @@ declare namespace fm.icelink {
         @return {boolean} true if the index is valid and the value was read; otherwise, false
         */
         static tryFromBytes1(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<boolean>): boolean;
+        /**<span id='method-fm.icelink.Binary-tryFromBytes10'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 10-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean} true if the index is valid and the value was read; otherwise, false
+        */
+        static tryFromBytes10(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.Binary-tryFromBytes11'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 11-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean} true if the index is valid and the value was read; otherwise, false
+        */
+        static tryFromBytes11(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.Binary-tryFromBytes12'>&nbsp;</span>**/
         /**
          <div>
@@ -12888,11 +12243,10 @@ declare namespace fm.icelink {
         @param {Uint8Array} input The input byte array.
         @param {number} inputIndex The index to start reading.
         @param {number} bitOffset The offset of the value within the byte.
-        @param {boolean} littleEndian Whether to use little-endian format
         @param {fm.icelink.Holder<number>} value The value.
         @return {boolean} true if the index is valid and the value was read; otherwise, false
         */
-        static tryFromBytes12(input: Uint8Array, inputIndex: number, bitOffset: number, littleEndian: boolean, value: fm.icelink.Holder<number>): boolean;
+        static tryFromBytes12(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.Binary-tryFromBytes13'>&nbsp;</span>**/
         /**
          <div>
@@ -12902,11 +12256,23 @@ declare namespace fm.icelink {
         @param {Uint8Array} input The input byte array.
         @param {number} inputIndex The index to start reading.
         @param {number} bitOffset The offset of the value within the byte.
-        @param {boolean} littleEndian Whether to use little-endian format
         @param {fm.icelink.Holder<number>} value The value.
         @return {boolean} true if the index is valid and the value was read; otherwise, false
         */
-        static tryFromBytes13(input: Uint8Array, inputIndex: number, bitOffset: number, littleEndian: boolean, value: fm.icelink.Holder<number>): boolean;
+        static tryFromBytes13(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.Binary-tryFromBytes14'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 14-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean} true if the index is valid and the value was read; otherwise, false
+        */
+        static tryFromBytes14(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.Binary-tryFromBytes15'>&nbsp;</span>**/
         /**
          <div>
@@ -12916,11 +12282,10 @@ declare namespace fm.icelink {
         @param {Uint8Array} input The input byte array.
         @param {number} inputIndex The index to start reading.
         @param {number} bitOffset The offset of the value within the byte.
-        @param {boolean} littleEndian Whether to use little-endian format.
         @param {fm.icelink.Holder<number>} value The value.
         @return {boolean} true if the index is valid and the value was read; otherwise, false
         */
-        static tryFromBytes15(input: Uint8Array, inputIndex: number, bitOffset: number, littleEndian: boolean, value: fm.icelink.Holder<number>): boolean;
+        static tryFromBytes15(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.Binary-tryFromBytes16'>&nbsp;</span>**/
         /**
          <div>
@@ -12934,6 +12299,19 @@ declare namespace fm.icelink {
         @return {boolean} true if the index is valid and the value was read; otherwise, false
         */
         static tryFromBytes16(input: Uint8Array, inputIndex: number, littleEndian: boolean, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.Binary-tryFromBytes17'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 17-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean} true if the index is valid and the value was read; otherwise, false
+        */
+        static tryFromBytes17(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.Binary-tryFromBytes18'>&nbsp;</span>**/
         /**
          <div>
@@ -12943,11 +12321,23 @@ declare namespace fm.icelink {
         @param {Uint8Array} input The input byte array.
         @param {number} inputIndex The index to start reading.
         @param {number} bitOffset The offset of the value within the byte.
-        @param {boolean} littleEndian Whether to use little-endian format.
         @param {fm.icelink.Holder<number>} value The value.
         @return {boolean} true if the index is valid and the value was read; otherwise, false
         */
-        static tryFromBytes18(input: Uint8Array, inputIndex: number, bitOffset: number, littleEndian: boolean, value: fm.icelink.Holder<number>): boolean;
+        static tryFromBytes18(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.Binary-tryFromBytes19'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 19-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean} true if the index is valid and the value was read; otherwise, false
+        */
+        static tryFromBytes19(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.Binary-tryFromBytes2'>&nbsp;</span>**/
         /**
          <div>
@@ -12961,6 +12351,58 @@ declare namespace fm.icelink {
         @return {boolean} true if the index is valid and the value was read; otherwise, false
         */
         static tryFromBytes2(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.Binary-tryFromBytes20'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 20-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean} true if the index is valid and the value was read; otherwise, false
+        */
+        static tryFromBytes20(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.Binary-tryFromBytes21'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 21-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean} true if the index is valid and the value was read; otherwise, false
+        */
+        static tryFromBytes21(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.Binary-tryFromBytes22'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 22-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean} true if the index is valid and the value was read; otherwise, false
+        */
+        static tryFromBytes22(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.Binary-tryFromBytes23'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 23-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean} true if the index is valid and the value was read; otherwise, false
+        */
+        static tryFromBytes23(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.Binary-tryFromBytes24'>&nbsp;</span>**/
         /**
          <div>
@@ -13116,6 +12558,19 @@ declare namespace fm.icelink {
         @return {boolean} true if the index is valid and the value was read; otherwise, false
         */
         static tryFromBytes8(input: Uint8Array, inputIndex: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.Binary-tryFromBytes9'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 9-bit value from a byte array.
+         </div>
+
+        @param {Uint8Array} input The input byte array.
+        @param {number} inputIndex The index to start reading.
+        @param {number} bitOffset The offset of the value within the byte.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean} true if the index is valid and the value was read; otherwise, false
+        */
+        static tryFromBytes9(input: Uint8Array, inputIndex: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
     }
 }
 declare namespace fm.icelink {
@@ -13127,10 +12582,7 @@ declare namespace fm.icelink {
     */
     class BooleanHolder {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
+        private fmicelinkBooleanHolderInit();
         /**<span id='method-fm.icelink.BooleanHolder-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -13284,10 +12736,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         static getYear(): number;
-        /** @internal */
-        private static __fmicelinkBuildInitialized;
-        /** @internal */
-        static fmicelinkBuildInitialize(): void;
     }
 }
 declare namespace fm.icelink {
@@ -13299,10 +12747,7 @@ declare namespace fm.icelink {
     */
     class ByteHolder {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
+        private fmicelinkByteHolderInit();
         /**<span id='method-fm.icelink.ByteHolder-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -13355,10 +12800,7 @@ declare namespace fm.icelink {
     */
     class CharacterHolder {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
+        private fmicelinkCharacterHolderInit();
         /**<span id='method-fm.icelink.CharacterHolder-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -13411,30 +12853,7 @@ declare namespace fm.icelink {
     */
     class CircularBuffer {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __allowRead;
-        /**
-        @internal
-        */
-        private __buffer;
-        /**
-        @internal
-        */
-        private _latency;
-        /**
-        @internal
-        */
-        private _littleEndian;
-        /**
-        @internal
-        */
-        private _readOffset;
-        /**
-        @internal
-        */
-        private _writeOffset;
+        private fmicelinkCircularBufferInit();
         /**<span id='method-fm.icelink.CircularBuffer-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -13528,26 +12947,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.DataBuffer}
         */
         read(length: number): fm.icelink.DataBuffer;
-        /**
-        @internal
-
-        */
-        private setLatency(value);
-        /**
-        @internal
-
-        */
-        private setLittleEndian(value);
-        /**
-        @internal
-
-        */
-        private setReadOffset(value);
-        /**
-        @internal
-
-        */
-        private setWriteOffset(value);
         /**<span id='method-fm.icelink.CircularBuffer-write'>&nbsp;</span>**/
         /**
          <div>
@@ -13562,25 +12961,184 @@ declare namespace fm.icelink {
 }
 declare namespace fm.icelink {
     /**
-    @internal
+     <div>
+     A record that calculates the min, max, and average from integer samples.
+     </div>
+
     */
-    class JsonCheckerModeWrapper {
+    class DiagnosticSampler {
         getTypeString(): string;
+        private fmicelinkDiagnosticSamplerInit();
+        /**<span id='method-fm.icelink.DiagnosticSampler-constructor'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Creates a new instance of the DiagnosticRecord.
+         </div>
+
+
+        @return {}
         */
-        private _value;
-        constructor(value: fm.icelink.JsonCheckerMode);
-        toString(): string;
+        constructor();
+        /**<span id='method-fm.icelink.DiagnosticSampler-constructor'>&nbsp;</span>**/
+        /**
+         <div>
+         Creates a new instance of the DiagnosticRecord.
+         </div>
+
+        @param {number} averageSampleCount How many samples to include in the average.
+        @return {}
+        */
+        constructor(averageSampleCount: number);
+        /**<span id='method-fm.icelink.DiagnosticSampler-addSample'>&nbsp;</span>**/
+        /**
+         <div>
+         Adds a new sample to the calculation.
+         </div>
+
+        @param {number} longSample The sample to add.
+        @return {void}
+        */
+        addSample(longSample: number): void;
+        /**<span id='method-fm.icelink.DiagnosticSampler-getAverage'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the average of all samples.
+         </div>
+
+
+        @return {number}
+        */
+        getAverage(): number;
+        /**<span id='method-fm.icelink.DiagnosticSampler-getCount'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets how many samples this record has used.
+         </div>
+
+
+        @return {number}
+        */
+        getCount(): number;
+        /**<span id='method-fm.icelink.DiagnosticSampler-getLastValue'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the value of the last sample recorded.
+         </div>
+
+
+        @return {number}
+        */
+        getLastValue(): number;
+        /**<span id='method-fm.icelink.DiagnosticSampler-getMax'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the maximum sample ever recorded.
+         </div>
+
+
+        @return {number}
+        */
+        getMax(): number;
+        /**<span id='method-fm.icelink.DiagnosticSampler-getMin'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the minimum sample ever recorded.
+         </div>
+
+
+        @return {number}
+        */
+        getMin(): number;
+        /**<span id='method-fm.icelink.DiagnosticSampler-getSamplesInAverage'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets how many samples are included in the average.
+         </div>
+
+
+        @return {number}
+        */
+        getSamplesInAverage(): number;
+    }
+}
+declare namespace fm.icelink {
+}
+declare namespace fm.icelink {
+    /**
+     <div>
+     A countdown latch that will signal when the counter reaches zero.
+     </div>
+
+    */
+    class ManagedCountdownLatch {
+        getTypeString(): string;
+        /**<span id='method-fm.icelink.ManagedCountdownLatch-constructor'>&nbsp;</span>**/
+        /**
+         <div>
+         Creates a new instance of the Latch with an count.
+         </div>
+
+        @param {number} initialCount The count to start the latch at.
+        @return {}
+        */
+        constructor(initialCount: number);
+        /**<span id='method-fm.icelink.ManagedCountdownLatch-constructor'>&nbsp;</span>**/
+        /**
+         <div>
+         Creates a new instance of the Latch with an unknown count.
+         This will cause the latch to count into the negatives until SetCount is called.
+         </div>
+
+
+        @return {}
+        */
+        constructor();
+        /**<span id='method-fm.icelink.ManagedCountdownLatch-decrement'>&nbsp;</span>**/
+        /**
+         <div>
+         Decrements the counter by one and signals if it reaches zero.
+         </div>
+
+
+        @return {void}
+        */
+        decrement(): void;
+        /**<span id='method-fm.icelink.ManagedCountdownLatch-getCount'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the current count on the latch.
+         </div>
+
+
+        @return {number}
+        */
+        getCount(): number;
+        /**<span id='method-fm.icelink.ManagedCountdownLatch-setCount'>&nbsp;</span>**/
+        /**
+         <div>
+         Sets the counter for the latch.
+         This brings the count back up into positive numbers.
+         </div>
+
+
+        @param {number} count
+        @return {void}
+        */
+        setCount(count: number): void;
+        /**<span id='method-fm.icelink.ManagedCountdownLatch-waitAsync'>&nbsp;</span>**/
+        /**
+         <div>
+         Returns a promise that resolves once the counter reaches zero.
+         </div>
+
+        @return {fm.icelink.Future<Object>}
+        */
+        waitAsync(): fm.icelink.Future<Object>;
     }
 }
 declare namespace fm.icelink {
     class OperatingSystemWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.OperatingSystem);
         toString(): string;
     }
@@ -13588,10 +13146,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class ArchitectureWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.Architecture);
         toString(): string;
     }
@@ -13605,26 +13159,7 @@ declare namespace fm.icelink {
     */
     class Pool<T> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __createObject;
-        /**
-        @internal
-        */
-        private __createObjectCounter;
-        /**
-        @internal
-        */
-        private __stack;
-        /**
-        @internal
-        */
-        private _maxSize;
-        /**
-        @internal
-        */
-        private _minSize;
+        private fmicelinkPoolInit();
         /**<span id='method-fm.icelink.Pool-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -13721,25 +13256,11 @@ declare namespace fm.icelink {
         @return {void}
         */
         put(item: T): void;
-        /**
-        @internal
-
-        */
-        private setMaxSize(value);
-        /**
-        @internal
-
-        */
-        private setMinSize(value);
     }
 }
 declare namespace fm.icelink {
     class SourceLanguageWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.SourceLanguage);
         toString(): string;
     }
@@ -13756,11 +13277,6 @@ declare namespace fm.icelink {
     class JsonSerializer {
         getTypeString(): string;
         constructor();
-        /**
-        @internal
-
-        */
-        private static charToUnicodeString(value);
         /**<span id='method-fm.icelink.JsonSerializer-deserializeBoolean'>&nbsp;</span>**/
         /**
          <div>
@@ -14000,11 +13516,6 @@ declare namespace fm.icelink {
         @return {string} The escaped string.
         */
         static escapeString(text: string): string;
-        /**
-        @internal
-
-        */
-        private static intToHex(value);
         /**<span id='method-fm.icelink.JsonSerializer-isValidJson'>&nbsp;</span>**/
         /**
          <div>
@@ -14259,11 +13770,6 @@ declare namespace fm.icelink {
         @return {string} The unescaped string.
         */
         static unescapeString(text: string): string;
-        /**
-        @internal
-
-        */
-        private static unicodeStringToChar(value);
     }
 }
 declare namespace fm.icelink {
@@ -14282,17 +13788,133 @@ declare namespace fm.icelink {
 }
 declare namespace fm.icelink {
     /**
-    @internal
+     <div>
+     A simple state machine.
+     </div>
+
     */
-    class StringTypeWrapper {
+    abstract class StateMachine<T> {
         getTypeString(): string;
+        private fmicelinkStateMachineInit();
+        /**<span id='method-fm.icelink.StateMachine-constructor'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Initializes a new instance of the `fm.icelink.stateMachine` class.
+         </div>
+
+        @param {T} initialState The initial state.
+        @return {}
         */
-        private _value;
-        constructor(value: fm.icelink.StringType);
-        toString(): string;
+        constructor(initialState: T);
+        /**<span id='method-fm.icelink.StateMachine-addTransition'>&nbsp;</span>**/
+        /**
+         <div>
+         Adds an allowed transition.
+         </div>
+
+        @param {T} fromState The "from" state.
+        @param {T} toState The "to" state.
+        @return {void}
+        */
+        addTransition(fromState: T, toState: T): void;
+        /**<span id='method-fm.icelink.StateMachine-canTransition'>&nbsp;</span>**/
+        /**
+         <div>
+         Determines whether a transition to the specified state is allowed.
+         </div>
+
+        @param {T} toState The "to" state.
+        @return {boolean} true if a transition to the specified state is allowed; otherwise, false.
+ 
+        */
+        canTransition(toState: T): boolean;
+        /**<span id='method-fm.icelink.StateMachine-getLastStateMillis'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the length of time spent in the last state,
+         in milliseconds.
+         </div>
+
+
+        @return {number}
+        */
+        getLastStateMillis(): number;
+        /**<span id='method-fm.icelink.StateMachine-getLastStateTicks'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the length of time spent in the last state,
+         in ticks.
+         </div>
+
+
+        @return {number}
+        */
+        getLastStateTicks(): number;
+        /**<span id='method-fm.icelink.StateMachine-getState'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the state.
+         </div>
+
+
+        @return {T}
+        */
+        getState(): T;
+        /**<span id='method-fm.icelink.StateMachine-getStateValue'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the state value.
+         </div>
+
+
+        @return {number}
+        */
+        protected getStateValue(): number;
+        /**<span id='method-fm.icelink.StateMachine-getSystemTimestamp'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the system timestamp of the last
+         state transition.
+         </div>
+
+
+        @return {number}
+        */
+        getSystemTimestamp(): number;
+        /**<span id='method-fm.icelink.StateMachine-stateToValue'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a state to an integer value.
+         </div>
+
+        @param {T} state The state.
+        @return {number}
+        */
+        protected abstract stateToValue(state: T): number;
+        /**<span id='method-fm.icelink.StateMachine-transition'>&nbsp;</span>**/
+        /**
+         <div>
+         Transitions to the specified state.
+         </div>
+
+        @param {T} toState The "to" state.
+        @return {boolean} true if a transition to the specified state is allowed; otherwise, false.
+ 
+        */
+        transition(toState: T): boolean;
+        /**<span id='method-fm.icelink.StateMachine-valueToState'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts an integer value to a state.
+         </div>
+
+        @param {number} value The integer value.
+        @return {T}
+        */
+        protected abstract valueToState(value: number): T;
     }
+}
+declare namespace fm.icelink {
 }
 declare namespace fm.icelink {
     /**
@@ -14303,18 +13925,6 @@ declare namespace fm.icelink {
     */
     class LinkedListNode<T> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _next;
-        /**
-        @internal
-        */
-        private _previous;
-        /**
-        @internal
-        */
-        private _value;
         /**<span id='method-fm.icelink.LinkedListNode-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -14355,21 +13965,6 @@ declare namespace fm.icelink {
         @return {T}
         */
         getValue(): T;
-        /**
-        @internal
-
-        */
-        setNext(value: fm.icelink.LinkedListNode<T>): void;
-        /**
-        @internal
-
-        */
-        setPrevious(value: fm.icelink.LinkedListNode<T>): void;
-        /**
-        @internal
-
-        */
-        private setValue(value);
     }
 }
 declare namespace fm.icelink {
@@ -14381,18 +13976,7 @@ declare namespace fm.icelink {
     */
     class LinkedListEnumerator<T> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __currentNode;
-        /**
-        @internal
-        */
-        private __root;
-        /**
-        @internal
-        */
-        private __started;
+        private fmicelinkLinkedListEnumeratorInit();
         /**<span id='method-fm.icelink.LinkedListEnumerator-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -14446,41 +14030,8 @@ declare namespace fm.icelink {
     }
 }
 declare namespace fm.icelink {
-    /**
-    @internal
-    */
-    class InternalConcurrentQueue<T> {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private _backingData;
-        constructor();
-        enqueue(item: T): void;
-        getCount(): number;
-        getIsEmpty(): boolean;
-        tryDequeue(item: fm.icelink.Holder<T>): boolean;
-        tryPeek(item: fm.icelink.Holder<T>): boolean;
-    }
 }
 declare namespace fm.icelink {
-    /**
-    @internal
-    */
-    class InternalConcurrentStack<T> {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private _backingData;
-        constructor();
-        clear(): void;
-        getCount(): number;
-        getIsEmpty(): boolean;
-        push(item: T): void;
-        tryPeek(result: fm.icelink.Holder<T>): boolean;
-        tryPop(result: fm.icelink.Holder<T>): boolean;
-    }
 }
 declare namespace fm.icelink {
     /**
@@ -14491,10 +14042,6 @@ declare namespace fm.icelink {
     */
     class ManagedConcurrentDictionary<TKey, TValue> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __dictionary;
         /**<span id='method-fm.icelink.ManagedConcurrentDictionary-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -14654,10 +14201,6 @@ declare namespace fm.icelink {
     */
     class ManagedConcurrentQueue<T> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __queue;
         /**<span id='method-fm.icelink.ManagedConcurrentQueue-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -14729,10 +14272,6 @@ declare namespace fm.icelink {
     */
     class ManagedConcurrentStack<TValue> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __stack;
         /**<span id='method-fm.icelink.ManagedConcurrentStack-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -14814,14 +14353,6 @@ declare namespace fm.icelink {
     */
     class MutablePair<T1, T2> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _item1;
-        /**
-        @internal
-        */
-        private _item2;
         /**<span id='method-fm.icelink.MutablePair-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -14886,10 +14417,6 @@ declare namespace fm.icelink {
     */
     class MutableUnit<T> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _item;
         /**<span id='method-fm.icelink.MutableUnit-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -14926,24 +14453,64 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     /**
      <div>
+     A 2-tuple.
+     </div><typeparam name="T1">First type the tuple holds.</typeparam><typeparam name="T2">Second type the tuple holds.</typeparam>
+
+    */
+    class Pair<T1, T2> {
+        getTypeString(): string;
+        /**<span id='method-fm.icelink.Pair-constructor'>&nbsp;</span>**/
+        /**
+         <div>
+         Initializes a new instance of the `fm.icelink.pair` class.
+         </div>
+
+        @param {T1} item1 First item the tuple holds.
+        @param {T2} item2 Second item the tuple holds.
+        @return {}
+        */
+        constructor(item1: T1, item2: T2);
+        /**<span id='method-fm.icelink.Pair-getHashCode'>&nbsp;</span>**/
+        /**
+         <div>
+         Calculates the hashcode for this pair.
+         </div>
+
+
+        @return {number}
+        */
+        getHashCode(): number;
+        /**<span id='method-fm.icelink.Pair-getItem1'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the first item in the tuple.
+         </div>
+
+
+        @return {T1}
+        */
+        getItem1(): T1;
+        /**<span id='method-fm.icelink.Pair-getItem2'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the second item in the tuple.
+         </div>
+
+
+        @return {T2}
+        */
+        getItem2(): T2;
+    }
+}
+declare namespace fm.icelink {
+    /**
+     <div>
      A 3-tuple.
      </div><typeparam name="T1">First type the tuple holds.</typeparam><typeparam name="T2">Second type the tuple holds.</typeparam><typeparam name="T3">Third type the tuple holds.</typeparam>
 
     */
     class Triple<T1, T2, T3> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _item1;
-        /**
-        @internal
-        */
-        private _item2;
-        /**
-        @internal
-        */
-        private _item3;
         /**<span id='method-fm.icelink.Triple-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -14986,21 +14553,6 @@ declare namespace fm.icelink {
         @return {T3}
         */
         getItem3(): T3;
-        /**
-        @internal
-
-        */
-        private setItem1(value);
-        /**
-        @internal
-
-        */
-        private setItem2(value);
-        /**
-        @internal
-
-        */
-        private setItem3(value);
     }
 }
 declare namespace fm.icelink {
@@ -15012,10 +14564,6 @@ declare namespace fm.icelink {
     */
     class Unit<T> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _item;
         /**<span id='method-fm.icelink.Unit-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -15036,20 +14584,11 @@ declare namespace fm.icelink {
         @return {T}
         */
         getItem(): T;
-        /**
-        @internal
-
-        */
-        private setItem(value);
     }
 }
 declare namespace fm.icelink {
     class CompareResultWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.CompareResult);
         toString(): string;
     }
@@ -15063,66 +14602,6 @@ declare namespace fm.icelink {
     */
     class Constants {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___hoursPerDay;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___millisecondsPerDay;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___millisecondsPerHour;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___millisecondsPerMinute;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___millisecondsPerSecond;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___minutesPerDay;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___minutesPerHour;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___secondsPerDay;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___secondsPerHour;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___secondsPerMinute;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___ticksPerDay;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___ticksPerHour;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___ticksPerMillisecond;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___ticksPerMinute;
-        /**
-        @internal
-        */
-        private static fm_icelink_Constants___ticksPerSecond;
         constructor();
         /**<span id='method-fm.icelink.Constants-getHoursPerDay'>&nbsp;</span>**/
         /**
@@ -15194,6 +14673,16 @@ declare namespace fm.icelink {
         @return {number}
         */
         static getMinutesPerHour(): number;
+        /**<span id='method-fm.icelink.Constants-getNanosecondsPerTick'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the number of nanoseconds in one tick.
+         </div>
+
+
+        @return {number}
+        */
+        static getNanosecondsPerTick(): number;
         /**<span id='method-fm.icelink.Constants-getSecondsPerDay'>&nbsp;</span>**/
         /**
          <div>
@@ -15274,10 +14763,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         static getTicksPerSecond(): number;
-        /** @internal */
-        private static __fmicelinkConstantsInitialized;
-        /** @internal */
-        static fmicelinkConstantsInitialize(): void;
     }
 }
 declare namespace fm.icelink {
@@ -15289,18 +14774,7 @@ declare namespace fm.icelink {
     */
     class DataBufferStream {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __bitPosition;
-        /**
-        @internal
-        */
-        private __buffer;
-        /**
-        @internal
-        */
-        private __position;
+        private fmicelinkDataBufferStreamInit();
         /**<span id='method-fm.icelink.DataBufferStream-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -15677,24 +15151,9 @@ declare namespace fm.icelink {
     */
     class DataBuffer {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _index;
-        /**
-        @internal
-        */
-        private _innerData;
-        /**
-        @internal
-        */
-        private _length;
-        /**
-        @internal
-        */
-        private _littleEndian;
-        constructor(data: Uint8Array, index: number, length: number, littleEndian: boolean);
+        private fmicelinkDataBufferInit();
         constructor();
+        constructor(data: Uint8Array, index: number, length: number, littleEndian: boolean);
         /**<span id='method-fm.icelink.DataBuffer-allocate'>&nbsp;</span>**/
         /**
          <div>
@@ -15740,21 +15199,6 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         static areEqual(buffer1: fm.icelink.DataBuffer, buffer2: fm.icelink.DataBuffer): boolean;
-        /**
-        @internal
-
-        */
-        private static check(condition);
-        /**
-        @internal
-
-        */
-        private static check(condition, message);
-        /**
-        @internal
-
-        */
-        private static checkSequenceEqual(test, actual);
         /**<span id='method-fm.icelink.DataBuffer-fromJson'>&nbsp;</span>**/
         /**
          <div>
@@ -15808,6 +15252,17 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.DataBuffer-wrap'>&nbsp;</span>**/
         /**
          <div>
+         Produces a new data buffer containing supplied data.
+         </div>
+
+        @param {Uint8Array} data The data.
+        @param {boolean} littleEndian Whether the data is little-endian.
+        @return {fm.icelink.DataBuffer}
+        */
+        static wrap(data: Uint8Array, littleEndian: boolean): fm.icelink.DataBuffer;
+        /**<span id='method-fm.icelink.DataBuffer-wrap'>&nbsp;</span>**/
+        /**
+         <div>
          Produces a new data buffer containing supplied data
          in big-endian format.
          </div>
@@ -15820,15 +15275,14 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.DataBuffer-wrap'>&nbsp;</span>**/
         /**
          <div>
-         Produces a new data buffer containing supplied data.
+         Produces a new data buffer containing supplied data
+         in big-endian format.
          </div>
 
         @param {Uint8Array} data The data.
-        @param {number} index The index.
-        @param {boolean} littleEndian Whether the data is little-endian.
         @return {fm.icelink.DataBuffer}
         */
-        static wrap(data: Uint8Array, index: number, littleEndian: boolean): fm.icelink.DataBuffer;
+        static wrap(data: Uint8Array): fm.icelink.DataBuffer;
         /**<span id='method-fm.icelink.DataBuffer-wrap'>&nbsp;</span>**/
         /**
          <div>
@@ -15849,10 +15303,11 @@ declare namespace fm.icelink {
          </div>
 
         @param {Uint8Array} data The data.
+        @param {number} index The index.
         @param {boolean} littleEndian Whether the data is little-endian.
         @return {fm.icelink.DataBuffer}
         */
-        static wrap(data: Uint8Array, littleEndian: boolean): fm.icelink.DataBuffer;
+        static wrap(data: Uint8Array, index: number, littleEndian: boolean): fm.icelink.DataBuffer;
         /**<span id='method-fm.icelink.DataBuffer-wrap'>&nbsp;</span>**/
         /**
          <div>
@@ -15866,17 +15321,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.DataBuffer}
         */
         static wrap(data: Uint8Array, index: number, length: number, littleEndian: boolean): fm.icelink.DataBuffer;
-        /**<span id='method-fm.icelink.DataBuffer-wrap'>&nbsp;</span>**/
-        /**
-         <div>
-         Produces a new data buffer containing supplied data
-         in big-endian format.
-         </div>
-
-        @param {Uint8Array} data The data.
-        @return {fm.icelink.DataBuffer}
-        */
-        static wrap(data: Uint8Array): fm.icelink.DataBuffer;
         /**<span id='method-fm.icelink.DataBuffer-and'>&nbsp;</span>**/
         /**
          <div>
@@ -15928,6 +15372,15 @@ declare namespace fm.icelink {
         @return {fm.icelink.DataBuffer}
         */
         clone(): fm.icelink.DataBuffer;
+        /**<span id='method-fm.icelink.DataBuffer-copy'>&nbsp;</span>**/
+        /**
+         <div>
+         Copies of this instance.
+         </div>
+
+        @return {fm.icelink.DataBuffer}
+        */
+        copy(): fm.icelink.DataBuffer;
         /**<span id='method-fm.icelink.DataBuffer-free'>&nbsp;</span>**/
         /**
          <div>
@@ -15935,9 +15388,9 @@ declare namespace fm.icelink {
          </div>
 
 
-        @return {void}
+        @return {fm.icelink.DataBuffer}
         */
-        free(): void;
+        free(): fm.icelink.DataBuffer;
         /**<span id='method-fm.icelink.DataBuffer-getData'>&nbsp;</span>**/
         /**
          <div>
@@ -16060,6 +15513,50 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         read1(offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-read10'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 10-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bitoffset.
+        @return {number}
+        */
+        read10(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read10Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 10-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read10Signed(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read11'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 11-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bitoffset.
+        @return {number}
+        */
+        read11(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read11Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 11-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read11Signed(offset: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read12'>&nbsp;</span>**/
         /**
          <div>
@@ -16071,6 +15568,17 @@ declare namespace fm.icelink {
         @return {number}
         */
         read12(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read12Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 12-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read12Signed(offset: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read13'>&nbsp;</span>**/
         /**
          <div>
@@ -16093,6 +15601,28 @@ declare namespace fm.icelink {
         @return {number}
         */
         read13Signed(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read14'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 14-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read14(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read14Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 14-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read14Signed(offset: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read15'>&nbsp;</span>**/
         /**
          <div>
@@ -16104,6 +15634,17 @@ declare namespace fm.icelink {
         @return {number}
         */
         read15(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read15Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 15-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read15Signed(offset: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read16'>&nbsp;</span>**/
         /**
          <div>
@@ -16146,6 +15687,28 @@ declare namespace fm.icelink {
         @return {number}
         */
         read16Signed(offset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read17'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 17-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read17(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read17Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 17-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read17Signed(offset: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read18'>&nbsp;</span>**/
         /**
          <div>
@@ -16157,6 +15720,39 @@ declare namespace fm.icelink {
         @return {number}
         */
         read18(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read18Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads an 18-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read18Signed(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read19'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 19-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read19(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read19Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 19-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read19Signed(offset: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read2'>&nbsp;</span>**/
         /**
          <div>
@@ -16168,6 +15764,104 @@ declare namespace fm.icelink {
         @return {number}
         */
         read2(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read20'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 20-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read20(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read20Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 20-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read20Signed(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read21'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 21-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read21(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read21Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 21-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read21Signed(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read22'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 22-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read22(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read22Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 22-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read22Signed(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read23'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 23-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read23(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read23Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 23-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read23Signed(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read24'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 24-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @return {number}
+        */
+        read24(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read24'>&nbsp;</span>**/
         /**
          <div>
@@ -16179,16 +15873,16 @@ declare namespace fm.icelink {
         @return {number}
         */
         read24(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
-        /**<span id='method-fm.icelink.DataBuffer-read24'>&nbsp;</span>**/
+        /**<span id='method-fm.icelink.DataBuffer-read24Signed'>&nbsp;</span>**/
         /**
          <div>
-         Reads a 24-bit value.
+         Reads a 24-bit signed value.
          </div>
 
         @param {number} offset The offset.
         @return {number}
         */
-        read24(offset: number): number;
+        read24Signed(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read24Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16200,16 +15894,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         read24Signed(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
-        /**<span id='method-fm.icelink.DataBuffer-read24Signed'>&nbsp;</span>**/
-        /**
-         <div>
-         Reads a 24-bit signed value.
-         </div>
-
-        @param {number} offset The offset.
-        @return {number}
-        */
-        read24Signed(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read2Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16239,9 +15923,10 @@ declare namespace fm.icelink {
          </div>
 
         @param {number} offset The offset.
+        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {number}
         */
-        read32(offset: number): number;
+        read32(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
         /**<span id='method-fm.icelink.DataBuffer-read32'>&nbsp;</span>**/
         /**
          <div>
@@ -16249,10 +15934,19 @@ declare namespace fm.icelink {
          </div>
 
         @param {number} offset The offset.
-        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {number}
         */
-        read32(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
+        read32(offset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read32Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 32-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @return {number}
+        */
+        read32Signed(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read32Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16264,16 +15958,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         read32Signed(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
-        /**<span id='method-fm.icelink.DataBuffer-read32Signed'>&nbsp;</span>**/
-        /**
-         <div>
-         Reads a 32-bit signed value.
-         </div>
-
-        @param {number} offset The offset.
-        @return {number}
-        */
-        read32Signed(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read3Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16324,10 +16008,9 @@ declare namespace fm.icelink {
          </div>
 
         @param {number} offset The offset.
-        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {number}
         */
-        read40Signed(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
+        read40Signed(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read40Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16335,9 +16018,20 @@ declare namespace fm.icelink {
          </div>
 
         @param {number} offset The offset.
+        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {number}
         */
-        read40Signed(offset: number): number;
+        read40Signed(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
+        /**<span id='method-fm.icelink.DataBuffer-read48'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 48-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @return {number}
+        */
+        read48(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read48'>&nbsp;</span>**/
         /**
          <div>
@@ -16349,26 +16043,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         read48(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
-        /**<span id='method-fm.icelink.DataBuffer-read48'>&nbsp;</span>**/
-        /**
-         <div>
-         Reads a 48-bit value.
-         </div>
-
-        @param {number} offset The offset.
-        @return {number}
-        */
-        read48(offset: number): number;
-        /**<span id='method-fm.icelink.DataBuffer-read48Signed'>&nbsp;</span>**/
-        /**
-         <div>
-         Reads a 48-bit signed value.
-         </div>
-
-        @param {number} offset The offset.
-        @return {number}
-        */
-        read48Signed(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read48Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16380,6 +16054,16 @@ declare namespace fm.icelink {
         @return {number}
         */
         read48Signed(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
+        /**<span id='method-fm.icelink.DataBuffer-read48Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 48-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @return {number}
+        */
+        read48Signed(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read4Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16409,10 +16093,9 @@ declare namespace fm.icelink {
          </div>
 
         @param {number} offset The offset.
-        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {number}
         */
-        read56(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
+        read56(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read56'>&nbsp;</span>**/
         /**
          <div>
@@ -16420,19 +16103,10 @@ declare namespace fm.icelink {
          </div>
 
         @param {number} offset The offset.
+        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {number}
         */
-        read56(offset: number): number;
-        /**<span id='method-fm.icelink.DataBuffer-read56Signed'>&nbsp;</span>**/
-        /**
-         <div>
-         Reads a 56-bit signed value.
-         </div>
-
-        @param {number} offset The offset.
-        @return {number}
-        */
-        read56Signed(offset: number): number;
+        read56(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
         /**<span id='method-fm.icelink.DataBuffer-read56Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16444,6 +16118,16 @@ declare namespace fm.icelink {
         @return {number}
         */
         read56Signed(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
+        /**<span id='method-fm.icelink.DataBuffer-read56Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 56-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @return {number}
+        */
+        read56Signed(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read5Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16494,9 +16178,10 @@ declare namespace fm.icelink {
          </div>
 
         @param {number} offset The offset.
+        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {number}
         */
-        read64Signed(offset: number): number;
+        read64Signed(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
         /**<span id='method-fm.icelink.DataBuffer-read64Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16504,10 +16189,9 @@ declare namespace fm.icelink {
          </div>
 
         @param {number} offset The offset.
-        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {number}
         */
-        read64Signed(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
+        read64Signed(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read6Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16569,10 +16253,9 @@ declare namespace fm.icelink {
          </div>
 
         @param {number} offset The offset.
-        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {number}
         */
-        read8Signed(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
+        read8Signed(offset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-read8Signed'>&nbsp;</span>**/
         /**
          <div>
@@ -16580,9 +16263,32 @@ declare namespace fm.icelink {
          </div>
 
         @param {number} offset The offset.
+        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {number}
         */
-        read8Signed(offset: number): number;
+        read8Signed(offset: number, offsetPlus: fm.icelink.Holder<number>): number;
+        /**<span id='method-fm.icelink.DataBuffer-read9'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 9-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bitoffset.
+        @return {number}
+        */
+        read9(offset: number, bitOffset: number): number;
+        /**<span id='method-fm.icelink.DataBuffer-read9Signed'>&nbsp;</span>**/
+        /**
+         <div>
+         Reads a 9-bit signed value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {number}
+        */
+        read9Signed(offset: number, bitOffset: number): number;
         /**<span id='method-fm.icelink.DataBuffer-readUtf8String'>&nbsp;</span>**/
         /**
          <div>
@@ -16607,16 +16313,6 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.DataBuffer-resize'>&nbsp;</span>**/
         /**
          <div>
-         Resizes this buffer to a new length with new data being inserted at the end.
-         </div>
-
-        @param {number} newLength The new length.
-        @return {void}
-        */
-        resize(newLength: number): void;
-        /**<span id='method-fm.icelink.DataBuffer-resize'>&nbsp;</span>**/
-        /**
-         <div>
          Resizes this buffer to a new length with new data being inserted at a given offset.
          </div>
 
@@ -16637,6 +16333,16 @@ declare namespace fm.icelink {
         @return {void}
         */
         resize(newLength: number, offset: number): void;
+        /**<span id='method-fm.icelink.DataBuffer-resize'>&nbsp;</span>**/
+        /**
+         <div>
+         Resizes this buffer to a new length with new data being inserted at the end.
+         </div>
+
+        @param {number} newLength The new length.
+        @return {void}
+        */
+        resize(newLength: number): void;
         /**<span id='method-fm.icelink.DataBuffer-sequenceEquals'>&nbsp;</span>**/
         /**
          <div>
@@ -16662,16 +16368,6 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.DataBuffer-set'>&nbsp;</span>**/
         /**
          <div>
-         Sets the data buffer to the specified value.
-         </div>
-
-        @param {number} value The value.
-        @return {void}
-        */
-        set(value: number): void;
-        /**<span id='method-fm.icelink.DataBuffer-set'>&nbsp;</span>**/
-        /**
-         <div>
          Sets a subset of the data buffer to the specified value.
          </div>
 
@@ -16692,19 +16388,16 @@ declare namespace fm.icelink {
         @return {void}
         */
         set(value: number, offset: number, length: number): void;
-        /**<span id='method-fm.icelink.DataBuffer-setIndex'>&nbsp;</span>**/
+        /**<span id='method-fm.icelink.DataBuffer-set'>&nbsp;</span>**/
         /**
          <div>
-         Sets the index.
+         Sets the data buffer to the specified value.
          </div>
 
-
-        @param {number} value
+        @param {number} value The value.
         @return {void}
-        @internal
-
         */
-        setIndex(value: number): void;
+        set(value: number): void;
         /**<span id='method-fm.icelink.DataBuffer-setInnerData'>&nbsp;</span>**/
         /**
          <div>
@@ -16716,19 +16409,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected setInnerData(value: Uint8Array): void;
-        /**<span id='method-fm.icelink.DataBuffer-setLength'>&nbsp;</span>**/
-        /**
-         <div>
-         Sets the length.
-         </div>
-
-
-        @param {number} value
-        @return {void}
-        @internal
-
-        */
-        setLength(value: number): void;
         /**<span id='method-fm.icelink.DataBuffer-setLittleEndian'>&nbsp;</span>**/
         /**
          <div>
@@ -16802,10 +16482,46 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         tryRead1(offset: number, bitOffset: number, value: fm.icelink.Holder<boolean>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead10'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 10-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead10(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead11'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read an 11-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead11(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead12'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 12-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead12(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.DataBuffer-tryRead13'>&nbsp;</span>**/
         /**
          <div>
-         Tries to read a 13-bit value;
+         Tries to read a 13-bit value.
          </div>
 
         @param {number} offset The offset.
@@ -16814,6 +16530,30 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         tryRead13(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead14'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 14-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead14(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead15'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 15-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead15(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.DataBuffer-tryRead16'>&nbsp;</span>**/
         /**
          <div>
@@ -16825,6 +16565,42 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         tryRead16(offset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead17'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 17-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead17(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead18'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read an 18-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead18(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead19'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 19-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead19(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.DataBuffer-tryRead2'>&nbsp;</span>**/
         /**
          <div>
@@ -16837,6 +16613,54 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         tryRead2(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead20'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 20-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead20(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead21'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 21-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead21(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead22'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 22-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead22(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead23'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 23-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead23(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.DataBuffer-tryRead24'>&nbsp;</span>**/
         /**
          <div>
@@ -16974,6 +16798,30 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         tryRead8(offset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-tryRead9'>&nbsp;</span>**/
+        /**
+         <div>
+         Tries to read a 9-bit value.
+         </div>
+
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @param {fm.icelink.Holder<number>} value The value.
+        @return {boolean}
+        */
+        tryRead9(offset: number, bitOffset: number, value: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a data buffer to this instance.
+         </div>
+
+        @param {fm.icelink.DataBuffer} buffer The buffer.
+        @param {number} offset The offset.
+        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the buffer length.
+        @return {void}
+        */
+        write(buffer: fm.icelink.DataBuffer, offset: number, offsetPlus: fm.icelink.Holder<number>): void;
         /**<span id='method-fm.icelink.DataBuffer-write'>&nbsp;</span>**/
         /**
          <div>
@@ -16995,18 +16843,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         write(buffer: fm.icelink.DataBuffer, offset: number): void;
-        /**<span id='method-fm.icelink.DataBuffer-write'>&nbsp;</span>**/
-        /**
-         <div>
-         Writes a data buffer to this instance.
-         </div>
-
-        @param {fm.icelink.DataBuffer} buffer The buffer.
-        @param {number} offset The offset.
-        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the buffer length.
-        @return {void}
-        */
-        write(buffer: fm.icelink.DataBuffer, offset: number, offsetPlus: fm.icelink.Holder<number>): void;
         /**<span id='method-fm.icelink.DataBuffer-write1'>&nbsp;</span>**/
         /**
          <div>
@@ -17019,6 +16855,42 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         write1(value: boolean, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write10'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 10-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {boolean}
+        */
+        write10(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write11'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes an 11-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {boolean}
+        */
+        write11(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write12'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 12-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {boolean}
+        */
+        write12(value: number, offset: number, bitOffset: number): boolean;
         /**<span id='method-fm.icelink.DataBuffer-write13'>&nbsp;</span>**/
         /**
          <div>
@@ -17031,6 +16903,41 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         write13(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write14'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 14-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {boolean}
+        */
+        write14(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write15'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 15-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {boolean}
+        */
+        write15(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write16'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 16-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @return {boolean}
+        */
+        write16(value: number, offset: number): boolean;
         /**<span id='method-fm.icelink.DataBuffer-write16'>&nbsp;</span>**/
         /**
          <div>
@@ -17043,17 +16950,18 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         write16(value: number, offset: number, offsetPlus: fm.icelink.Holder<number>): boolean;
-        /**<span id='method-fm.icelink.DataBuffer-write16'>&nbsp;</span>**/
+        /**<span id='method-fm.icelink.DataBuffer-write17'>&nbsp;</span>**/
         /**
          <div>
-         Writes a 16-bit value.
+         Writes a 17-bit value.
          </div>
 
         @param {number} value The value.
         @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
         @return {boolean}
         */
-        write16(value: number, offset: number): boolean;
+        write17(value: number, offset: number, bitOffset: number): boolean;
         /**<span id='method-fm.icelink.DataBuffer-write18'>&nbsp;</span>**/
         /**
          <div>
@@ -17066,6 +16974,18 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         write18(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write19'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 19-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {boolean}
+        */
+        write19(value: number, offset: number, bitOffset: number): boolean;
         /**<span id='method-fm.icelink.DataBuffer-write2'>&nbsp;</span>**/
         /**
          <div>
@@ -17078,6 +16998,65 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         write2(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write20'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 20-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {boolean}
+        */
+        write20(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write21'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 21-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {boolean}
+        */
+        write21(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write22'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 22-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {boolean}
+        */
+        write22(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write23'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 23-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {boolean}
+        */
+        write23(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write24'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 24-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @return {boolean}
+        */
+        write24(value: number, offset: number): boolean;
         /**<span id='method-fm.icelink.DataBuffer-write24'>&nbsp;</span>**/
         /**
          <div>
@@ -17090,17 +17069,6 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         write24(value: number, offset: number, offsetPlus: fm.icelink.Holder<number>): boolean;
-        /**<span id='method-fm.icelink.DataBuffer-write24'>&nbsp;</span>**/
-        /**
-         <div>
-         Writes a 24-bit value.
-         </div>
-
-        @param {number} value The value.
-        @param {number} offset The offset.
-        @return {boolean}
-        */
-        write24(value: number, offset: number): boolean;
         /**<span id='method-fm.icelink.DataBuffer-write3'>&nbsp;</span>**/
         /**
          <div>
@@ -17121,9 +17089,10 @@ declare namespace fm.icelink {
 
         @param {number} value The value.
         @param {number} offset The offset.
+        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {boolean}
         */
-        write32(value: number, offset: number): boolean;
+        write32(value: number, offset: number, offsetPlus: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.DataBuffer-write32'>&nbsp;</span>**/
         /**
          <div>
@@ -17132,10 +17101,9 @@ declare namespace fm.icelink {
 
         @param {number} value The value.
         @param {number} offset The offset.
-        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {boolean}
         */
-        write32(value: number, offset: number, offsetPlus: fm.icelink.Holder<number>): boolean;
+        write32(value: number, offset: number): boolean;
         /**<span id='method-fm.icelink.DataBuffer-write4'>&nbsp;</span>**/
         /**
          <div>
@@ -17179,9 +17147,10 @@ declare namespace fm.icelink {
 
         @param {number} value The value.
         @param {number} offset The offset.
+        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {boolean}
         */
-        write48(value: number, offset: number): boolean;
+        write48(value: number, offset: number, offsetPlus: fm.icelink.Holder<number>): boolean;
         /**<span id='method-fm.icelink.DataBuffer-write48'>&nbsp;</span>**/
         /**
          <div>
@@ -17190,10 +17159,9 @@ declare namespace fm.icelink {
 
         @param {number} value The value.
         @param {number} offset The offset.
-        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the value length.
         @return {boolean}
         */
-        write48(value: number, offset: number, offsetPlus: fm.icelink.Holder<number>): boolean;
+        write48(value: number, offset: number): boolean;
         /**<span id='method-fm.icelink.DataBuffer-write5'>&nbsp;</span>**/
         /**
          <div>
@@ -17299,6 +17267,32 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         write8(value: number, offset: number, offsetPlus: fm.icelink.Holder<number>): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-write9'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a 9-bit value.
+         </div>
+
+        @param {number} value The value.
+        @param {number} offset The offset.
+        @param {number} bitOffset The bit offset.
+        @return {boolean}
+        */
+        write9(value: number, offset: number, bitOffset: number): boolean;
+        /**<span id='method-fm.icelink.DataBuffer-writeBytes'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a byte array to this instance.
+         </div>
+
+        @param {Uint8Array} bytes The bytes.
+        @param {number} bytesIndex The bytes index.
+        @param {number} bytesLength The bytes length.
+        @param {number} offset The offset.
+        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the buffer length.
+        @return {void}
+        */
+        writeBytes(bytes: Uint8Array, bytesIndex: number, bytesLength: number, offset: number, offsetPlus: fm.icelink.Holder<number>): void;
         /**<span id='method-fm.icelink.DataBuffer-writeBytes'>&nbsp;</span>**/
         /**
          <div>
@@ -17328,37 +17322,23 @@ declare namespace fm.icelink {
 
         @param {Uint8Array} bytes The bytes.
         @param {number} bytesIndex The bytes index.
+        @param {number} offset The offset.
+        @return {void}
+        */
+        writeBytes(bytes: Uint8Array, bytesIndex: number, offset: number): void;
+        /**<span id='method-fm.icelink.DataBuffer-writeBytes'>&nbsp;</span>**/
+        /**
+         <div>
+         Writes a byte array to this instance.
+         </div>
+
+        @param {Uint8Array} bytes The bytes.
+        @param {number} bytesIndex The bytes index.
         @param {number} bytesLength The bytes length.
         @param {number} offset The offset.
         @return {void}
         */
         writeBytes(bytes: Uint8Array, bytesIndex: number, bytesLength: number, offset: number): void;
-        /**<span id='method-fm.icelink.DataBuffer-writeBytes'>&nbsp;</span>**/
-        /**
-         <div>
-         Writes a byte array to this instance.
-         </div>
-
-        @param {Uint8Array} bytes The bytes.
-        @param {number} bytesIndex The bytes index.
-        @param {number} bytesLength The bytes length.
-        @param {number} offset The offset.
-        @param {fm.icelink.Holder<number>} offsetPlus The offset plus the buffer length.
-        @return {void}
-        */
-        writeBytes(bytes: Uint8Array, bytesIndex: number, bytesLength: number, offset: number, offsetPlus: fm.icelink.Holder<number>): void;
-        /**<span id='method-fm.icelink.DataBuffer-writeBytes'>&nbsp;</span>**/
-        /**
-         <div>
-         Writes a byte array to this instance.
-         </div>
-
-        @param {Uint8Array} bytes The bytes.
-        @param {number} bytesIndex The bytes index.
-        @param {number} offset The offset.
-        @return {void}
-        */
-        writeBytes(bytes: Uint8Array, bytesIndex: number, offset: number): void;
         /**<span id='method-fm.icelink.DataBuffer-xor'>&nbsp;</span>**/
         /**
          <div>
@@ -17381,10 +17361,6 @@ declare namespace fm.icelink {
     */
     class DataBufferSubset extends fm.icelink.DataBuffer {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _parent;
         constructor(buffer: fm.icelink.DataBuffer, index: number, length: number);
         /**<span id='method-fm.icelink.DataBufferSubset-append'>&nbsp;</span>**/
         /**
@@ -17413,9 +17389,9 @@ declare namespace fm.icelink {
          </div>
 
 
-        @return {void}
+        @return {fm.icelink.DataBuffer}
         */
-        free(): void;
+        free(): fm.icelink.DataBuffer;
         /**<span id='method-fm.icelink.DataBufferSubset-getData'>&nbsp;</span>**/
         /**
          <div>
@@ -17486,11 +17462,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         prepend(buffers: fm.icelink.DataBuffer[]): void;
-        /**
-        @internal
-
-        */
-        private setParent(value);
         /**<span id='method-fm.icelink.DataBufferSubset-subset'>&nbsp;</span>**/
         /**
          <div>
@@ -17516,50 +17487,90 @@ declare namespace fm.icelink {
 }
 declare namespace fm.icelink {
     /**
-    @internal
+     <div>
+     LogItem class that contains the log event details.
+     </div>
+
     */
-    class LogQueueItem {
+    class LogEvent {
         getTypeString(): string;
+        private fmicelinkLogEventInit();
+        constructor(timestamp: fm.icelink.DateTime, tag: string, scope: string, level: fm.icelink.LogLevel, msg: string, ex: fm.icelink.Exception, threadId: number);
+        /**<span id='method-fm.icelink.LogEvent-getException'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Gets the exception if one exists for this log event.
+         </div>
+
+
+        @return {fm.icelink.Exception}
         */
-        private _exception;
-        /**
-        @internal
-        */
-        private _logLevel;
-        /**
-        @internal
-        */
-        private _message;
-        /**
-        @internal
-        */
-        private _tag;
-        /**
-        @internal
-        */
-        private _timeStamp;
-        constructor(timestamp: fm.icelink.DateTime, tag: string, level: fm.icelink.LogLevel, msg: string, ex: fm.icelink.Exception);
         getException(): fm.icelink.Exception;
+        /**<span id='method-fm.icelink.LogEvent-getLogLevel'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the level of this log event.
+         </div>
+
+
+        @return {fm.icelink.LogLevel}
+        */
         getLogLevel(): fm.icelink.LogLevel;
+        /**<span id='method-fm.icelink.LogEvent-getMessage'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the log message.
+         </div>
+
+
+        @return {string}
+        */
         getMessage(): string;
+        /**<span id='method-fm.icelink.LogEvent-getScope'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the scope of this log event.
+         </div>
+
+
+        @return {string}
+        */
+        getScope(): string;
+        /**<span id='method-fm.icelink.LogEvent-getTag'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the tag of this log event.
+         </div>
+
+
+        @return {string}
+        */
         getTag(): string;
+        /**<span id='method-fm.icelink.LogEvent-getThreadId'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the id of the thread this log event occurred on.
+         </div>
+
+
+        @return {number}
+        */
+        getThreadId(): number;
+        /**<span id='method-fm.icelink.LogEvent-getTimeStamp'>&nbsp;</span>**/
+        /**
+         <div>
+         Gets the timestamp when this log event occurred.
+         </div>
+
+
+        @return {fm.icelink.DateTime}
+        */
         getTimeStamp(): fm.icelink.DateTime;
-        setException(value: fm.icelink.Exception): void;
-        setLogLevel(value: fm.icelink.LogLevel): void;
-        setMessage(value: string): void;
-        setTag(value: string): void;
-        setTimeStamp(value: fm.icelink.DateTime): void;
     }
 }
 declare namespace fm.icelink {
     class HashTypeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.HashType);
         toString(): string;
     }
@@ -17567,10 +17578,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class MacTypeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.MacType);
         toString(): string;
     }
@@ -17584,18 +17591,6 @@ declare namespace fm.icelink {
     */
     class UnixTimestamp {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private static fm_icelink_UnixTimestamp__baseTime;
-        /**
-        @internal
-        */
-        private static fm_icelink_UnixTimestamp__ticksPerMillisecond;
-        /**
-        @internal
-        */
-        private static fm_icelink_UnixTimestamp__ticksPerSecond;
         constructor();
         /**<span id='method-fm.icelink.UnixTimestamp-dateTimeToUnix'>&nbsp;</span>**/
         /**
@@ -17687,10 +17682,6 @@ declare namespace fm.icelink {
         @return {number} The equivalent ticks.
         */
         static unixToTicks(unix: number): number;
-        /** @internal */
-        private static __fmicelinkUnixTimestampInitialized;
-        /** @internal */
-        static fmicelinkUnixTimestampInitialize(): void;
     }
 }
 declare namespace fm.icelink {
@@ -17702,10 +17693,7 @@ declare namespace fm.icelink {
     */
     class DoubleHolder {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
+        private fmicelinkDoubleHolderInit();
         /**<span id='method-fm.icelink.DoubleHolder-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -17758,14 +17746,6 @@ declare namespace fm.icelink {
     */
     class Error {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _errorCode;
-        /**
-        @internal
-        */
-        private _exception;
         /**<span id='method-fm.icelink.Error-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -17877,10 +17857,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class ErrorCodeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.ErrorCode);
         toString(): string;
     }
@@ -17894,10 +17870,7 @@ declare namespace fm.icelink {
     */
     class FloatHolder {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
+        private fmicelinkFloatHolderInit();
         /**<span id='method-fm.icelink.FloatHolder-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -17944,10 +17917,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class HttpMethodWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.HttpMethod);
         toString(): string;
     }
@@ -17961,42 +17930,7 @@ declare namespace fm.icelink {
     */
     class HttpRequestArgs extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __headers;
-        /**
-        @internal
-        */
-        private _binaryContent;
-        /**
-        @internal
-        */
-        private _method;
-        /**
-        @internal
-        */
-        private _onRequestCreated;
-        /**
-        @internal
-        */
-        private _onResponseReceived;
-        /**
-        @internal
-        */
-        private _sender;
-        /**
-        @internal
-        */
-        private _textContent;
-        /**
-        @internal
-        */
-        private _timeout;
-        /**
-        @internal
-        */
-        private _url;
+        private fmicelinkHttpRequestArgsInit();
         /**<span id='method-fm.icelink.HttpRequestArgs-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -18085,7 +18019,7 @@ declare namespace fm.icelink {
         /**
          <div>
          Gets the number of milliseconds to wait before timing out the HTTP transfer.
-         Defaults to 15000 (15 seconds).
+         Defaults to 15000 ms (15 seconds).
          </div>
 
 
@@ -18186,7 +18120,7 @@ declare namespace fm.icelink {
         /**
          <div>
          Sets the number of milliseconds to wait before timing out the HTTP transfer.
-         Defaults to 15000 (15 seconds).
+         Defaults to 15000 ms (15 seconds).
          </div>
 
 
@@ -18216,18 +18150,6 @@ declare namespace fm.icelink {
     */
     class HttpRequestCreatedArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _request;
-        /**
-        @internal
-        */
-        private _requestArgs;
-        /**
-        @internal
-        */
-        private _sender;
         constructor();
         /**<span id='method-fm.icelink.HttpRequestCreatedArgs-getRequest'>&nbsp;</span>**/
         /**
@@ -18303,30 +18225,7 @@ declare namespace fm.icelink {
     */
     class HttpResponseArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _binaryContent;
-        /**
-        @internal
-        */
-        private _exception;
-        /**
-        @internal
-        */
-        private _headers;
-        /**
-        @internal
-        */
-        private _requestArgs;
-        /**
-        @internal
-        */
-        private _statusCode;
-        /**
-        @internal
-        */
-        private _textContent;
+        private fmicelinkHttpResponseArgsInit();
         constructor();
         /**<span id='method-fm.icelink.HttpResponseArgs-constructor'>&nbsp;</span>**/
         /**
@@ -18420,11 +18319,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         setException(value: fm.icelink.Exception): void;
-        /**
-        @internal
-
-        */
-        private setHeaders(value);
         /**<span id='method-fm.icelink.HttpResponseArgs-setRequestArgs'>&nbsp;</span>**/
         /**
          <div>
@@ -18469,18 +18363,6 @@ declare namespace fm.icelink {
     */
     class HttpResponseReceivedArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _requestArgs;
-        /**
-        @internal
-        */
-        private _response;
-        /**
-        @internal
-        */
-        private _sender;
         constructor();
         /**<span id='method-fm.icelink.HttpResponseReceivedArgs-getRequestArgs'>&nbsp;</span>**/
         /**
@@ -18556,30 +18438,6 @@ declare namespace fm.icelink {
     */
     class HttpSendFinishArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _requestBinaryContent;
-        /**
-        @internal
-        */
-        private _requestTextContent;
-        /**
-        @internal
-        */
-        private _responseBinaryContent;
-        /**
-        @internal
-        */
-        private _responseHeaders;
-        /**
-        @internal
-        */
-        private _responseTextContent;
-        /**
-        @internal
-        */
-        private _sender;
         constructor();
         /**<span id='method-fm.icelink.HttpSendFinishArgs-getRequestBinaryContent'>&nbsp;</span>**/
         /**
@@ -18641,36 +18499,6 @@ declare namespace fm.icelink {
         @return {Object}
         */
         getSender(): Object;
-        /**
-        @internal
-
-        */
-        setRequestBinaryContent(value: Uint8Array): void;
-        /**
-        @internal
-
-        */
-        setRequestTextContent(value: string): void;
-        /**
-        @internal
-
-        */
-        setResponseBinaryContent(value: Uint8Array): void;
-        /**
-        @internal
-
-        */
-        setResponseHeaders(value: fm.icelink.NameValueCollection): void;
-        /**
-        @internal
-
-        */
-        setResponseTextContent(value: string): void;
-        /**
-        @internal
-
-        */
-        setSender(value: Object): void;
     }
 }
 declare namespace fm.icelink {
@@ -18682,18 +18510,6 @@ declare namespace fm.icelink {
     */
     class HttpSendStartArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _requestBinaryContent;
-        /**
-        @internal
-        */
-        private _requestTextContent;
-        /**
-        @internal
-        */
-        private _sender;
         constructor();
         /**<span id='method-fm.icelink.HttpSendStartArgs-getRequestBinaryContent'>&nbsp;</span>**/
         /**
@@ -18725,21 +18541,6 @@ declare namespace fm.icelink {
         @return {Object}
         */
         getSender(): Object;
-        /**
-        @internal
-
-        */
-        setRequestBinaryContent(value: Uint8Array): void;
-        /**
-        @internal
-
-        */
-        setRequestTextContent(value: string): void;
-        /**
-        @internal
-
-        */
-        setSender(value: Object): void;
     }
 }
 declare namespace fm.icelink {
@@ -18751,16 +18552,7 @@ declare namespace fm.icelink {
     */
     class HttpTransferFactory {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private static fm_icelink_HttpTransferFactory__createHttpTransfer;
         constructor();
-        /**
-        @internal
-
-        */
-        static defaultCreateHttpTransfer(): fm.icelink.HttpTransfer;
         /**<span id='method-fm.icelink.HttpTransferFactory-getCreateHttpTransfer'>&nbsp;</span>**/
         /**
          <div>
@@ -18803,22 +18595,7 @@ declare namespace fm.icelink {
     */
     class HttpWebRequestSender extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __disableJsonp;
-        /**
-        @internal
-        */
-        private __forceJsonp;
-        /**
-        @internal
-        */
-        private _disableCors;
-        /**
-        @internal
-        */
-        private _disablePostMessage;
+        private fmicelinkHttpWebRequestSenderInit();
         constructor();
         /**<span id='method-fm.icelink.HttpWebRequestSender-getDisableCors'>&nbsp;</span>**/
         /**
@@ -18914,12 +18691,18 @@ declare namespace fm.icelink {
 
     */
     interface ILog {
+        debug(scope: string, message: string): void;
         debug(message: string, ex: fm.icelink.Exception): void;
         debug(message: string): void;
-        error(message: string): void;
+        debug(scope: string, message: string, ex: fm.icelink.Exception): void;
+        error(scope: string, message: string, ex: fm.icelink.Exception): void;
+        error(scope: string, message: string): void;
         error(message: string, ex: fm.icelink.Exception): void;
-        fatal(message: string): void;
+        error(message: string): void;
+        fatal(scope: string, message: string, ex: fm.icelink.Exception): void;
         fatal(message: string, ex: fm.icelink.Exception): void;
+        fatal(message: string): void;
+        fatal(scope: string, message: string): void;
         flush(): void;
         getIsDebugEnabled(): boolean;
         getIsErrorEnabled(): boolean;
@@ -18928,12 +18711,19 @@ declare namespace fm.icelink {
         getIsVerboseEnabled(): boolean;
         getIsWarnEnabled(): boolean;
         getTag(): string;
+        info(scope: string, message: string, ex: fm.icelink.Exception): void;
         info(message: string, ex: fm.icelink.Exception): void;
+        info(scope: string, message: string): void;
         info(message: string): void;
         isLogEnabled(level: fm.icelink.LogLevel): boolean;
+        log(scope: string, message: string): void;
         log(message: string): void;
-        verbose(message: string): void;
+        verbose(scope: string, message: string): void;
         verbose(message: string, ex: fm.icelink.Exception): void;
+        verbose(message: string): void;
+        verbose(scope: string, message: string, ex: fm.icelink.Exception): void;
+        warn(scope: string, message: string, ex: fm.icelink.Exception): void;
+        warn(scope: string, message: string): void;
         warn(message: string, ex: fm.icelink.Exception): void;
         warn(message: string): void;
     }
@@ -18947,10 +18737,7 @@ declare namespace fm.icelink {
     */
     class IntegerHolder {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
+        private fmicelinkIntegerHolderInit();
         /**<span id='method-fm.icelink.IntegerHolder-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -19006,68 +18793,6 @@ declare namespace fm.icelink {
     }
 }
 declare namespace fm.icelink {
-    /**
-    @internal
-    */
-    class JsonChecker {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private __depth;
-        /**
-        @internal
-        */
-        private __offset;
-        /**
-        @internal
-        */
-        private __stack;
-        /**
-        @internal
-        */
-        private __state;
-        /**
-        @internal
-        */
-        private static fm_icelink_JsonChecker__ascii_class;
-        /**
-        @internal
-        */
-        private static fm_icelink_JsonChecker__state_transition_table;
-        constructor();
-        constructor(depth: number);
-        /**
-        @internal
-
-        */
-        private check(ch);
-        checkString(str: string): boolean;
-        /**
-        @internal
-
-        */
-        private finalCheck();
-        /**
-        @internal
-
-        */
-        private onError();
-        /**
-        @internal
-
-        */
-        private pop(mode);
-        /**
-        @internal
-
-        */
-        private push(mode);
-        /** @internal */
-        private static __fmicelinkJsonCheckerInitialized;
-        /** @internal */
-        static fmicelinkJsonCheckerInitialize(): void;
-    }
 }
 declare namespace fm.icelink {
     /**
@@ -19110,14 +18835,6 @@ declare namespace fm.icelink {
     */
     abstract class LockedRandomizer {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private static fm_icelink_LockedRandomizer__randomizer;
-        /**
-        @internal
-        */
-        private static fm_icelink_LockedRandomizer__randomLock;
         /**<span id='method-fm.icelink.LockedRandomizer-next'>&nbsp;</span>**/
         /**
          <div>
@@ -19189,10 +18906,6 @@ declare namespace fm.icelink {
         @return {string}
         */
         static randomString(size: number): string;
-        /** @internal */
-        private static __fmicelinkLockedRandomizerInitialized;
-        /** @internal */
-        static fmicelinkLockedRandomizerInitialize(): void;
     }
 }
 declare namespace fm.icelink {
@@ -19204,10 +18917,6 @@ declare namespace fm.icelink {
     */
     class Log {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private static fm_icelink_Log___staticLogger;
         constructor();
         /**<span id='method-fm.icelink.Log-debug'>&nbsp;</span>**/
         /**
@@ -19542,66 +19251,13 @@ declare namespace fm.icelink {
         @return {void}
         */
         static writeLine(text: string): void;
-        /** @internal */
-        private static __fmicelinkLogInitialized;
-        /** @internal */
-        static fmicelinkLogInitialize(): void;
     }
 }
 declare namespace fm.icelink {
-    /**
-    @internal
-    */
-    class LogConfiguration {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private static fm_icelink_LogConfiguration___lock;
-        /**
-        @internal
-        */
-        private static fm_icelink_LogConfiguration___logProviders;
-        /**
-        @internal
-        */
-        private static fm_icelink_LogConfiguration___providerCount;
-        /**
-        @internal
-        */
-        private static fm_icelink_LogConfiguration__defaultLogLevel;
-        /**
-        @internal
-        */
-        private static fm_icelink_LogConfiguration__tagOverrides;
-        constructor();
-        static addLogProvider(provider: fm.icelink.LogProvider): void;
-        static clearLogProviders(): void;
-        static getDefaultLogLevel(): fm.icelink.LogLevel;
-        static getHaveProviders(): boolean;
-        static getLogProviders(): fm.icelink.LogProvider[];
-        static getTagLogLevel(tag: string): fm.icelink.LogLevel;
-        static getTagOverrides(): fm.icelink.Hash<string, fm.icelink.LogLevel>;
-        static removeLogProvider(provider: fm.icelink.LogProvider): void;
-        static setDefaultLogLevel(value: fm.icelink.LogLevel): void;
-        /**
-        @internal
-
-        */
-        private static setTagOverrides(value);
-        /** @internal */
-        private static __fmicelinkLogConfigurationInitialized;
-        /** @internal */
-        static fmicelinkLogConfigurationInitialize(): void;
-    }
 }
 declare namespace fm.icelink {
     class LogLevelWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.LogLevel);
         toString(): string;
     }
@@ -19615,10 +19271,7 @@ declare namespace fm.icelink {
     */
     class LongHolder {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
+        private fmicelinkLongHolderInit();
         /**<span id='method-fm.icelink.LongHolder-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -19714,23 +19367,15 @@ declare namespace fm.icelink {
          Logs a message at the specified log level.
          </div>
 
-        @param {fm.icelink.DateTime} timestamp The timestamp when the event occurred.
-        @param {fm.icelink.LogLevel} level The log level.
-        @param {string} tag The logger tag.
-        @param {string} message The message.
-        @param {fm.icelink.Exception} ex The exception.
+        @param {fm.icelink.LogEvent} logItem The log event containing the details.
         @return {void}
         */
-        protected doLog(timestamp: fm.icelink.DateTime, level: fm.icelink.LogLevel, tag: string, message: string, ex: fm.icelink.Exception): void;
+        protected doLog(logItem: fm.icelink.LogEvent): void;
     }
 }
 declare namespace fm.icelink {
     class FutureStateWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.FutureState);
         toString(): string;
     }
@@ -19744,10 +19389,7 @@ declare namespace fm.icelink {
     */
     class ShortHolder {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
+        private fmicelinkShortHolderInit();
         /**<span id='method-fm.icelink.ShortHolder-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -19801,16 +19443,6 @@ declare namespace fm.icelink {
     class Sort {
         getTypeString(): string;
         constructor();
-        /**
-        @internal
-
-        */
-        private static doQuickSort<T>(array, left, right, comparer);
-        /**
-        @internal
-
-        */
-        private static partition<T>(array, left, right, pivotIndex, comparer);
         /**<span id='method-fm.icelink.Sort-quickSort'>&nbsp;</span>**/
         /**
          <div>
@@ -19825,11 +19457,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         static quickSort<T>(array: Array<T>, comparer: fm.icelink.IFunction2<T, T, fm.icelink.CompareResult>): void;
-        /**
-        @internal
-
-        */
-        private static swap<T>(array, pos1, pos2);
     }
 }
 declare namespace fm.icelink {
@@ -19907,18 +19534,6 @@ declare namespace fm.icelink {
     */
     class TextLogProvider extends fm.icelink.LogProvider {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __callback;
-        /**
-        @internal
-        */
-        private __text;
-        /**
-        @internal
-        */
-        private __textLock;
         /**<span id='method-fm.icelink.TextLogProvider-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -19956,14 +19571,10 @@ declare namespace fm.icelink {
          Logs a message at the specified log level.
          </div>
 
-        @param {fm.icelink.DateTime} timestamp The timestamp when the event occurred.
-        @param {fm.icelink.LogLevel} level The log level.
-        @param {string} tag The logger tag.
-        @param {string} message The message.
-        @param {fm.icelink.Exception} ex The exception.
+        @param {fm.icelink.LogEvent} logItem The log event containing the details.
         @return {void}
         */
-        protected doLog(timestamp: fm.icelink.DateTime, level: fm.icelink.LogLevel, tag: string, message: string, ex: fm.icelink.Exception): void;
+        protected doLog(logItem: fm.icelink.LogEvent): void;
         /**<span id='method-fm.icelink.TextLogProvider-getCallback'>&nbsp;</span>**/
         /**
          <div>
@@ -19997,11 +19608,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         setCallback(value: fm.icelink.IAction1<string>): void;
-        /**
-        @internal
-
-        */
-        private writeLine(text);
     }
 }
 declare namespace fm.icelink {
@@ -20036,14 +19642,7 @@ declare namespace fm.icelink {
     */
     class UnhandledExceptionArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __exception;
-        /**
-        @internal
-        */
-        private _handled;
+        private fmicelinkUnhandledExceptionArgsInit();
         /**<span id='method-fm.icelink.UnhandledExceptionArgs-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -20157,25 +19756,6 @@ declare namespace fm.icelink {
     }
 }
 declare namespace fm.icelink {
-    /**
-    @internal
-    */
-    class WebSocketSendState {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private _requestBytes;
-        /**
-        @internal
-        */
-        private _sendArgs;
-        constructor();
-        getRequestBytes(): Uint8Array;
-        getSendArgs(): fm.icelink.WebSocketSendArgs;
-        setRequestBytes(value: Uint8Array): void;
-        setSendArgs(value: fm.icelink.WebSocketSendArgs): void;
-    }
 }
 declare namespace fm.icelink {
     /**
@@ -20203,18 +19783,6 @@ declare namespace fm.icelink {
     */
     class WebSocketCloseArgs extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _onComplete;
-        /**
-        @internal
-        */
-        private _reason;
-        /**
-        @internal
-        */
-        private _statusCode;
         /**<span id='method-fm.icelink.WebSocketCloseArgs-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -20300,18 +19868,6 @@ declare namespace fm.icelink {
     */
     class WebSocketCloseCompleteArgs extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _closeArgs;
-        /**
-        @internal
-        */
-        private _reason;
-        /**
-        @internal
-        */
-        private _statusCode;
         constructor();
         /**<span id='method-fm.icelink.WebSocketCloseCompleteArgs-getCloseArgs'>&nbsp;</span>**/
         /**
@@ -20387,46 +19943,7 @@ declare namespace fm.icelink {
     */
     class WebSocketOpenArgs extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _handshakeTimeout;
-        /**
-        @internal
-        */
-        private _headers;
-        /**
-        @internal
-        */
-        private _onFailure;
-        /**
-        @internal
-        */
-        private _onReceive;
-        /**
-        @internal
-        */
-        private _onRequestCreated;
-        /**
-        @internal
-        */
-        private _onResponseReceived;
-        /**
-        @internal
-        */
-        private _onStreamFailure;
-        /**
-        @internal
-        */
-        private _onSuccess;
-        /**
-        @internal
-        */
-        private _sender;
-        /**
-        @internal
-        */
-        private _streamTimeout;
+        private fmicelinkWebSocketOpenArgsInit();
         /**<span id='method-fm.icelink.WebSocketOpenArgs-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -20440,7 +19957,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebSocketOpenArgs-getHandshakeTimeout'>&nbsp;</span>**/
         /**
          <div>
-         Gets the timeout for the handshake.
+         Gets the timeout for the handshake (in ms).
          </div>
 
 
@@ -20530,7 +20047,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebSocketOpenArgs-getStreamTimeout'>&nbsp;</span>**/
         /**
          <div>
-         Gets the timeout for the stream.
+         Gets the timeout for the stream (in ms).
          </div>
 
 
@@ -20540,7 +20057,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebSocketOpenArgs-setHandshakeTimeout'>&nbsp;</span>**/
         /**
          <div>
-         Sets the timeout for the handshake.
+         Sets the timeout for the handshake (in ms).
          </div>
 
 
@@ -20639,7 +20156,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebSocketOpenArgs-setStreamTimeout'>&nbsp;</span>**/
         /**
          <div>
-         Sets the timeout for the stream.
+         Sets the timeout for the stream (in ms).
          </div>
 
 
@@ -20658,18 +20175,6 @@ declare namespace fm.icelink {
     */
     class WebSocketOpenFailureArgs extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _exception;
-        /**
-        @internal
-        */
-        private _openArgs;
-        /**
-        @internal
-        */
-        private _statusCode;
         constructor();
         /**<span id='method-fm.icelink.WebSocketOpenFailureArgs-getException'>&nbsp;</span>**/
         /**
@@ -20745,10 +20250,6 @@ declare namespace fm.icelink {
     */
     class WebSocketOpenSuccessArgs extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _openArgs;
         constructor();
         /**<span id='method-fm.icelink.WebSocketOpenSuccessArgs-getOpenArgs'>&nbsp;</span>**/
         /**
@@ -20782,18 +20283,6 @@ declare namespace fm.icelink {
     */
     class WebSocketReceiveArgs extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _binaryMessage;
-        /**
-        @internal
-        */
-        private _openArgs;
-        /**
-        @internal
-        */
-        private _textMessage;
         constructor();
         /**<span id='method-fm.icelink.WebSocketReceiveArgs-getBinaryMessage'>&nbsp;</span>**/
         /**
@@ -20871,25 +20360,6 @@ declare namespace fm.icelink {
     }
 }
 declare namespace fm.icelink {
-    /**
-    @internal
-    */
-    class WebSocketRequest {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private _args;
-        /**
-        @internal
-        */
-        private _callback;
-        constructor();
-        getArgs(): fm.icelink.HttpRequestArgs;
-        getCallback(): fm.icelink.IAction1<fm.icelink.HttpResponseArgs>;
-        setArgs(value: fm.icelink.HttpRequestArgs): void;
-        setCallback(value: fm.icelink.IAction1<fm.icelink.HttpResponseArgs>): void;
-    }
 }
 declare namespace fm.icelink {
     /**
@@ -20900,18 +20370,7 @@ declare namespace fm.icelink {
     */
     class WebSocketSendArgs extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _binaryMessage;
-        /**
-        @internal
-        */
-        private _textMessage;
-        /**
-        @internal
-        */
-        private _timeout;
+        private fmicelinkWebSocketSendArgsInit();
         /**<span id='method-fm.icelink.WebSocketSendArgs-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -20932,11 +20391,6 @@ declare namespace fm.icelink {
         @return {Uint8Array}
         */
         getBinaryMessage(): Uint8Array;
-        /**
-        @internal
-
-        */
-        getIsText(): boolean;
         /**<span id='method-fm.icelink.WebSocketSendArgs-getTextMessage'>&nbsp;</span>**/
         /**
          <div>
@@ -20950,7 +20404,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebSocketSendArgs-getTimeout'>&nbsp;</span>**/
         /**
          <div>
-         Gets the timeout for the request.
+         Gets the timeout for the request (in ms).
          </div>
 
 
@@ -20982,7 +20436,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebSocketSendArgs-setTimeout'>&nbsp;</span>**/
         /**
          <div>
-         Sets the timeout for the request.
+         Sets the timeout for the request (in ms).
          </div>
 
 
@@ -20995,10 +20449,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class WebSocketStatusCodeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.WebSocketStatusCode);
         toString(): string;
     }
@@ -21012,18 +20462,6 @@ declare namespace fm.icelink {
     */
     class WebSocketStreamFailureArgs extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _exception;
-        /**
-        @internal
-        */
-        private _openArgs;
-        /**
-        @internal
-        */
-        private _statusCode;
         constructor();
         /**<span id='method-fm.icelink.WebSocketStreamFailureArgs-getException'>&nbsp;</span>**/
         /**
@@ -21099,42 +20537,7 @@ declare namespace fm.icelink {
     */
     abstract class WebSocketTransfer {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __url;
-        /**
-        @internal
-        */
-        private _handshakeTimeout;
-        /**
-        @internal
-        */
-        private _onOpenFailure;
-        /**
-        @internal
-        */
-        private _onOpenSuccess;
-        /**
-        @internal
-        */
-        private _onRequestCreated;
-        /**
-        @internal
-        */
-        private _onResponseReceived;
-        /**
-        @internal
-        */
-        private _onStreamFailure;
-        /**
-        @internal
-        */
-        private _sender;
-        /**
-        @internal
-        */
-        private _streamTimeout;
+        private fmicelinkWebSocketTransferInit();
         /**<span id='method-fm.icelink.WebSocketTransfer-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -21148,7 +20551,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebSocketTransfer-getHandshakeTimeout'>&nbsp;</span>**/
         /**
          <div>
-         Gets the timeout for the initial handshake.
+         Gets the timeout for the initial handshake (in ms).
          </div>
 
 
@@ -21218,7 +20621,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebSocketTransfer-getStreamTimeout'>&nbsp;</span>**/
         /**
          <div>
-         Gets the timeout for the stream.
+         Gets the timeout for the stream (in ms).
          </div>
 
 
@@ -21269,7 +20672,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebSocketTransfer-setHandshakeTimeout'>&nbsp;</span>**/
         /**
          <div>
-         Sets the timeout for the initial handshake.
+         Sets the timeout for the initial handshake (in ms).
          </div>
 
 
@@ -21346,7 +20749,7 @@ declare namespace fm.icelink {
         /**<span id='method-fm.icelink.WebSocketTransfer-setStreamTimeout'>&nbsp;</span>**/
         /**
          <div>
-         Sets the timeout for the stream.
+         Sets the timeout for the stream (in ms).
          </div>
 
 
@@ -21386,16 +20789,7 @@ declare namespace fm.icelink {
     */
     class WebSocketTransferFactory {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private static fm_icelink_WebSocketTransferFactory__createWebSocketTransfer;
         constructor();
-        /**
-        @internal
-
-        */
-        static defaultCreateWebSocketTransfer(url: string): fm.icelink.WebSocketTransfer;
         /**<span id='method-fm.icelink.WebSocketTransferFactory-getCreateWebSocketTransfer'>&nbsp;</span>**/
         /**
          <div>
@@ -21439,14 +20833,6 @@ declare namespace fm.icelink {
     */
     class WebSocketWebRequestTransfer extends fm.icelink.WebSocketTransfer {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _activeRequest;
-        /**
-        @internal
-        */
-        private _webSocket;
         /**<span id='method-fm.icelink.WebSocketWebRequestTransfer-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -21457,21 +20843,6 @@ declare namespace fm.icelink {
         @return {}
         */
         constructor(url: string);
-        /**
-        @internal
-
-        */
-        private connectFailure(e);
-        /**
-        @internal
-
-        */
-        private connectSuccess(e);
-        /**
-        @internal
-
-        */
-        private getWebSocket();
         /**<span id='method-fm.icelink.WebSocketWebRequestTransfer-open'>&nbsp;</span>**/
         /**
          <div>
@@ -21483,11 +20854,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         open(headers: fm.icelink.NameValueCollection): void;
-        /**
-        @internal
-
-        */
-        private receive(e);
         /**<span id='method-fm.icelink.WebSocketWebRequestTransfer-send'>&nbsp;</span>**/
         /**
          <div>
@@ -21509,11 +20875,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         sendAsync(requestArgs: fm.icelink.HttpRequestArgs, callback: fm.icelink.IAction1<fm.icelink.HttpResponseArgs>): void;
-        /**
-        @internal
-
-        */
-        private setWebSocket(value);
         /**<span id='method-fm.icelink.WebSocketWebRequestTransfer-shutdown'>&nbsp;</span>**/
         /**
          <div>
@@ -21524,11 +20885,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         shutdown(): void;
-        /**
-        @internal
-
-        */
-        private streamFailure(e);
     }
 }
 declare namespace fm.icelink {
@@ -21540,30 +20896,7 @@ declare namespace fm.icelink {
     */
     abstract class MediaBuffer<TFormat extends fm.icelink.MediaFormat<TFormat>, TBuffer extends fm.icelink.MediaBuffer<TFormat, TBuffer>> extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _dataBuffers;
-        /**
-        @internal
-        */
-        private _format;
-        /**
-        @internal
-        */
-        private _recoveredByFec;
-        /**
-        @internal
-        */
-        private _rtpHeaders;
-        /**
-        @internal
-        */
-        private _sequenceNumbers;
-        /**
-        @internal
-        */
-        private _sourceId;
+        private fmicelinkMediaBufferInit();
         /**<span id='method-fm.icelink.MediaBuffer-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -21622,10 +20955,9 @@ declare namespace fm.icelink {
          Frees the data buffers referenced by this instance.
          </div>
 
-
-        @return {void}
+        @return {TBuffer} This instance.
         */
-        free(): void;
+        free(): TBuffer;
         /**<span id='method-fm.icelink.MediaBuffer-getDataBuffer'>&nbsp;</span>**/
         /**
          <div>
@@ -21666,11 +20998,6 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         abstract getIsMuted(): boolean;
-        /**
-        @internal
-
-        */
-        getIsPacketized(): boolean;
         /**<span id='method-fm.icelink.MediaBuffer-getLastSequenceNumber'>&nbsp;</span>**/
         /**
          <div>
@@ -21768,10 +21095,9 @@ declare namespace fm.icelink {
          Keeps the data buffers referenced by this instance.
          </div>
 
-
-        @return {void}
+        @return {TBuffer} This instance.
         */
-        keep(): void;
+        keep(): TBuffer;
         /**<span id='method-fm.icelink.MediaBuffer-mute'>&nbsp;</span>**/
         /**
          <div>
@@ -21905,14 +21231,6 @@ declare namespace fm.icelink {
     */
     abstract class Collection<T, TCollection extends fm.icelink.Collection<T, TCollection>> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __values;
-        /**
-        @internal
-        */
-        private __valuesLock;
         constructor();
         /**<span id='method-fm.icelink.Collection-add'>&nbsp;</span>**/
         /**
@@ -22351,10 +21669,7 @@ declare namespace fm.icelink {
     */
     abstract class MediaConfig<TConfig extends fm.icelink.MediaConfig<TConfig>> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _clockRate;
+        private fmicelinkMediaConfigInit();
         /**<span id='method-fm.icelink.MediaConfig-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -22385,11 +21700,6 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         isEquivalent(config: TConfig): boolean;
-        /**
-        @internal
-
-        */
-        private setClockRate(value);
     }
 }
 declare namespace fm.icelink {
@@ -22401,10 +21711,7 @@ declare namespace fm.icelink {
     */
     class AudioConfig extends fm.icelink.MediaConfig<fm.icelink.AudioConfig> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _channelCount;
+        private fmicelinkAudioConfigInit();
         /**<span id='method-fm.icelink.AudioConfig-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -22436,11 +21743,6 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         isEquivalent(config: fm.icelink.AudioConfig): boolean;
-        /**
-        @internal
-
-        */
-        private setChannelCount(value);
         /**<span id='method-fm.icelink.AudioConfig-toString'>&nbsp;</span>**/
         /**
          <div>
@@ -22462,34 +21764,7 @@ declare namespace fm.icelink {
     */
     abstract class MediaFormat<TFormat extends fm.icelink.MediaFormat<TFormat>> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _clockRate;
-        /**
-        @internal
-        */
-        private _isEncrypted;
-        /**
-        @internal
-        */
-        private _isInjected;
-        /**
-        @internal
-        */
-        private _isPacketized;
-        /**
-        @internal
-        */
-        private _name;
-        /**
-        @internal
-        */
-        private _registeredPayloadType;
-        /**
-        @internal
-        */
-        private _staticPayloadType;
+        private fmicelinkMediaFormatInit();
         /**<span id='method-fm.icelink.MediaFormat-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -22623,11 +21898,6 @@ declare namespace fm.icelink {
         @return {string}
         */
         abstract getParameters(): string;
-        /**
-        @internal
-
-        */
-        getRegisteredPayloadType(): number;
         /**<span id='method-fm.icelink.MediaFormat-getStaticPayloadType'>&nbsp;</span>**/
         /**
          <div>
@@ -22707,11 +21977,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         setName(value: string): void;
-        /**
-        @internal
-
-        */
-        setRegisteredPayloadType(value: number): void;
         /**<span id='method-fm.icelink.MediaFormat-setStaticPayloadType'>&nbsp;</span>**/
         /**
          <div>
@@ -22745,14 +22010,7 @@ declare namespace fm.icelink {
     */
     class AudioFormat extends fm.icelink.MediaFormat<fm.icelink.AudioFormat> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _channelCount;
-        /**
-        @internal
-        */
-        private _littleEndian;
+        private fmicelinkAudioFormatInit();
         /**<span id='method-fm.icelink.AudioFormat-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -22990,23 +22248,6 @@ declare namespace fm.icelink {
     */
     abstract class MediaSinkBase extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _id;
-        /**
-        @internal
-        */
-        private _tag;
-        /**<span id='method-fm.icelink.MediaSinkBase-constructor'>&nbsp;</span>**/
-        /**
-         <div>
-         Initializes a new instance of the `fm.icelink.mediaSinkBase` class.
-         </div>
-
-
-        @return {}
-        */
         constructor();
         /**<span id='method-fm.icelink.MediaSinkBase-getId'>&nbsp;</span>**/
         /**
@@ -23028,17 +22269,6 @@ declare namespace fm.icelink {
         @return {string}
         */
         getTag(): string;
-        /**<span id='method-fm.icelink.MediaSinkBase-setId'>&nbsp;</span>**/
-        /**
-         <div>
-         Sets the identifier.
-         </div>
-
-
-        @param {string} value
-        @return {void}
-        */
-        setId(value: string): void;
         /**<span id='method-fm.icelink.MediaSinkBase-setTag'>&nbsp;</span>**/
         /**
          <div>
@@ -23061,23 +22291,6 @@ declare namespace fm.icelink {
     */
     abstract class MediaSourceBase extends fm.icelink.Dynamic {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _id;
-        /**
-        @internal
-        */
-        private _tag;
-        /**<span id='method-fm.icelink.MediaSourceBase-constructor'>&nbsp;</span>**/
-        /**
-         <div>
-         Initializes a new instance of the `fm.icelink.mediaSourceBase` class.
-         </div>
-
-
-        @return {}
-        */
         constructor();
         /**<span id='method-fm.icelink.MediaSourceBase-getId'>&nbsp;</span>**/
         /**
@@ -23099,17 +22312,6 @@ declare namespace fm.icelink {
         @return {string}
         */
         getTag(): string;
-        /**<span id='method-fm.icelink.MediaSourceBase-setId'>&nbsp;</span>**/
-        /**
-         <div>
-         Sets the identifier.
-         </div>
-
-
-        @param {string} value
-        @return {void}
-        */
-        setId(value: string): void;
         /**<span id='method-fm.icelink.MediaSourceBase-setTag'>&nbsp;</span>**/
         /**
          <div>
@@ -23152,6 +22354,7 @@ declare namespace fm.icelink {
     */
     interface IStream {
         addOnDirectionChange(value: fm.icelink.IAction0): void;
+        addOnStateChange(value: fm.icelink.IAction0): void;
         changeDirection(newDirection: fm.icelink.StreamDirection): fm.icelink.Error;
         getDirection(): fm.icelink.StreamDirection;
         getId(): string;
@@ -23162,10 +22365,11 @@ declare namespace fm.icelink {
         getRemoteDirection(): fm.icelink.StreamDirection;
         getRemoteReceive(): boolean;
         getRemoteSend(): boolean;
+        getState(): fm.icelink.StreamState;
         getTag(): string;
         getType(): fm.icelink.StreamType;
         removeOnDirectionChange(value: fm.icelink.IAction0): void;
-        setId(value: string): void;
+        removeOnStateChange(value: fm.icelink.IAction0): void;
         setLocalDirection(value: fm.icelink.StreamDirection): void;
         setLocalReceive(value: boolean): void;
         setLocalSend(value: boolean): void;
@@ -23259,22 +22463,7 @@ declare namespace fm.icelink {
     */
     class Candidate {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __turnTransportProtocol;
-        /**
-        @internal
-        */
-        private _dispatched;
-        /**
-        @internal
-        */
-        private _sdpCandidateAttribute;
-        /**
-        @internal
-        */
-        private _sdpMediaIndex;
+        private fmicelinkCandidateInit();
         constructor();
         /**<span id='method-fm.icelink.Candidate-fromJson'>&nbsp;</span>**/
         /**
@@ -23401,10 +22590,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class CandidatePairStateWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.CandidatePairState);
         toString(): string;
     }
@@ -23412,10 +22597,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class CandidateTypeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.CandidateType);
         toString(): string;
     }
@@ -23423,10 +22604,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class CodecTypeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.CodecType);
         toString(): string;
     }
@@ -23440,18 +22617,7 @@ declare namespace fm.icelink {
     */
     class Color {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _b;
-        /**
-        @internal
-        */
-        private _g;
-        /**
-        @internal
-        */
-        private _r;
+        private fmicelinkColorInit();
         /**<span id='method-fm.icelink.Color-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -23656,21 +22822,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         getR(): number;
-        /**
-        @internal
-
-        */
-        private setB(value);
-        /**
-        @internal
-
-        */
-        private setG(value);
-        /**
-        @internal
-
-        */
-        private setR(value);
     }
 }
 declare namespace fm.icelink {
@@ -23701,6 +22852,7 @@ declare namespace fm.icelink {
         getDataStreams(): TDataStream[];
         getDeadStreamTimeout(): number;
         getError(): fm.icelink.Error;
+        getExternalId(): string;
         getGatheringState(): fm.icelink.IceGatheringState;
         getHasAudio(): boolean;
         getHasData(): boolean;
@@ -23732,12 +22884,13 @@ declare namespace fm.icelink {
         removeOnSignallingStateChange(value: fm.icelink.IAction1<TConnection>): void;
         removeOnStateChange(value: fm.icelink.IAction1<TConnection>): void;
         setDeadStreamTimeout(value: number): void;
+        setExternalId(value: string): void;
         setIceGatherPolicy(value: fm.icelink.IceGatherPolicy): void;
         setIceServer(value: fm.icelink.IceServer): void;
         setIceServers(value: fm.icelink.IceServer[]): void;
-        setId(value: string): void;
         setLocalDescription(localDescription: fm.icelink.SessionDescription): fm.icelink.Future<fm.icelink.SessionDescription>;
         setRemoteDescription(remoteDescription: fm.icelink.SessionDescription): fm.icelink.Future<fm.icelink.SessionDescription>;
+        setTieBreaker(value: string): void;
         setTimeout(value: number): void;
         setTrickleIcePolicy(value: fm.icelink.TrickleIcePolicy): void;
     }
@@ -23751,14 +22904,6 @@ declare namespace fm.icelink {
     */
     class ConnectionCollection extends fm.icelink.Collection<fm.icelink.Connection, fm.icelink.ConnectionCollection> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __lookup;
-        /**
-        @internal
-        */
-        private __lookupLock;
         constructor();
         /**<span id='method-fm.icelink.ConnectionCollection-addSuccess'>&nbsp;</span>**/
         /**
@@ -23824,12 +22969,131 @@ declare namespace fm.icelink {
     }
 }
 declare namespace fm.icelink {
+    /**
+     <div>
+     A state machine for data channel states.
+     </div>
+
+    */
+    class DataChannelStateMachine extends fm.icelink.StateMachine<fm.icelink.DataChannelState> {
+        getTypeString(): string;
+        /**<span id='method-fm.icelink.DataChannelStateMachine-constructor'>&nbsp;</span>**/
+        /**
+         <div>
+         Initializes a new instance of the `fm.icelink.dataChannelStateMachine` class.
+         </div>
+
+
+        @return {}
+        */
+        constructor();
+        /**<span id='method-fm.icelink.DataChannelStateMachine-stateToValue'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a state to an integer value.
+         </div>
+
+        @param {fm.icelink.DataChannelState} state The state.
+        @return {number}
+        */
+        protected stateToValue(state: fm.icelink.DataChannelState): number;
+        /**<span id='method-fm.icelink.DataChannelStateMachine-valueToState'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts an integer value to a state.
+         </div>
+
+        @param {number} value The integer value.
+        @return {fm.icelink.DataChannelState}
+        */
+        protected valueToState(value: number): fm.icelink.DataChannelState;
+    }
+}
+declare namespace fm.icelink {
+    /**
+     <div>
+     A state machine for stream states.
+     </div>
+
+    */
+    class StreamStateMachine extends fm.icelink.StateMachine<fm.icelink.StreamState> {
+        getTypeString(): string;
+        /**<span id='method-fm.icelink.StreamStateMachine-constructor'>&nbsp;</span>**/
+        /**
+         <div>
+         Initializes a new instance of the `fm.icelink.streamStateMachine` class.
+         </div>
+
+
+        @return {}
+        */
+        constructor();
+        /**<span id='method-fm.icelink.StreamStateMachine-stateToValue'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a state to an integer value.
+         </div>
+
+        @param {fm.icelink.StreamState} state The state.
+        @return {number}
+        */
+        protected stateToValue(state: fm.icelink.StreamState): number;
+        /**<span id='method-fm.icelink.StreamStateMachine-valueToState'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts an integer value to a state.
+         </div>
+
+        @param {number} value The integer value.
+        @return {fm.icelink.StreamState}
+        */
+        protected valueToState(value: number): fm.icelink.StreamState;
+    }
+}
+declare namespace fm.icelink {
+    /**
+     <div>
+     A state machine for connection states.
+     </div>
+
+    */
+    class ConnectionStateMachine extends fm.icelink.StateMachine<fm.icelink.ConnectionState> {
+        getTypeString(): string;
+        /**<span id='method-fm.icelink.ConnectionStateMachine-constructor'>&nbsp;</span>**/
+        /**
+         <div>
+         Initializes a new instance of the `fm.icelink.connectionStateMachine` class.
+         </div>
+
+
+        @return {}
+        */
+        constructor();
+        /**<span id='method-fm.icelink.ConnectionStateMachine-stateToValue'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts a state to an integer value.
+         </div>
+
+        @param {fm.icelink.ConnectionState} state The state.
+        @return {number}
+        */
+        protected stateToValue(state: fm.icelink.ConnectionState): number;
+        /**<span id='method-fm.icelink.ConnectionStateMachine-valueToState'>&nbsp;</span>**/
+        /**
+         <div>
+         Converts an integer value to a state.
+         </div>
+
+        @param {number} value The integer value.
+        @return {fm.icelink.ConnectionState}
+        */
+        protected valueToState(value: number): fm.icelink.ConnectionState;
+    }
+}
+declare namespace fm.icelink {
     class ConnectionStateWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.ConnectionState);
         toString(): string;
     }
@@ -23843,14 +23107,15 @@ declare namespace fm.icelink {
     */
     interface IDataChannel<TDataChannel> {
         addOnStateChange(value: fm.icelink.IAction1<TDataChannel>): void;
+        getId(): string;
         getLabel(): string;
         getOnReceive(): fm.icelink.IAction1<fm.icelink.DataChannelReceiveArgs>;
         getOrdered(): boolean;
         getState(): fm.icelink.DataChannelState;
         getSubprotocol(): string;
         removeOnStateChange(value: fm.icelink.IAction1<TDataChannel>): void;
-        sendDataBytes(dataBytes: fm.icelink.DataBuffer): void;
-        sendDataString(dataString: string): void;
+        sendDataBytes(dataBytes: fm.icelink.DataBuffer): fm.icelink.Future<Object>;
+        sendDataString(dataString: string): fm.icelink.Future<Object>;
         setOnReceive(value: fm.icelink.IAction1<fm.icelink.DataChannelReceiveArgs>): void;
     }
 }
@@ -23895,14 +23160,6 @@ declare namespace fm.icelink {
     */
     class DataChannelReceiveArgs {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _dataBytes;
-        /**
-        @internal
-        */
-        private _dataString;
         constructor();
         /**<span id='method-fm.icelink.DataChannelReceiveArgs-getDataBytes'>&nbsp;</span>**/
         /**
@@ -23951,10 +23208,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class DataChannelStateWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.DataChannelState);
         toString(): string;
     }
@@ -23973,10 +23226,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class EncryptionModeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.EncryptionMode);
         toString(): string;
     }
@@ -23984,10 +23233,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class EncryptionPolicyWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.EncryptionPolicy);
         toString(): string;
     }
@@ -24001,14 +23246,6 @@ declare namespace fm.icelink {
     */
     class VideoFormat extends fm.icelink.MediaFormat<fm.icelink.VideoFormat> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private static fm_icelink_VideoFormat__fourCCLookup;
-        /**
-        @internal
-        */
-        private static fm_icelink_VideoFormat__reverseFourCCLookup;
         /**<span id='method-fm.icelink.VideoFormat-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -24611,10 +23848,6 @@ declare namespace fm.icelink {
         @return {string}
         */
         toJson(): string;
-        /** @internal */
-        private static __fmicelinkVideoFormatInitialized;
-        /** @internal */
-        static fmicelinkVideoFormatInitialize(): void;
     }
 }
 declare namespace fm.icelink.h264 {
@@ -24651,10 +23884,6 @@ declare namespace fm.icelink.h264 {
 declare namespace fm.icelink {
     class IceConnectionStateWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.IceConnectionState);
         toString(): string;
     }
@@ -24662,10 +23891,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class IceGatheringStateWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.IceGatheringState);
         toString(): string;
     }
@@ -24673,10 +23898,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class IceGatherPolicyWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.IceGatherPolicy);
         toString(): string;
     }
@@ -24690,26 +23911,6 @@ declare namespace fm.icelink {
     */
     class IceServer {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __ipAddress;
-        /**
-        @internal
-        */
-        private __ipAddresses;
-        /**
-        @internal
-        */
-        private _password;
-        /**
-        @internal
-        */
-        private _url;
-        /**
-        @internal
-        */
-        private _username;
         /**<span id='method-fm.icelink.IceServer-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -24763,16 +23964,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         static getDefaultPort(): number;
-        /**
-        @internal
-
-        */
-        private static parseAddress(address, host, port);
-        /**
-        @internal
-
-        */
-        private static parsePort(portString);
         /**<span id='method-fm.icelink.IceServer-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -24807,16 +23998,6 @@ declare namespace fm.icelink {
         @return {string}
         */
         getHost(): string;
-        /**
-        @internal
-
-        */
-        getIPAddress(): string;
-        /**
-        @internal
-
-        */
-        getIPAddresses(): string[];
         /**<span id='method-fm.icelink.IceServer-getIsSecure'>&nbsp;</span>**/
         /**
          <div>
@@ -24907,31 +24088,6 @@ declare namespace fm.icelink {
         @return {string}
         */
         getUsername(): string;
-        /**
-        @internal
-
-        */
-        setIPAddress(value: string): void;
-        /**
-        @internal
-
-        */
-        setIPAddresses(value: string[]): void;
-        /**
-        @internal
-
-        */
-        private setPassword(value);
-        /**
-        @internal
-
-        */
-        private setUrl(value);
-        /**
-        @internal
-
-        */
-        private setUsername(value);
         /**<span id='method-fm.icelink.IceServer-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -25130,26 +24286,7 @@ declare namespace fm.icelink {
     */
     class Layout {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __localFrame;
-        /**
-        @internal
-        */
-        private __remoteFrames;
-        /**
-        @internal
-        */
-        private _height;
-        /**
-        @internal
-        */
-        private _origin;
-        /**
-        @internal
-        */
-        private _width;
+        private fmicelinkLayoutInit();
         constructor();
         /**<span id='method-fm.icelink.Layout-getAllFrames'>&nbsp;</span>**/
         /**
@@ -25303,10 +24440,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class LayoutAlignmentWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.LayoutAlignment);
         toString(): string;
     }
@@ -25314,10 +24447,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class LayoutDirectionWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.LayoutDirection);
         toString(): string;
     }
@@ -25331,22 +24460,7 @@ declare namespace fm.icelink {
     */
     class LayoutFrame {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _height;
-        /**
-        @internal
-        */
-        private _width;
-        /**
-        @internal
-        */
-        private _x;
-        /**
-        @internal
-        */
-        private _y;
+        private fmicelinkLayoutFrameInit();
         /**<span id='method-fm.icelink.LayoutFrame-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -25504,10 +24618,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class LayoutModeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.LayoutMode);
         toString(): string;
     }
@@ -25515,10 +24625,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class LayoutOriginWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.LayoutOrigin);
         toString(): string;
     }
@@ -25526,10 +24632,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class LayoutScaleWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.LayoutScale);
         toString(): string;
     }
@@ -25543,22 +24645,7 @@ declare namespace fm.icelink {
     */
     class LayoutTable {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _cellHeight;
-        /**
-        @internal
-        */
-        private _cellWidth;
-        /**
-        @internal
-        */
-        private _columnCount;
-        /**
-        @internal
-        */
-        private _rowCount;
+        private fmicelinkLayoutTableInit();
         /**<span id='method-fm.icelink.LayoutTable-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -25661,10 +24748,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class LocalMediaStateWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.LocalMediaState);
         toString(): string;
     }
@@ -25678,26 +24761,7 @@ declare namespace fm.icelink {
     */
     class VideoBuffer extends fm.icelink.MediaBuffer<fm.icelink.VideoFormat, fm.icelink.VideoBuffer> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __height;
-        /**
-        @internal
-        */
-        private __isMuted;
-        /**
-        @internal
-        */
-        private __orientation;
-        /**
-        @internal
-        */
-        private __width;
-        /**
-        @internal
-        */
-        private _strides;
+        private fmicelinkVideoBufferInit();
         /**<span id='method-fm.icelink.VideoBuffer-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -25734,11 +24798,6 @@ declare namespace fm.icelink {
         @return {}
         */
         constructor(width: number, height: number, dataBuffers: fm.icelink.DataBuffer[], format: fm.icelink.VideoFormat);
-        /**
-        @internal
-
-        */
-        private static calculateByteCount(format, width, height);
         /**<span id='method-fm.icelink.VideoBuffer-createBlack'>&nbsp;</span>**/
         /**
          <div>
@@ -26045,11 +25104,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.VideoBuffer}
         */
         protected createInstance(): fm.icelink.VideoBuffer;
-        /**
-        @internal
-
-        */
-        private getDefaultStrides(width, format);
         /**<span id='method-fm.icelink.VideoBuffer-getHeight'>&nbsp;</span>**/
         /**
          <div>
@@ -26291,11 +25345,6 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         mute(): boolean;
-        /**
-        @internal
-
-        */
-        private read(rValues, gValues, bValues, aValues);
         /**<span id='method-fm.icelink.VideoBuffer-setHeight'>&nbsp;</span>**/
         /**
          <div>
@@ -26307,11 +25356,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         setHeight(value: number): void;
-        /**
-        @internal
-
-        */
-        setIsMuted(value: boolean): void;
         /**<span id='method-fm.icelink.VideoBuffer-setOrientation'>&nbsp;</span>**/
         /**
          <div>
@@ -26376,31 +25420,9 @@ declare namespace fm.icelink {
         @return {fm.icelink.VideoBuffer}
         */
         toPlanar(): fm.icelink.VideoBuffer;
-        /**
-        @internal
-
-        */
-        private write(rValues, gValues, bValues, aValues);
     }
 }
 declare namespace fm.icelink {
-    /**
-    @internal
-    */
-    class RemoteCandidatePromise extends fm.icelink.Promise<fm.icelink.Candidate> {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private _remoteCandidate;
-        constructor(remoteCandidate: fm.icelink.Candidate);
-        getRemoteCandidate(): fm.icelink.Candidate;
-        /**
-        @internal
-
-        */
-        private setRemoteCandidate(value);
-    }
 }
 declare namespace fm.icelink {
     /**
@@ -26411,14 +25433,6 @@ declare namespace fm.icelink {
     */
     class RemoteMediaCollection extends fm.icelink.Collection<fm.icelink.RemoteMedia, fm.icelink.RemoteMediaCollection> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __lookup;
-        /**
-        @internal
-        */
-        private __lookupLock;
         constructor();
         /**<span id='method-fm.icelink.RemoteMediaCollection-addSuccess'>&nbsp;</span>**/
         /**
@@ -26487,10 +25501,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class NackPolicyWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.NackPolicy);
         toString(): string;
     }
@@ -26498,10 +25508,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class ProtocolTypeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.ProtocolType);
         toString(): string;
     }
@@ -26509,10 +25515,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class RedFecPolicyWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.RedFecPolicy);
         toString(): string;
     }
@@ -26520,10 +25522,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class RembPolicyWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.RembPolicy);
         toString(): string;
     }
@@ -26537,54 +25535,7 @@ declare namespace fm.icelink {
     */
     class RtpPacketHeader {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _contributingSourceCount;
-        /**
-        @internal
-        */
-        private _contributingSources;
-        /**
-        @internal
-        */
-        private _extension;
-        /**
-        @internal
-        */
-        private _headerExtension;
-        /**
-        @internal
-        */
-        private _marker;
-        /**
-        @internal
-        */
-        private _padding;
-        /**
-        @internal
-        */
-        private _paddingLength;
-        /**
-        @internal
-        */
-        private _payloadType;
-        /**
-        @internal
-        */
-        private _sequenceNumber;
-        /**
-        @internal
-        */
-        private _synchronizationSource;
-        /**
-        @internal
-        */
-        private _timestamp;
-        /**
-        @internal
-        */
-        private _version;
+        private fmicelinkRtpPacketHeaderInit();
         /**<span id='method-fm.icelink.RtpPacketHeader-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -26767,11 +25718,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         setContributingSources(value: number[]): void;
-        /**
-        @internal
-
-        */
-        private setExtension(value);
         /**<span id='method-fm.icelink.RtpPacketHeader-setHeaderExtension'>&nbsp;</span>**/
         /**
          <div>
@@ -26805,11 +25751,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         setPadding(value: boolean): void;
-        /**
-        @internal
-
-        */
-        private setPaddingLength(value);
         /**<span id='method-fm.icelink.RtpPacketHeader-setPayloadType'>&nbsp;</span>**/
         /**
          <div>
@@ -26893,33 +25834,10 @@ declare namespace fm.icelink {
     }
 }
 declare namespace fm.icelink.rtp {
-    /**
-    @internal
-    */
-    class RawHeaderExtension implements fm.icelink.IRtpHeaderExtension {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private __buffer;
-        /**
-        @internal
-        */
-        private __id;
-        constructor(id: Uint8Array, buffer: fm.icelink.DataBuffer);
-        fillBuffer(buffer: fm.icelink.DataBuffer, offset: number): void;
-        free(): void;
-        getId(): Uint8Array;
-        getLength(): number;
-    }
 }
 declare namespace fm.icelink {
     class SdesPolicyWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.SdesPolicy);
         toString(): string;
     }
@@ -26966,87 +25884,17 @@ declare namespace fm.icelink.sdp {
     }
 }
 declare namespace fm.icelink.sdp {
-    /**
-    @internal
-    */
-    class AttributeCollection {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private __attributes;
-        constructor();
-        addAttribute(attribute: fm.icelink.sdp.Attribute): void;
-        remove(attribute: fm.icelink.sdp.Attribute): boolean;
-        remove(attributeType: fm.icelink.sdp.AttributeType): boolean;
-        replaceAttribute(attribute: fm.icelink.sdp.Attribute): void;
-        toArray(): fm.icelink.sdp.Attribute[];
-        tryGetAttribute(type: fm.icelink.sdp.AttributeType, attribute: fm.icelink.Holder<fm.icelink.sdp.Attribute>): boolean;
-        tryGetAttributes(type: fm.icelink.sdp.AttributeType, attributes: fm.icelink.Holder<fm.icelink.sdp.Attribute[]>): boolean;
-    }
 }
 declare namespace fm.icelink.sdp {
     class AttributeTypeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.sdp.AttributeType);
         toString(): string;
     }
 }
 declare namespace fm.icelink.sdp {
-    /**
-    @internal
-    */
-    class AttributeRegistration {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private _creationDelegate;
-        /**
-        @internal
-        */
-        private _mediaLevel;
-        /**
-        @internal
-        */
-        private _name;
-        /**
-        @internal
-        */
-        private _sessionLevel;
-        constructor(name: string, sessionLevel: boolean, mediaLevel: boolean, creationDelegate: fm.icelink.IFunction1<fm.icelink.sdp.AttributeCreationArgs, fm.icelink.sdp.Attribute>);
-        getCreationDelegate(): fm.icelink.IFunction1<fm.icelink.sdp.AttributeCreationArgs, fm.icelink.sdp.Attribute>;
-        getMediaLevel(): boolean;
-        getName(): string;
-        getSessionLevel(): boolean;
-        setCreationDelegate(value: fm.icelink.IFunction1<fm.icelink.sdp.AttributeCreationArgs, fm.icelink.sdp.Attribute>): void;
-        setMediaLevel(value: boolean): void;
-        setName(value: string): void;
-        setSessionLevel(value: boolean): void;
-    }
 }
 declare namespace fm.icelink.sdp {
-    /**
-    @internal
-    */
-    class AttributeCreationArgs {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
-        constructor(value: string);
-        getValue(): string;
-        /**
-        @internal
-
-        */
-        private setValue(value);
-    }
 }
 declare namespace fm.icelink.sdp {
     /**
@@ -27057,22 +25905,6 @@ declare namespace fm.icelink.sdp {
     */
     abstract class Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _attributeType;
-        /**
-        @internal
-        */
-        private static fm_icelink_sdp_Attribute__registeredAttributes;
-        /**
-        @internal
-        */
-        private static fm_icelink_sdp_Attribute__registeredAttributesLock;
-        /**
-        @internal
-        */
-        private static fm_icelink_sdp_Attribute__unknownAttributeTypeName;
         constructor();
         /**<span id='method-fm.icelink.sdp.Attribute-createAttribute'>&nbsp;</span>**/
         /**
@@ -27085,191 +25917,6 @@ declare namespace fm.icelink.sdp {
         @return {fm.icelink.sdp.Attribute}
         */
         static createAttribute(name: string, value: string): fm.icelink.sdp.Attribute;
-        /**
-        @internal
-
-        */
-        private static createSDPCandidateAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPCategoryAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPCharacterSetAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPConferenceTypeAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPCryptoAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPExtMapAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPFingerprintAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPFormatParametersAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPFrameRateAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPIceLiteAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPIceMismatchAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPIceOptionsAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPIcePasswordAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPIceUfragAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPInactiveAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPKeywordsAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPLanguageAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPMaxPacketTimeAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPMediaStreamIdAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPMediaStreamIdSemanticAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPOrientationAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPPacketTimeAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPQualityAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPReceiveOnlyAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPRemoteCandidatesAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPRtcpAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPRtcpFeedbackAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPRtcpMuxAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPRtpMapAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPSctpMapAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPSctpMaxMessageSizeAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPSdpLanguageAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPSendOnlyAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPSendReceiveAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPSetupAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPSSRCAttribute(e);
-        /**
-        @internal
-
-        */
-        private static createSDPToolAttribute(e);
         /**<span id='method-fm.icelink.sdp.Attribute-getTypeName'>&nbsp;</span>**/
         /**
          <div>
@@ -27310,16 +25957,6 @@ declare namespace fm.icelink.sdp {
         @return {fm.icelink.sdp.Attribute}
         */
         static parse(s: string): fm.icelink.sdp.Attribute;
-        /**
-        @internal
-
-        */
-        private static registerAttribute(type, name, sessionLevel, mediaLevel, creationDelegate);
-        /**
-        @internal
-
-        */
-        private static unregisterAttribute(type);
         /**<span id='method-fm.icelink.sdp.Attribute-getAttributeType'>&nbsp;</span>**/
         /**
          <div>
@@ -27361,10 +25998,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         toString(): string;
-        /** @internal */
-        private static __fmicelinksdpAttributeInitialized;
-        /** @internal */
-        static fmicelinksdpAttributeInitialize(): void;
     }
 }
 declare namespace fm.icelink.sdp {
@@ -27376,14 +26009,7 @@ declare namespace fm.icelink.sdp {
     */
     class Bandwidth {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _bandwidthType;
-        /**
-        @internal
-        */
-        private _value;
+        private fmicelinksdpBandwidthInit();
         /**<span id='method-fm.icelink.sdp.Bandwidth-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -27425,16 +26051,6 @@ declare namespace fm.icelink.sdp {
         @return {number}
         */
         getValue(): number;
-        /**
-        @internal
-
-        */
-        private setBandwidthType(value);
-        /**
-        @internal
-
-        */
-        private setValue(value);
         /**<span id='method-fm.icelink.sdp.Bandwidth-toString'>&nbsp;</span>**/
         /**
          <div>
@@ -27528,11 +26144,6 @@ declare namespace fm.icelink.sdp {
         @return {fm.icelink.sdp.EncryptionKey}
         */
         static parse(s: string): fm.icelink.sdp.EncryptionKey;
-        /**
-        @internal
-
-        */
-        abstract getMethodAndValue(): string;
         /**<span id='method-fm.icelink.sdp.EncryptionKey-toString'>&nbsp;</span>**/
         /**
          <div>
@@ -27554,10 +26165,6 @@ declare namespace fm.icelink.sdp {
     */
     class Base64EncryptionKey extends fm.icelink.sdp.EncryptionKey {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _encodedEncryptionKey;
         /**<span id='method-fm.icelink.sdp.Base64EncryptionKey-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -27578,16 +26185,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getEncodedEncryptionKey(): string;
-        /**
-        @internal
-
-        */
-        getMethodAndValue(): string;
-        /**
-        @internal
-
-        */
-        private setEncodedEncryptionKey(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -27603,10 +26200,6 @@ declare namespace fm.icelink.sdp {
     */
     class CategoryAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _category;
         /**<span id='method-fm.icelink.sdp.CategoryAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -27647,11 +26240,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getCategory(): string;
-        /**
-        @internal
-
-        */
-        private setCategory(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -27670,10 +26258,6 @@ declare namespace fm.icelink.sdp {
     */
     class CharacterSetAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _characterSet;
         /**<span id='method-fm.icelink.sdp.CharacterSetAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -27714,11 +26298,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getCharacterSet(): string;
-        /**
-        @internal
-
-        */
-        private setCharacterSet(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -27730,10 +26309,6 @@ declare namespace fm.icelink.sdp {
     */
     class ClearEncryptionKey extends fm.icelink.sdp.EncryptionKey {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _encryptionKey;
         /**<span id='method-fm.icelink.sdp.ClearEncryptionKey-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -27754,16 +26329,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getEncryptionKey(): string;
-        /**
-        @internal
-
-        */
-        getMethodAndValue(): string;
-        /**
-        @internal
-
-        */
-        private setEncryptionKey(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -27847,10 +26412,6 @@ declare namespace fm.icelink.sdp {
     */
     class ConferenceTypeAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _conferenceType;
         /**<span id='method-fm.icelink.sdp.ConferenceTypeAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -27891,11 +26452,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getConferenceType(): string;
-        /**
-        @internal
-
-        */
-        private setConferenceType(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -27907,18 +26463,6 @@ declare namespace fm.icelink.sdp {
     */
     class ConnectionData {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _addressType;
-        /**
-        @internal
-        */
-        private _connectionAddress;
-        /**
-        @internal
-        */
-        private _networkType;
         /**<span id='method-fm.icelink.sdp.ConnectionData-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -28042,22 +26586,7 @@ declare namespace fm.icelink.sdp {
     */
     class CryptoAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _cryptoSuite;
-        /**
-        @internal
-        */
-        private _keyParams;
-        /**
-        @internal
-        */
-        private _sessionParams;
-        /**
-        @internal
-        */
-        private _tag;
+        private fmicelinksdpCryptoAttributeInit();
         /**<span id='method-fm.icelink.sdp.CryptoAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -28150,16 +26679,6 @@ declare namespace fm.icelink.sdp {
         @return {number}
         */
         getTag(): number;
-        /**
-        @internal
-
-        */
-        private setCryptoSuite(value);
-        /**
-        @internal
-
-        */
-        private setKeyParams(value);
         /**<span id='method-fm.icelink.sdp.CryptoAttribute-setKeySalt'>&nbsp;</span>**/
         /**
          <div>
@@ -28171,11 +26690,6 @@ declare namespace fm.icelink.sdp {
         @return {fm.icelink.sdp.CryptoAttribute}
         */
         setKeySalt(key: Uint8Array, salt: Uint8Array): fm.icelink.sdp.CryptoAttribute;
-        /**
-        @internal
-
-        */
-        private setSessionParams(value);
         /**<span id='method-fm.icelink.sdp.CryptoAttribute-setTag'>&nbsp;</span>**/
         /**
          <div>
@@ -28369,14 +26883,7 @@ declare namespace fm.icelink.sdp {
     */
     class FormatParametersAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _format;
-        /**
-        @internal
-        */
-        private _formatSpecificParameters;
+        private fmicelinksdpFormatParametersAttributeInit();
         /**<span id='method-fm.icelink.sdp.FormatParametersAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -28469,11 +26976,6 @@ declare namespace fm.icelink.sdp {
         @return {void}
         */
         serializeFormatSpecificParameters(map: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        private setFormat(value);
         /**<span id='method-fm.icelink.sdp.FormatParametersAttribute-setFormatSpecificParameter'>&nbsp;</span>**/
         /**
          <div>
@@ -28485,11 +26987,6 @@ declare namespace fm.icelink.sdp {
         @return {void}
         */
         setFormatSpecificParameter(key: string, value: string): void;
-        /**
-        @internal
-
-        */
-        private setFormatSpecificParameters(value);
         /**<span id='method-fm.icelink.sdp.FormatParametersAttribute-tryGetFormatSpecificParameter'>&nbsp;</span>**/
         /**
          <div>
@@ -28527,10 +27024,6 @@ declare namespace fm.icelink.sdp {
     */
     class FrameRateAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _frameRate;
         /**<span id='method-fm.icelink.sdp.FrameRateAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -28571,11 +27064,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getFrameRate(): string;
-        /**
-        @internal
-
-        */
-        private setFrameRate(value);
     }
 }
 declare namespace fm.icelink.sdp.ice {
@@ -28589,46 +27077,7 @@ declare namespace fm.icelink.sdp.ice {
     */
     class CandidateAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __candidateType;
-        /**
-        @internal
-        */
-        private __connectionAddress;
-        /**
-        @internal
-        */
-        private __foundation;
-        /**
-        @internal
-        */
-        private _componentId;
-        /**
-        @internal
-        */
-        private _extensions;
-        /**
-        @internal
-        */
-        private _port;
-        /**
-        @internal
-        */
-        private _priority;
-        /**
-        @internal
-        */
-        private _protocol;
-        /**
-        @internal
-        */
-        private _relatedAddress;
-        /**
-        @internal
-        */
-        private _relatedPort;
+        private fmicelinksdpiceCandidateAttributeInit();
         constructor();
         /**<span id='method-fm.icelink.sdp.ice.CandidateAttribute-constructor'>&nbsp;</span>**/
         /**
@@ -28816,11 +27265,6 @@ declare namespace fm.icelink.sdp.ice {
         @return {void}
         */
         setConnectionAddress(value: string): void;
-        /**
-        @internal
-
-        */
-        private setExtensions(value);
         /**<span id='method-fm.icelink.sdp.ice.CandidateAttribute-setFoundation'>&nbsp;</span>**/
         /**
          <div>
@@ -28950,14 +27394,6 @@ declare namespace fm.icelink.sdp.ice {
     */
     class FingerprintAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _fingerprint;
-        /**
-        @internal
-        */
-        private _hashFunction;
         /**<span id='method-fm.icelink.sdp.ice.FingerprintAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -29010,16 +27446,6 @@ declare namespace fm.icelink.sdp.ice {
         @return {string}
         */
         getHashFunction(): string;
-        /**
-        @internal
-
-        */
-        private setFingerprint(value);
-        /**
-        @internal
-
-        */
-        private setHashFunction(value);
     }
 }
 declare namespace fm.icelink.sdp.ice {
@@ -29111,10 +27537,6 @@ declare namespace fm.icelink.sdp.ice {
 declare namespace fm.icelink.sdp.ice {
     class OptionTagTypeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.sdp.ice.OptionTagType);
         toString(): string;
     }
@@ -29128,10 +27550,6 @@ declare namespace fm.icelink.sdp.ice {
     */
     abstract class OptionTag {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _type;
         constructor();
         /**<span id='method-fm.icelink.sdp.ice.OptionTag-getTrickle'>&nbsp;</span>**/
         /**
@@ -29194,10 +27612,6 @@ declare namespace fm.icelink.sdp.ice {
     */
     class UnknownIceOptionTag extends fm.icelink.sdp.ice.OptionTag {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _tagString;
         /**<span id='method-fm.icelink.sdp.ice.UnknownIceOptionTag-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -29219,11 +27633,6 @@ declare namespace fm.icelink.sdp.ice {
         @return {string}
         */
         getTagString(): string;
-        /**
-        @internal
-
-        */
-        private setTagString(value);
         /**<span id='method-fm.icelink.sdp.ice.UnknownIceOptionTag-toString'>&nbsp;</span>**/
         /**
          <div>
@@ -29277,10 +27686,6 @@ declare namespace fm.icelink.sdp.ice {
     */
     class OptionsAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _tags;
         /**<span id='method-fm.icelink.sdp.ice.OptionsAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -29332,11 +27737,6 @@ declare namespace fm.icelink.sdp.ice {
         @return {boolean}
         */
         getTrickleOptionSet(): boolean;
-        /**
-        @internal
-
-        */
-        private setTags(value);
         /**<span id='method-fm.icelink.sdp.ice.OptionsAttribute-setTrickleOptionSet'>&nbsp;</span>**/
         /**
          <div>
@@ -29360,10 +27760,6 @@ declare namespace fm.icelink.sdp.ice {
     */
     class PasswordAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _password;
         /**<span id='method-fm.icelink.sdp.ice.PasswordAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -29424,11 +27820,6 @@ declare namespace fm.icelink.sdp.ice {
         @return {string}
         */
         getPassword(): string;
-        /**
-        @internal
-
-        */
-        private setPassword(value);
     }
 }
 declare namespace fm.icelink.sdp.ice {
@@ -29440,18 +27831,7 @@ declare namespace fm.icelink.sdp.ice {
     */
     class RemoteCandidate {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _componentId;
-        /**
-        @internal
-        */
-        private _connectionAddress;
-        /**
-        @internal
-        */
-        private _port;
+        private fmicelinksdpiceRemoteCandidateInit();
         /**<span id='method-fm.icelink.sdp.ice.RemoteCandidate-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -29504,21 +27884,6 @@ declare namespace fm.icelink.sdp.ice {
         @return {number}
         */
         getPort(): number;
-        /**
-        @internal
-
-        */
-        private setComponentId(value);
-        /**
-        @internal
-
-        */
-        private setConnectionAddress(value);
-        /**
-        @internal
-
-        */
-        private setPort(value);
         /**<span id='method-fm.icelink.sdp.ice.RemoteCandidate-toString'>&nbsp;</span>**/
         /**
          <div>
@@ -29545,10 +27910,6 @@ declare namespace fm.icelink.sdp.ice {
     */
     class RemoteCandidatesAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _candidates;
         /**<span id='method-fm.icelink.sdp.ice.RemoteCandidatesAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -29590,11 +27951,6 @@ declare namespace fm.icelink.sdp.ice {
         @return {fm.icelink.sdp.ice.RemoteCandidate[]}
         */
         getCandidates(): fm.icelink.sdp.ice.RemoteCandidate[];
-        /**
-        @internal
-
-        */
-        private setCandidates(value);
     }
 }
 declare namespace fm.icelink.sdp.ice {
@@ -29638,10 +27994,6 @@ declare namespace fm.icelink.sdp.ice {
     */
     class UfragAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _ufrag;
         /**<span id='method-fm.icelink.sdp.ice.UfragAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -29702,11 +28054,6 @@ declare namespace fm.icelink.sdp.ice {
         @return {string}
         */
         getUfrag(): string;
-        /**
-        @internal
-
-        */
-        private setUfrag(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -29782,10 +28129,6 @@ declare namespace fm.icelink.sdp {
     */
     class KeywordsAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _keywords;
         /**<span id='method-fm.icelink.sdp.KeywordsAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -29826,11 +28169,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getKeywords(): string;
-        /**
-        @internal
-
-        */
-        private setKeywords(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -29851,10 +28189,6 @@ declare namespace fm.icelink.sdp {
     */
     class LanguageAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _languageTag;
         /**<span id='method-fm.icelink.sdp.LanguageAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -29899,11 +28233,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getLanguageTag(): string;
-        /**
-        @internal
-
-        */
-        private setLanguageTag(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -29924,10 +28253,7 @@ declare namespace fm.icelink.sdp {
     */
     class MaxPacketTimeAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _maxPacketTime;
+        private fmicelinksdpMaxPacketTimeAttributeInit();
         /**<span id='method-fm.icelink.sdp.MaxPacketTimeAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -29971,11 +28297,6 @@ declare namespace fm.icelink.sdp {
         @return {number}
         */
         getMaxPacketTime(): number;
-        /**
-        @internal
-
-        */
-        private setMaxPacketTime(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -29987,30 +28308,7 @@ declare namespace fm.icelink.sdp {
     */
     class Media {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _formatDescription;
-        /**
-        @internal
-        */
-        private _mediaType;
-        /**
-        @internal
-        */
-        private _numberOfPorts;
-        /**
-        @internal
-        */
-        private _transportPort;
-        /**
-        @internal
-        */
-        private _transportProtocol;
-        /**
-        @internal
-        */
-        private static fm_icelink_sdp_Media__defaultNumberOfPorts;
+        private fmicelinksdpMediaInit();
         /**<span id='method-fm.icelink.sdp.Media-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -30171,10 +28469,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         toString(): string;
-        /** @internal */
-        private static __fmicelinksdpMediaInitialized;
-        /** @internal */
-        static fmicelinksdpMediaInitialize(): void;
     }
 }
 declare namespace fm.icelink.sdp {
@@ -30186,34 +28480,6 @@ declare namespace fm.icelink.sdp {
     */
     class MediaDescription {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __bandwidths;
-        /**
-        @internal
-        */
-        private __mediaAttributes;
-        /**
-        @internal
-        */
-        private __orphanedAttributes;
-        /**
-        @internal
-        */
-        private _connectionData;
-        /**
-        @internal
-        */
-        private _encryptionKey;
-        /**
-        @internal
-        */
-        private _media;
-        /**
-        @internal
-        */
-        private _mediaTitle;
         /**<span id='method-fm.icelink.sdp.MediaDescription-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -30224,61 +28490,6 @@ declare namespace fm.icelink.sdp {
         @return {}
         */
         constructor(media: fm.icelink.sdp.Media);
-        /**
-        @internal
-
-        */
-        static getCryptoAttributesFromCollection(attributes: fm.icelink.sdp.AttributeCollection): fm.icelink.sdp.CryptoAttribute[];
-        /**
-        @internal
-
-        */
-        static getFingerprintAttributeFromCollection(attributes: fm.icelink.sdp.AttributeCollection): fm.icelink.sdp.ice.FingerprintAttribute;
-        /**
-        @internal
-
-        */
-        static getIceOptionAttributesFromCollection(attributes: fm.icelink.sdp.AttributeCollection): fm.icelink.sdp.Attribute[];
-        /**
-        @internal
-
-        */
-        static getIcePasswordAttributeFromCollection(attributes: fm.icelink.sdp.AttributeCollection): fm.icelink.sdp.ice.PasswordAttribute;
-        /**
-        @internal
-
-        */
-        static getIceUfragAttributeFromCollection(attributes: fm.icelink.sdp.AttributeCollection): fm.icelink.sdp.ice.UfragAttribute;
-        /**
-        @internal
-
-        */
-        static getQualityAttributeFromCollection(attributes: fm.icelink.sdp.AttributeCollection): fm.icelink.sdp.QualityAttribute;
-        /**
-        @internal
-
-        */
-        static getRtcpMultiplexingSupportFromCollection(attributes: fm.icelink.sdp.AttributeCollection): boolean;
-        /**
-        @internal
-
-        */
-        static getRtpExtMapAttributesFromCollection(attributes: fm.icelink.sdp.AttributeCollection): fm.icelink.sdp.Attribute[];
-        /**
-        @internal
-
-        */
-        static getSetupAttributeFromCollection(attributes: fm.icelink.sdp.AttributeCollection): fm.icelink.sdp.SetupAttribute;
-        /**
-        @internal
-
-        */
-        static getStreamDirectionFromCollection(attributes: fm.icelink.sdp.AttributeCollection): fm.icelink.StreamDirection;
-        /**
-        @internal
-
-        */
-        static getSupportsIceFromCollection(attributes: fm.icelink.sdp.AttributeCollection): boolean;
         /**<span id='method-fm.icelink.sdp.MediaDescription-parse'>&nbsp;</span>**/
         /**
          <div>
@@ -30819,11 +29030,6 @@ declare namespace fm.icelink.sdp {
         @return {boolean}
         */
         insertRembAttribute(formatName: string, clockRate: number, formatParameters: string): boolean;
-        /**
-        @internal
-
-        */
-        private isMediaType(mediaType);
         /**<span id='method-fm.icelink.sdp.MediaDescription-removeBandwidth'>&nbsp;</span>**/
         /**
          <div>
@@ -30866,11 +29072,6 @@ declare namespace fm.icelink.sdp {
         @return {void}
         */
         setEncryptionKey(value: fm.icelink.sdp.EncryptionKey): void;
-        /**
-        @internal
-
-        */
-        private setMedia(value);
         /**<span id='method-fm.icelink.sdp.MediaDescription-setMediaTitle'>&nbsp;</span>**/
         /**
          <div>
@@ -30975,10 +29176,6 @@ declare namespace fm.icelink.sdp {
     */
     class MediaStreamIdAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _identificationTag;
         /**<span id='method-fm.icelink.sdp.MediaStreamIdAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -31019,20 +29216,11 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getIdentificationTag(): string;
-        /**
-        @internal
-
-        */
-        private setIdentificationTag(value);
     }
 }
 declare namespace fm.icelink.sdp {
     class MediaStreamIdSemanticTokenWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.sdp.MediaStreamIdSemanticToken);
         toString(): string;
     }
@@ -31087,14 +29275,6 @@ declare namespace fm.icelink.sdp {
     */
     class MediaStreamIdSemanticAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _msIdList;
-        /**
-        @internal
-        */
-        private _semanticToken;
         /**<span id='method-fm.icelink.sdp.MediaStreamIdSemanticAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -31126,16 +29306,6 @@ declare namespace fm.icelink.sdp {
         @return {fm.icelink.sdp.MediaStreamIdSemanticAttribute}
         */
         static fromAttributeValue(value: string): fm.icelink.sdp.MediaStreamIdSemanticAttribute;
-        /**
-        @internal
-
-        */
-        private static getSemanticTokenFromString(semanticToken);
-        /**
-        @internal
-
-        */
-        private static getSemanticTokenString(semanticToken);
         /**<span id='method-fm.icelink.sdp.MediaStreamIdSemanticAttribute-getAttributeValue'>&nbsp;</span>**/
         /**
          <div>
@@ -31163,11 +29333,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getMsIdList(): string;
-        /**
-        @internal
-
-        */
-        private getSemanticToken();
         /**<span id='method-fm.icelink.sdp.MediaStreamIdSemanticAttribute-setMsIdList'>&nbsp;</span>**/
         /**
          <div>
@@ -31186,11 +29351,6 @@ declare namespace fm.icelink.sdp {
         @return {void}
         */
         setMsIdList(value: string): void;
-        /**
-        @internal
-
-        */
-        private setSemanticToken(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -31283,62 +29443,6 @@ declare namespace fm.icelink.sdp {
     */
     class Message {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __bandwidths;
-        /**
-        @internal
-        */
-        private __mediaDescriptions;
-        /**
-        @internal
-        */
-        private __sessionAttributes;
-        /**
-        @internal
-        */
-        private __timeDescriptions;
-        /**
-        @internal
-        */
-        private _connectionData;
-        /**
-        @internal
-        */
-        private _emailAddress;
-        /**
-        @internal
-        */
-        private _encryptionKey;
-        /**
-        @internal
-        */
-        private _origin;
-        /**
-        @internal
-        */
-        private _phoneNumber;
-        /**
-        @internal
-        */
-        private _protocolVersion;
-        /**
-        @internal
-        */
-        private _sessionInformation;
-        /**
-        @internal
-        */
-        private _sessionName;
-        /**
-        @internal
-        */
-        private _timeZoneAdjustments;
-        /**
-        @internal
-        */
-        private _uri;
         /**<span id='method-fm.icelink.sdp.Message-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -31422,11 +29526,6 @@ declare namespace fm.icelink.sdp {
         @return {void}
         */
         addTimeDescription(timeDescription: fm.icelink.sdp.TimeDescription): void;
-        /**
-        @internal
-
-        */
-        private findMediaDescriptions(mediaType);
         /**<span id='method-fm.icelink.sdp.Message-getApplicationDescription'>&nbsp;</span>**/
         /**
          <div>
@@ -31507,11 +29606,6 @@ declare namespace fm.icelink.sdp {
         @return {fm.icelink.sdp.EncryptionKey}
         */
         getEncryptionKey(): fm.icelink.sdp.EncryptionKey;
-        /**
-        @internal
-
-        */
-        private getFirstMediaDescription(mediaDescriptions);
         /**<span id='method-fm.icelink.sdp.Message-getMediaDescriptions'>&nbsp;</span>**/
         /**
          <div>
@@ -31852,11 +29946,6 @@ declare namespace fm.icelink.sdp {
         @return {void}
         */
         setEncryptionKey(value: fm.icelink.sdp.EncryptionKey): void;
-        /**
-        @internal
-
-        */
-        private setOrigin(value);
         /**<span id='method-fm.icelink.sdp.Message-setPhoneNumber'>&nbsp;</span>**/
         /**
          <div>
@@ -31868,11 +29957,6 @@ declare namespace fm.icelink.sdp {
         @return {void}
         */
         setPhoneNumber(value: string): void;
-        /**
-        @internal
-
-        */
-        private setProtocolVersion(value);
         /**<span id='method-fm.icelink.sdp.Message-setSessionInformation'>&nbsp;</span>**/
         /**
          <div>
@@ -31884,11 +29968,6 @@ declare namespace fm.icelink.sdp {
         @return {void}
         */
         setSessionInformation(value: string): void;
-        /**
-        @internal
-
-        */
-        private setSessionName(value);
         /**<span id='method-fm.icelink.sdp.Message-setTimeZoneAdjustments'>&nbsp;</span>**/
         /**
          <div>
@@ -32008,10 +30087,6 @@ declare namespace fm.icelink.sdp {
     */
     class OrientationAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _orientation;
         /**<span id='method-fm.icelink.sdp.OrientationAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -32052,11 +30127,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getOrientation(): string;
-        /**
-        @internal
-
-        */
-        private setOrientation(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -32068,30 +30138,7 @@ declare namespace fm.icelink.sdp {
     */
     class Origin {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _addressType;
-        /**
-        @internal
-        */
-        private _networkType;
-        /**
-        @internal
-        */
-        private _sessionId;
-        /**
-        @internal
-        */
-        private _sessionVersion;
-        /**
-        @internal
-        */
-        private _unicastAddress;
-        /**
-        @internal
-        */
-        private _username;
+        private fmicelinksdpOriginInit();
         /**<span id='method-fm.icelink.sdp.Origin-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -32123,16 +30170,6 @@ declare namespace fm.icelink.sdp {
         @return {fm.icelink.sdp.Origin}
         */
         static parse(s: string): fm.icelink.sdp.Origin;
-        /**
-        @internal
-
-        */
-        private generateSessionId();
-        /**
-        @internal
-
-        */
-        private generateSessionVersion();
         /**<span id='method-fm.icelink.sdp.Origin-getAddressType'>&nbsp;</span>**/
         /**
          <div>
@@ -32286,10 +30323,7 @@ declare namespace fm.icelink.sdp {
     */
     class PacketTimeAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _packetTime;
+        private fmicelinksdpPacketTimeAttributeInit();
         /**<span id='method-fm.icelink.sdp.PacketTimeAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -32333,11 +30367,6 @@ declare namespace fm.icelink.sdp {
         @return {number}
         */
         getPacketTime(): number;
-        /**
-        @internal
-
-        */
-        private setPacketTime(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -32350,11 +30379,6 @@ declare namespace fm.icelink.sdp {
     class PromptEncryptionKey extends fm.icelink.sdp.EncryptionKey {
         getTypeString(): string;
         constructor();
-        /**
-        @internal
-
-        */
-        getMethodAndValue(): string;
     }
 }
 declare namespace fm.icelink.sdp {
@@ -32379,10 +30403,7 @@ declare namespace fm.icelink.sdp {
     */
     class QualityAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _quality;
+        private fmicelinksdpQualityAttributeInit();
         /**<span id='method-fm.icelink.sdp.QualityAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -32424,11 +30445,6 @@ declare namespace fm.icelink.sdp {
         @return {number}
         */
         getQuality(): number;
-        /**
-        @internal
-
-        */
-        private setQuality(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -32496,18 +30512,6 @@ declare namespace fm.icelink.sdp {
     */
     class RepeatTime {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __offsets;
-        /**
-        @internal
-        */
-        private _activeDuration;
-        /**
-        @internal
-        */
-        private _repeatInterval;
         /**<span id='method-fm.icelink.sdp.RepeatTime-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -32591,16 +30595,6 @@ declare namespace fm.icelink.sdp {
         @return {boolean}
         */
         removeOffset(offset: fm.icelink.TimeSpan): boolean;
-        /**
-        @internal
-
-        */
-        private setActiveDuration(value);
-        /**
-        @internal
-
-        */
-        private setRepeatInterval(value);
         /**<span id='method-fm.icelink.sdp.RepeatTime-toString'>&nbsp;</span>**/
         /**
          <div>
@@ -32624,22 +30618,7 @@ declare namespace fm.icelink.sdp.rtcp {
     */
     class Attribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _addressType;
-        /**
-        @internal
-        */
-        private _connectionAddress;
-        /**
-        @internal
-        */
-        private _networkType;
-        /**
-        @internal
-        */
-        private _port;
+        private fmicelinksdprtcpAttributeInit();
         constructor();
         /**<span id='method-fm.icelink.sdp.rtcp.Attribute-constructor'>&nbsp;</span>**/
         /**
@@ -32712,26 +30691,6 @@ declare namespace fm.icelink.sdp.rtcp {
         @return {number}
         */
         getPort(): number;
-        /**
-        @internal
-
-        */
-        private setAddressType(value);
-        /**
-        @internal
-
-        */
-        private setConnectionAddress(value);
-        /**
-        @internal
-
-        */
-        private setNetworkType(value);
-        /**
-        @internal
-
-        */
-        private setPort(value);
         /**<span id='method-fm.icelink.sdp.rtcp.Attribute-update'>&nbsp;</span>**/
         /**
          <div>
@@ -32755,18 +30714,7 @@ declare namespace fm.icelink.sdp.rtcp {
     */
     class FeedbackAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _payloadType;
-        /**
-        @internal
-        */
-        private _subType;
-        /**
-        @internal
-        */
-        private _type;
+        private fmicelinksdprtcpFeedbackAttributeInit();
         constructor();
         /**<span id='method-fm.icelink.sdp.rtcp.FeedbackAttribute-constructor'>&nbsp;</span>**/
         /**
@@ -33134,22 +31082,7 @@ declare namespace fm.icelink.sdp.rtp {
     */
     class ExtMapAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __direction;
-        /**
-        @internal
-        */
-        private _extensionAttributes;
-        /**
-        @internal
-        */
-        private _id;
-        /**
-        @internal
-        */
-        private _uri;
+        private fmicelinksdprtpExtMapAttributeInit();
         /**<span id='method-fm.icelink.sdp.rtp.ExtMapAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -33255,40 +31188,9 @@ declare namespace fm.icelink.sdp.rtp {
         @return {void}
         */
         setExtensionAttributes(value: string): void;
-        /**
-        @internal
-
-        */
-        private setId(value);
-        /**
-        @internal
-
-        */
-        private setUri(value);
     }
 }
 declare namespace fm.icelink.sdp.rtp {
-    /**
-    @internal
-    */
-    class FeedbackAttributeCollection {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private __attributes;
-        constructor();
-        addAttribute(attribute: fm.icelink.sdp.rtcp.FeedbackAttribute): boolean;
-        /**
-        @internal
-
-        */
-        private calculateFeedbackAttributeKey(payloadType, feedbackAttributeType, subType);
-        clear(): void;
-        remove(attribute: fm.icelink.sdp.rtcp.FeedbackAttribute): boolean;
-        toArray(): fm.icelink.sdp.rtcp.FeedbackAttribute[];
-        tryGetFeedbackAttribute(payloadType: number, feedbackAttributeType: string, subType: string, feedbackAttribute: fm.icelink.Holder<fm.icelink.sdp.rtcp.FeedbackAttribute>): boolean;
-    }
 }
 declare namespace fm.icelink.sdp.rtp {
     /**
@@ -33303,30 +31205,7 @@ declare namespace fm.icelink.sdp.rtp {
     */
     class MapAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __relatedRtcpFeedbackAttributes;
-        /**
-        @internal
-        */
-        private _clockRate;
-        /**
-        @internal
-        */
-        private _formatName;
-        /**
-        @internal
-        */
-        private _formatParameters;
-        /**
-        @internal
-        */
-        private _payloadType;
-        /**
-        @internal
-        */
-        private _relatedFormatParametersAttribute;
+        private fmicelinksdprtpMapAttributeInit();
         /**<span id='method-fm.icelink.sdp.rtp.MapAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -33548,26 +31427,6 @@ declare namespace fm.icelink.sdp.rtp {
         @return {void}
         */
         resetRtcpFeedbackAttributes(attributes: fm.icelink.sdp.rtcp.FeedbackAttribute[]): void;
-        /**
-        @internal
-
-        */
-        private setClockRate(value);
-        /**
-        @internal
-
-        */
-        private setFormatName(value);
-        /**
-        @internal
-
-        */
-        private setFormatParameters(value);
-        /**
-        @internal
-
-        */
-        private setPayloadType(value);
         /**<span id='method-fm.icelink.sdp.rtp.MapAttribute-setRelatedFormatParametersAttribute'>&nbsp;</span>**/
         /**
          <div>
@@ -33739,18 +31598,7 @@ declare namespace fm.icelink.sdp.rtp {
     */
     class SsrcAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _name;
-        /**
-        @internal
-        */
-        private _synchronizationSource;
-        /**
-        @internal
-        */
-        private _value;
+        private fmicelinksdprtpSsrcAttributeInit();
         /**<span id='method-fm.icelink.sdp.rtp.SsrcAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -33825,16 +31673,6 @@ declare namespace fm.icelink.sdp.rtp {
         @return {string}
         */
         getValue(): string;
-        /**
-        @internal
-
-        */
-        private setName(value);
-        /**
-        @internal
-
-        */
-        private setSynchronizationSource(value);
         /**<span id='method-fm.icelink.sdp.rtp.SsrcAttribute-setValue'>&nbsp;</span>**/
         /**
          <div>
@@ -33934,18 +31772,7 @@ declare namespace fm.icelink.sdp.sctp {
     */
     class MapAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _port;
-        /**
-        @internal
-        */
-        private _sctpProtocol;
-        /**
-        @internal
-        */
-        private _streams;
+        private fmicelinksdpsctpMapAttributeInit();
         /**<span id='method-fm.icelink.sdp.sctp.MapAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -34009,21 +31836,6 @@ declare namespace fm.icelink.sdp.sctp {
         @return {number}
         */
         getStreams(): number;
-        /**
-        @internal
-
-        */
-        private setPort(value);
-        /**
-        @internal
-
-        */
-        private setSctpProtocol(value);
-        /**
-        @internal
-
-        */
-        private setStreams(value);
     }
 }
 declare namespace fm.icelink.sdp.sctp {
@@ -34038,10 +31850,7 @@ declare namespace fm.icelink.sdp.sctp {
     */
     class MaxMessageSizeAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _maxMessageSize;
+        private fmicelinksdpsctpMaxMessageSizeAttributeInit();
         /**<span id='method-fm.icelink.sdp.sctp.MaxMessageSizeAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -34083,11 +31892,6 @@ declare namespace fm.icelink.sdp.sctp {
         @return {number}
         */
         getMaxMessageSize(): number;
-        /**
-        @internal
-
-        */
-        private setMaxMessageSize(value);
     }
 }
 declare namespace fm.icelink.sdp.sctp {
@@ -34197,10 +32001,7 @@ declare namespace fm.icelink.sdp.sctp {
     */
     class PortAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _port;
+        private fmicelinksdpsctpPortAttributeInit();
         /**<span id='method-fm.icelink.sdp.sctp.PortAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -34242,11 +32043,6 @@ declare namespace fm.icelink.sdp.sctp {
         @return {number}
         */
         getPort(): number;
-        /**
-        @internal
-
-        */
-        private setPort(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -34267,10 +32063,6 @@ declare namespace fm.icelink.sdp {
     */
     class SdpLanguageAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _languageTag;
         /**<span id='method-fm.icelink.sdp.SdpLanguageAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -34317,11 +32109,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getLanguageTag(): string;
-        /**
-        @internal
-
-        */
-        private setLanguageTag(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -34492,10 +32279,6 @@ declare namespace fm.icelink.sdp {
     */
     class SetupAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _setup;
         /**<span id='method-fm.icelink.sdp.SetupAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -34536,11 +32319,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getSetup(): string;
-        /**
-        @internal
-
-        */
-        private setSetup(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -34552,14 +32330,6 @@ declare namespace fm.icelink.sdp {
     */
     class TimeDescription {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __repeatTimes;
-        /**
-        @internal
-        */
-        private _timing;
         /**<span id='method-fm.icelink.sdp.TimeDescription-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -34620,11 +32390,6 @@ declare namespace fm.icelink.sdp {
         @return {boolean}
         */
         removeRepeatTime(repeatTime: fm.icelink.sdp.RepeatTime): boolean;
-        /**
-        @internal
-
-        */
-        private setTiming(value);
         /**<span id='method-fm.icelink.sdp.TimeDescription-toString'>&nbsp;</span>**/
         /**
          <div>
@@ -34646,14 +32411,7 @@ declare namespace fm.icelink.sdp {
     */
     class TimeZone {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _adjustmentTime;
-        /**
-        @internal
-        */
-        private _offset;
+        private fmicelinksdpTimeZoneInit();
         /**<span id='method-fm.icelink.sdp.TimeZone-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -34695,16 +32453,6 @@ declare namespace fm.icelink.sdp {
         @return {fm.icelink.TimeSpan}
         */
         getOffset(): fm.icelink.TimeSpan;
-        /**
-        @internal
-
-        */
-        private setAdjustmentTime(value);
-        /**
-        @internal
-
-        */
-        private setOffset(value);
         /**<span id='method-fm.icelink.sdp.TimeZone-toString'>&nbsp;</span>**/
         /**
          <div>
@@ -34726,10 +32474,6 @@ declare namespace fm.icelink.sdp {
     */
     class TimeZones {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __values;
         /**<span id='method-fm.icelink.sdp.TimeZones-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -34801,14 +32545,7 @@ declare namespace fm.icelink.sdp {
     */
     class Timing {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _startTime;
-        /**
-        @internal
-        */
-        private _stopTime;
+        private fmicelinksdpTimingInit();
         /**<span id='method-fm.icelink.sdp.Timing-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -34905,10 +32642,6 @@ declare namespace fm.icelink.sdp {
     */
     class ToolAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _tool;
         /**<span id='method-fm.icelink.sdp.ToolAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -34951,11 +32684,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getTool(): string;
-        /**
-        @internal
-
-        */
-        private setTool(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -35000,14 +32728,6 @@ declare namespace fm.icelink.sdp {
     */
     class UnknownAttribute extends fm.icelink.sdp.Attribute {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _name;
-        /**
-        @internal
-        */
-        private _value;
         /**<span id='method-fm.icelink.sdp.UnknownAttribute-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -35049,16 +32769,6 @@ declare namespace fm.icelink.sdp {
         @return {string}
         */
         getValue(): string;
-        /**
-        @internal
-
-        */
-        private setName(value);
-        /**
-        @internal
-
-        */
-        private setValue(value);
     }
 }
 declare namespace fm.icelink.sdp {
@@ -35070,10 +32780,6 @@ declare namespace fm.icelink.sdp {
     */
     class UriEncryptionKey extends fm.icelink.sdp.EncryptionKey {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _uri;
         /**<span id='method-fm.icelink.sdp.UriEncryptionKey-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -35084,11 +32790,6 @@ declare namespace fm.icelink.sdp {
         @return {}
         */
         constructor(uri: fm.icelink.Uri);
-        /**
-        @internal
-
-        */
-        getMethodAndValue(): string;
         /**<span id='method-fm.icelink.sdp.UriEncryptionKey-getUri'>&nbsp;</span>**/
         /**
          <div>
@@ -35099,22 +32800,9 @@ declare namespace fm.icelink.sdp {
         @return {fm.icelink.Uri}
         */
         getUri(): fm.icelink.Uri;
-        /**
-        @internal
-
-        */
-        private setUri(value);
     }
 }
 declare namespace fm.icelink.sdp {
-    /**
-    @internal
-    */
-    class Utility {
-        getTypeString(): string;
-        constructor();
-        static splitAndClean(s: string): string[];
-    }
 }
 declare namespace fm.icelink {
     /**
@@ -35125,22 +32813,7 @@ declare namespace fm.icelink {
     */
     class SessionDescription {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _renegotiation;
-        /**
-        @internal
-        */
-        private _sdpMessage;
-        /**
-        @internal
-        */
-        private _tieBreaker;
-        /**
-        @internal
-        */
-        private _type;
+        private fmicelinkSessionDescriptionInit();
         constructor();
         /**<span id='method-fm.icelink.SessionDescription-fromJson'>&nbsp;</span>**/
         /**
@@ -35204,11 +32877,6 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         getIsOffer(): boolean;
-        /**
-        @internal
-
-        */
-        getRenegotiation(): boolean;
         /**<span id='method-fm.icelink.SessionDescription-getSdpMessage'>&nbsp;</span>**/
         /**
          <div>
@@ -35259,11 +32927,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.SessionDescriptionType}
         */
         getType(): fm.icelink.SessionDescriptionType;
-        /**
-        @internal
-
-        */
-        setRenegotiation(value: boolean): void;
         /**<span id='method-fm.icelink.SessionDescription-setSdpMessage'>&nbsp;</span>**/
         /**
          <div>
@@ -35312,10 +32975,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class SessionDescriptionTypeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.SessionDescriptionType);
         toString(): string;
     }
@@ -35329,14 +32988,7 @@ declare namespace fm.icelink {
     */
     class Size {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _height;
-        /**
-        @internal
-        */
-        private _width;
+        private fmicelinkSizeInit();
         /**<span id='method-fm.icelink.Size-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -35391,16 +33043,6 @@ declare namespace fm.icelink {
         @return {number}
         */
         getWidth(): number;
-        /**
-        @internal
-
-        */
-        private setHeight(value);
-        /**
-        @internal
-
-        */
-        private setWidth(value);
         /**<span id='method-fm.icelink.Size-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -35417,10 +33059,6 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class SignallingStateWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.SignallingState);
         toString(): string;
     }
@@ -35434,14 +33072,6 @@ declare namespace fm.icelink {
     */
     class SinkOutput {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _id;
-        /**
-        @internal
-        */
-        private _name;
         constructor();
         /**<span id='method-fm.icelink.SinkOutput-constructor'>&nbsp;</span>**/
         /**
@@ -35514,16 +33144,6 @@ declare namespace fm.icelink {
         @return {string}
         */
         getName(): string;
-        /**
-        @internal
-
-        */
-        private setId(value);
-        /**
-        @internal
-
-        */
-        private setName(value);
         /**<span id='method-fm.icelink.SinkOutput-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -35555,14 +33175,6 @@ declare namespace fm.icelink {
     */
     class SourceInput {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _id;
-        /**
-        @internal
-        */
-        private _name;
         constructor();
         /**<span id='method-fm.icelink.SourceInput-constructor'>&nbsp;</span>**/
         /**
@@ -35635,16 +33247,28 @@ declare namespace fm.icelink {
         @return {string}
         */
         getName(): string;
+        /**<span id='method-fm.icelink.SourceInput-setId'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the identifier.
+         </div>
 
+
+        @param {string} value
+        @return {void}
         */
-        private setId(value);
+        setId(value: string): void;
+        /**<span id='method-fm.icelink.SourceInput-setName'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the name.
+         </div>
 
+
+        @param {string} value
+        @return {void}
         */
-        private setName(value);
+        setName(value: string): void;
         /**<span id='method-fm.icelink.SourceInput-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -35676,14 +33300,6 @@ declare namespace fm.icelink {
     */
     abstract class BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _id;
-        /**
-        @internal
-        */
-        private _timestamp;
         constructor();
         /**<span id='method-fm.icelink.BaseStats-deserializeProperties'>&nbsp;</span>**/
         /**
@@ -35728,16 +33344,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setId(value: string): void;
-        /**
-        @internal
-
-        */
-        setTimestamp(value: fm.icelink.DateTime): void;
     }
 }
 declare namespace fm.icelink {
@@ -35749,30 +33355,7 @@ declare namespace fm.icelink {
     */
     class CodecStats extends fm.icelink.BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _channelCount;
-        /**
-        @internal
-        */
-        private _clockRate;
-        /**
-        @internal
-        */
-        private _codecType;
-        /**
-        @internal
-        */
-        private _name;
-        /**
-        @internal
-        */
-        private _parameters;
-        /**
-        @internal
-        */
-        private _payloadType;
+        private fmicelinkCodecStatsInit();
         constructor();
         /**<span id='method-fm.icelink.CodecStats-fromJson'>&nbsp;</span>**/
         /**
@@ -35875,36 +33458,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setChannelCount(value: number): void;
-        /**
-        @internal
-
-        */
-        setClockRate(value: number): void;
-        /**
-        @internal
-
-        */
-        setCodecType(value: fm.icelink.CodecType): void;
-        /**
-        @internal
-
-        */
-        setName(value: string): void;
-        /**
-        @internal
-
-        */
-        setParameters(value: string): void;
-        /**
-        @internal
-
-        */
-        setPayloadType(value: number): void;
         /**<span id='method-fm.icelink.CodecStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -35925,14 +33478,6 @@ declare namespace fm.icelink {
     */
     abstract class StreamStats extends fm.icelink.BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _transport;
-        /**
-        @internal
-        */
-        private _type;
         constructor();
         /**<span id='method-fm.icelink.StreamStats-deserializeProperties'>&nbsp;</span>**/
         /**
@@ -36005,26 +33550,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setTransport(value: fm.icelink.TransportStats): void;
-        /**
-        @internal
-
-        */
-        setType(value: fm.icelink.StreamType): void;
-        /**
-        @internal
-
-        */
-        private typeFromString(typeString);
-        /**
-        @internal
-
-        */
-        private typeToString(type);
     }
 }
 declare namespace fm.icelink {
@@ -36036,10 +33561,6 @@ declare namespace fm.icelink {
     */
     class DataStreamStats extends fm.icelink.StreamStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _dataChannels;
         constructor();
         /**<span id='method-fm.icelink.DataStreamStats-fromJson'>&nbsp;</span>**/
         /**
@@ -36112,11 +33633,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setDataChannels(value: fm.icelink.DataChannelStats[]): void;
         /**<span id='method-fm.icelink.DataStreamStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -36137,34 +33653,7 @@ declare namespace fm.icelink {
     */
     abstract class MediaComponentStats extends fm.icelink.BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _codec;
-        /**
-        @internal
-        */
-        private _firCount;
-        /**
-        @internal
-        */
-        private _nackCount;
-        /**
-        @internal
-        */
-        private _pliCount;
-        /**
-        @internal
-        */
-        private _sliCount;
-        /**
-        @internal
-        */
-        private _synchronizationSource;
-        /**
-        @internal
-        */
-        private _track;
+        private fmicelinkMediaComponentStatsInit();
         constructor();
         /**<span id='method-fm.icelink.MediaComponentStats-deserializeProperties'>&nbsp;</span>**/
         /**
@@ -36257,39 +33746,81 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
+        /**<span id='method-fm.icelink.MediaComponentStats-setCodec'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the codec stats.
+         </div>
 
+
+        @param {fm.icelink.CodecStats} value
+        @return {void}
         */
         setCodec(value: fm.icelink.CodecStats): void;
+        /**<span id='method-fm.icelink.MediaComponentStats-setFirCount'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the FIR count.
+         </div>
 
+
+        @param {number} value
+        @return {void}
         */
         setFirCount(value: number): void;
+        /**<span id='method-fm.icelink.MediaComponentStats-setNackCount'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the NACK count.
+         </div>
 
+
+        @param {number} value
+        @return {void}
         */
         setNackCount(value: number): void;
+        /**<span id='method-fm.icelink.MediaComponentStats-setPliCount'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the PLI count.
+         </div>
 
+
+        @param {number} value
+        @return {void}
         */
         setPliCount(value: number): void;
+        /**<span id='method-fm.icelink.MediaComponentStats-setSliCount'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the SLI count.
+         </div>
 
+
+        @param {number} value
+        @return {void}
         */
         setSliCount(value: number): void;
+        /**<span id='method-fm.icelink.MediaComponentStats-setSynchronizationSource'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the synchronization source.
+         </div>
 
+
+        @param {number} value
+        @return {void}
         */
         setSynchronizationSource(value: number): void;
+        /**<span id='method-fm.icelink.MediaComponentStats-setTrack'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the track's stats.
+         </div>
 
+
+        @param {fm.icelink.MediaTrackStats} value
+        @return {void}
         */
         setTrack(value: fm.icelink.MediaTrackStats): void;
     }
@@ -36303,10 +33834,6 @@ declare namespace fm.icelink {
     */
     class MediaStats extends fm.icelink.BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _tracks;
         constructor();
         /**<span id='method-fm.icelink.MediaStats-fromJson'>&nbsp;</span>**/
         /**
@@ -36379,11 +33906,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setTracks(value: fm.icelink.MediaTrackStats[]): void;
         /**<span id='method-fm.icelink.MediaStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -36404,18 +33926,7 @@ declare namespace fm.icelink {
     */
     class MediaSenderStats extends fm.icelink.MediaComponentStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _bytesSent;
-        /**
-        @internal
-        */
-        private _packetsSent;
-        /**
-        @internal
-        */
-        private _roundTripTime;
+        private fmicelinkMediaSenderStatsInit();
         constructor();
         /**<span id='method-fm.icelink.MediaSenderStats-fromJson'>&nbsp;</span>**/
         /**
@@ -36488,21 +33999,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setBytesSent(value: number): void;
-        /**
-        @internal
-
-        */
-        setPacketsSent(value: number): void;
-        /**
-        @internal
-
-        */
-        setRoundTripTime(value: number): void;
         /**<span id='method-fm.icelink.MediaSenderStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -36523,26 +34019,7 @@ declare namespace fm.icelink {
     */
     class MediaReceiverStats extends fm.icelink.MediaComponentStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _bytesReceived;
-        /**
-        @internal
-        */
-        private _jitter;
-        /**
-        @internal
-        */
-        private _packetsDiscarded;
-        /**
-        @internal
-        */
-        private _packetsLost;
-        /**
-        @internal
-        */
-        private _packetsReceived;
+        private fmicelinkMediaReceiverStatsInit();
         constructor();
         /**<span id='method-fm.icelink.MediaReceiverStats-fromJson'>&nbsp;</span>**/
         /**
@@ -36635,31 +34112,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setBytesReceived(value: number): void;
-        /**
-        @internal
-
-        */
-        setJitter(value: number): void;
-        /**
-        @internal
-
-        */
-        setPacketsDiscarded(value: number): void;
-        /**
-        @internal
-
-        */
-        setPacketsLost(value: number): void;
-        /**
-        @internal
-
-        */
-        setPacketsReceived(value: number): void;
         /**<span id='method-fm.icelink.MediaReceiverStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -36680,54 +34132,7 @@ declare namespace fm.icelink {
     */
     class MediaTrackStats extends fm.icelink.BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _detached;
-        /**
-        @internal
-        */
-        private _frameHeight;
-        /**
-        @internal
-        */
-        private _frameRate;
-        /**
-        @internal
-        */
-        private _framesCorrupted;
-        /**
-        @internal
-        */
-        private _framesDecoded;
-        /**
-        @internal
-        */
-        private _framesDropped;
-        /**
-        @internal
-        */
-        private _framesEncoded;
-        /**
-        @internal
-        */
-        private _framesReceived;
-        /**
-        @internal
-        */
-        private _framesSent;
-        /**
-        @internal
-        */
-        private _frameWidth;
-        /**
-        @internal
-        */
-        private _stopped;
-        /**
-        @internal
-        */
-        private _synchronizationSources;
+        private fmicelinkMediaTrackStatsInit();
         constructor();
         /**<span id='method-fm.icelink.MediaTrackStats-fromJson'>&nbsp;</span>**/
         /**
@@ -36930,66 +34335,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setDetached(value: boolean): void;
-        /**
-        @internal
-
-        */
-        setFrameHeight(value: number): void;
-        /**
-        @internal
-
-        */
-        setFrameRate(value: number): void;
-        /**
-        @internal
-
-        */
-        setFramesCorrupted(value: number): void;
-        /**
-        @internal
-
-        */
-        setFramesDecoded(value: number): void;
-        /**
-        @internal
-
-        */
-        setFramesDropped(value: number): void;
-        /**
-        @internal
-
-        */
-        setFramesEncoded(value: number): void;
-        /**
-        @internal
-
-        */
-        setFramesReceived(value: number): void;
-        /**
-        @internal
-
-        */
-        setFramesSent(value: number): void;
-        /**
-        @internal
-
-        */
-        setFrameWidth(value: number): void;
-        /**
-        @internal
-
-        */
-        setStopped(value: boolean): void;
-        /**
-        @internal
-
-        */
-        setSynchronizationSources(value: number[]): void;
         /**<span id='method-fm.icelink.MediaTrackStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -37010,38 +34355,7 @@ declare namespace fm.icelink {
     */
     class CandidateStats extends fm.icelink.BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private __turnTransportProtocol;
-        /**
-        @internal
-        */
-        private _ipAddress;
-        /**
-        @internal
-        */
-        private _port;
-        /**
-        @internal
-        */
-        private _priority;
-        /**
-        @internal
-        */
-        private _protocol;
-        /**
-        @internal
-        */
-        private _relatedIPAddress;
-        /**
-        @internal
-        */
-        private _relatedPort;
-        /**
-        @internal
-        */
-        private _type;
+        private fmicelinkCandidateStatsInit();
         constructor();
         /**<span id='method-fm.icelink.CandidateStats-fromJson'>&nbsp;</span>**/
         /**
@@ -37204,16 +34518,6 @@ declare namespace fm.icelink {
         @return {fm.icelink.CandidateType}
         */
         getType(): fm.icelink.CandidateType;
-        /**
-        @internal
-
-        */
-        private protocolTypeFromString(protocolTypeString);
-        /**
-        @internal
-
-        */
-        private protocolTypeToString(protocolType);
         /**<span id='method-fm.icelink.CandidateStats-serializeProperties'>&nbsp;</span>**/
         /**
          <div>
@@ -37224,46 +34528,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setIPAddress(value: string): void;
-        /**
-        @internal
-
-        */
-        setPort(value: number): void;
-        /**
-        @internal
-
-        */
-        setPriority(value: number): void;
-        /**
-        @internal
-
-        */
-        setProtocol(value: fm.icelink.ProtocolType): void;
-        /**
-        @internal
-
-        */
-        setRelatedIPAddress(value: string): void;
-        /**
-        @internal
-
-        */
-        setRelatedPort(value: number): void;
-        /**
-        @internal
-
-        */
-        setTurnProtocol(value: fm.icelink.ProtocolType): void;
-        /**
-        @internal
-
-        */
-        setType(value: fm.icelink.CandidateType): void;
         /**<span id='method-fm.icelink.CandidateStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -37273,16 +34537,6 @@ declare namespace fm.icelink {
         @return {string}
         */
         toJson(): string;
-        /**
-        @internal
-
-        */
-        private typeFromString(typeString);
-        /**
-        @internal
-
-        */
-        private typeToString(type);
     }
 }
 declare namespace fm.icelink {
@@ -37294,70 +34548,7 @@ declare namespace fm.icelink {
     */
     class CandidatePairStats extends fm.icelink.BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _bytesReceived;
-        /**
-        @internal
-        */
-        private _bytesSent;
-        /**
-        @internal
-        */
-        private _consentRequestsReceived;
-        /**
-        @internal
-        */
-        private _consentRequestsSent;
-        /**
-        @internal
-        */
-        private _consentResponsesReceived;
-        /**
-        @internal
-        */
-        private _consentResponsesSent;
-        /**
-        @internal
-        */
-        private _currentRoundTripTime;
-        /**
-        @internal
-        */
-        private _localCandidateId;
-        /**
-        @internal
-        */
-        private _nominated;
-        /**
-        @internal
-        */
-        private _priority;
-        /**
-        @internal
-        */
-        private _remoteCandidateId;
-        /**
-        @internal
-        */
-        private _requestsSent;
-        /**
-        @internal
-        */
-        private _responsesReceived;
-        /**
-        @internal
-        */
-        private _state;
-        /**
-        @internal
-        */
-        private _totalRoundTripTime;
-        /**
-        @internal
-        */
-        private _transportId;
+        private fmicelinkCandidatePairStatsInit();
         constructor();
         /**<span id='method-fm.icelink.CandidatePairStats-fromJson'>&nbsp;</span>**/
         /**
@@ -37580,96 +34771,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setBytesReceived(value: number): void;
-        /**
-        @internal
-
-        */
-        setBytesSent(value: number): void;
-        /**
-        @internal
-
-        */
-        setConsentRequestsReceived(value: number): void;
-        /**
-        @internal
-
-        */
-        setConsentRequestsSent(value: number): void;
-        /**
-        @internal
-
-        */
-        setConsentResponsesReceived(value: number): void;
-        /**
-        @internal
-
-        */
-        setConsentResponsesSent(value: number): void;
-        /**
-        @internal
-
-        */
-        setCurrentRoundTripTime(value: number): void;
-        /**
-        @internal
-
-        */
-        setLocalCandidateId(value: string): void;
-        /**
-        @internal
-
-        */
-        setNominated(value: boolean): void;
-        /**
-        @internal
-
-        */
-        setPriority(value: number): void;
-        /**
-        @internal
-
-        */
-        setRemoteCandidateId(value: string): void;
-        /**
-        @internal
-
-        */
-        setRequestsSent(value: number): void;
-        /**
-        @internal
-
-        */
-        setResponsesReceived(value: number): void;
-        /**
-        @internal
-
-        */
-        setState(value: fm.icelink.CandidatePairState): void;
-        /**
-        @internal
-
-        */
-        setTotalRoundTripTime(value: number): void;
-        /**
-        @internal
-
-        */
-        setTransportId(value: string): void;
-        /**
-        @internal
-
-        */
-        private stateFromString(stateString);
-        /**
-        @internal
-
-        */
-        private stateToString(state);
         /**<span id='method-fm.icelink.CandidatePairStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -37690,18 +34791,6 @@ declare namespace fm.icelink {
     */
     class CertificateStats extends fm.icelink.BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _certificateBase64;
-        /**
-        @internal
-        */
-        private _fingerprint;
-        /**
-        @internal
-        */
-        private _fingerprintAlgorithm;
         constructor();
         /**<span id='method-fm.icelink.CertificateStats-fromJson'>&nbsp;</span>**/
         /**
@@ -37794,21 +34883,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setCertificateBase64(value: string): void;
-        /**
-        @internal
-
-        */
-        setFingerprint(value: string): void;
-        /**
-        @internal
-
-        */
-        setFingerprintAlgorithm(value: string): void;
         /**<span id='method-fm.icelink.CertificateStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -37829,38 +34903,7 @@ declare namespace fm.icelink {
     */
     class DataChannelStats extends fm.icelink.BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _bytesReceived;
-        /**
-        @internal
-        */
-        private _bytesSent;
-        /**
-        @internal
-        */
-        private _label;
-        /**
-        @internal
-        */
-        private _messagesReceived;
-        /**
-        @internal
-        */
-        private _messagesSent;
-        /**
-        @internal
-        */
-        private _ordered;
-        /**
-        @internal
-        */
-        private _protocol;
-        /**
-        @internal
-        */
-        private _state;
+        private fmicelinkDataChannelStatsInit();
         constructor();
         /**<span id='method-fm.icelink.DataChannelStats-fromJson'>&nbsp;</span>**/
         /**
@@ -38003,56 +35046,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setBytesReceived(value: number): void;
-        /**
-        @internal
-
-        */
-        setBytesSent(value: number): void;
-        /**
-        @internal
-
-        */
-        setLabel(value: string): void;
-        /**
-        @internal
-
-        */
-        setMessagesReceived(value: number): void;
-        /**
-        @internal
-
-        */
-        setMessagesSent(value: number): void;
-        /**
-        @internal
-
-        */
-        setOrdered(value: boolean): void;
-        /**
-        @internal
-
-        */
-        setProtocol(value: string): void;
-        /**
-        @internal
-
-        */
-        setState(value: fm.icelink.DataChannelState): void;
-        /**
-        @internal
-
-        */
-        private stateFromString(stateString);
-        /**
-        @internal
-
-        */
-        private stateToString(state);
         /**<span id='method-fm.icelink.DataChannelStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -38073,14 +35066,6 @@ declare namespace fm.icelink {
     */
     class ConnectionStats extends fm.icelink.BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _dataStream;
-        /**
-        @internal
-        */
-        private _mediaStreams;
         constructor();
         /**<span id='method-fm.icelink.ConnectionStats-fromJson'>&nbsp;</span>**/
         /**
@@ -38246,16 +35231,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setDataStream(value: fm.icelink.DataStreamStats): void;
-        /**
-        @internal
-
-        */
-        setMediaStreams(value: fm.icelink.MediaStreamStats[]): void;
         /**<span id='method-fm.icelink.ConnectionStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -38276,18 +35251,6 @@ declare namespace fm.icelink {
     */
     class MediaStreamStats extends fm.icelink.StreamStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _direction;
-        /**
-        @internal
-        */
-        private _receiver;
-        /**
-        @internal
-        */
-        private _sender;
         constructor();
         /**<span id='method-fm.icelink.MediaStreamStats-fromJson'>&nbsp;</span>**/
         /**
@@ -38380,21 +35343,6 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
-        /**
-        @internal
-
-        */
-        setDirection(value: fm.icelink.StreamDirection): void;
-        /**
-        @internal
-
-        */
-        setReceiver(value: fm.icelink.MediaReceiverStats): void;
-        /**
-        @internal
-
-        */
-        setSender(value: fm.icelink.MediaSenderStats): void;
         /**<span id='method-fm.icelink.MediaStreamStats-toJson'>&nbsp;</span>**/
         /**
          <div>
@@ -38436,46 +35384,6 @@ declare namespace fm.icelink {
         @return {string}
         */
         static directionToString(direction: fm.icelink.StreamDirection): string;
-        /**
-        @internal
-
-        */
-        static isReceiveDisabled(direction: fm.icelink.StreamDirection): boolean;
-        /**
-        @internal
-
-        */
-        static isReceiveDisabled(stringDirection: string): boolean;
-        /**
-        @internal
-
-        */
-        static isSendDisabled(stringDirection: string): boolean;
-        /**
-        @internal
-
-        */
-        static isSendDisabled(direction: fm.icelink.StreamDirection): boolean;
-        /**
-        @internal
-
-        */
-        static setReceiveDisable(stringDirection: string, disabled: boolean): string;
-        /**
-        @internal
-
-        */
-        static setSendDisable(stringDirection: string, disabled: boolean): string;
-        /**
-        @internal
-
-        */
-        static toggleReceive(direction: fm.icelink.StreamDirection): fm.icelink.StreamDirection;
-        /**
-        @internal
-
-        */
-        static toggleSend(direction: fm.icelink.StreamDirection): fm.icelink.StreamDirection;
     }
 }
 declare namespace fm.icelink {
@@ -38487,42 +35395,7 @@ declare namespace fm.icelink {
     */
     class TransportStats extends fm.icelink.BaseStats {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _activeCandidatePair;
-        /**
-        @internal
-        */
-        private _bytesReceived;
-        /**
-        @internal
-        */
-        private _bytesSent;
-        /**
-        @internal
-        */
-        private _candidatePairs;
-        /**
-        @internal
-        */
-        private _localCandidates;
-        /**
-        @internal
-        */
-        private _localCertificate;
-        /**
-        @internal
-        */
-        private _remoteCandidates;
-        /**
-        @internal
-        */
-        private _remoteCertificate;
-        /**
-        @internal
-        */
-        private _rtcpTransport;
+        private fmicelinkTransportStatsInit();
         constructor();
         /**<span id='method-fm.icelink.TransportStats-fromJson'>&nbsp;</span>**/
         /**
@@ -38715,49 +35588,103 @@ declare namespace fm.icelink {
         @return {void}
         */
         protected serializeProperties(jsonObject: fm.icelink.Hash<string, string>): void;
+        /**<span id='method-fm.icelink.TransportStats-setActiveCandidatePair'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the active candidate pair's stats.
+         </div>
 
+
+        @param {fm.icelink.CandidatePairStats} value
+        @return {void}
         */
         setActiveCandidatePair(value: fm.icelink.CandidatePairStats): void;
+        /**<span id='method-fm.icelink.TransportStats-setBytesReceived'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the number of bytes received.
+         </div>
 
+
+        @param {number} value
+        @return {void}
         */
         setBytesReceived(value: number): void;
+        /**<span id='method-fm.icelink.TransportStats-setBytesSent'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the number of bytes sent.
+         </div>
 
+
+        @param {number} value
+        @return {void}
         */
         setBytesSent(value: number): void;
+        /**<span id='method-fm.icelink.TransportStats-setCandidatePairs'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the candidate pairs' stats.
+         </div>
 
+
+        @param {fm.icelink.CandidatePairStats[]} value
+        @return {void}
         */
         setCandidatePairs(value: fm.icelink.CandidatePairStats[]): void;
+        /**<span id='method-fm.icelink.TransportStats-setLocalCandidates'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the local candidates' stats.
+         </div>
 
+
+        @param {fm.icelink.CandidateStats[]} value
+        @return {void}
         */
         setLocalCandidates(value: fm.icelink.CandidateStats[]): void;
+        /**<span id='method-fm.icelink.TransportStats-setLocalCertificate'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the local certificate's stats.
+         </div>
 
+
+        @param {fm.icelink.CertificateStats} value
+        @return {void}
         */
         setLocalCertificate(value: fm.icelink.CertificateStats): void;
+        /**<span id='method-fm.icelink.TransportStats-setRemoteCandidates'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the remote candidates' stats.
+         </div>
 
+
+        @param {fm.icelink.CandidateStats[]} value
+        @return {void}
         */
         setRemoteCandidates(value: fm.icelink.CandidateStats[]): void;
+        /**<span id='method-fm.icelink.TransportStats-setRemoteCertificate'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the remote certificate's stats.
+         </div>
 
+
+        @param {fm.icelink.CertificateStats} value
+        @return {void}
         */
         setRemoteCertificate(value: fm.icelink.CertificateStats): void;
+        /**<span id='method-fm.icelink.TransportStats-setRtcpTransport'>&nbsp;</span>**/
         /**
-        @internal
+         <div>
+         Sets the RTCP transport's stats.
+         </div>
 
+
+        @param {fm.icelink.TransportStats} value
+        @return {void}
         */
         setRtcpTransport(value: fm.icelink.TransportStats): void;
         /**<span id='method-fm.icelink.TransportStats-toJson'>&nbsp;</span>**/
@@ -38828,46 +35755,29 @@ declare namespace fm.icelink {
 declare namespace fm.icelink {
     class StreamDirectionWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.StreamDirection);
+        toString(): string;
+    }
+}
+declare namespace fm.icelink {
+    class StreamStateWrapper {
+        getTypeString(): string;
+        constructor(value: fm.icelink.StreamState);
         toString(): string;
     }
 }
 declare namespace fm.icelink {
     class StreamTypeWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.StreamType);
         toString(): string;
     }
 }
 declare namespace fm.icelink {
-    /**
-    @internal
-    */
-    class TransportTypeWrapper {
-        getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
-        constructor(value: fm.icelink.TransportType);
-        toString(): string;
-    }
 }
 declare namespace fm.icelink {
     class TrickleIcePolicyWrapper {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _value;
         constructor(value: fm.icelink.TrickleIcePolicy);
         toString(): string;
     }
@@ -38935,6 +35845,15 @@ declare namespace fm.icelink {
         @return {number}
         */
         static generateSynchronizationSource(): number;
+        /**<span id='method-fm.icelink.Utility-generateTieBreaker'>&nbsp;</span>**/
+        /**
+         <div>
+         Generates a Connection Tie-breaker.
+         </div>
+
+        @return {string}
+        */
+        static generateTieBreaker(): string;
         /**<span id='method-fm.icelink.Utility-lastOrDefault'>&nbsp;</span>**/
         /**
          <div>
@@ -39002,18 +35921,7 @@ declare namespace fm.icelink {
     */
     class VideoConfig extends fm.icelink.MediaConfig<fm.icelink.VideoConfig> {
         getTypeString(): string;
-        /**
-        @internal
-        */
-        private _frameRate;
-        /**
-        @internal
-        */
-        private _height;
-        /**
-        @internal
-        */
-        private _width;
+        private fmicelinkVideoConfigInit();
         /**<span id='method-fm.icelink.VideoConfig-constructor'>&nbsp;</span>**/
         /**
          <div>
@@ -39079,21 +35987,6 @@ declare namespace fm.icelink {
         @return {boolean}
         */
         isEquivalent(config: fm.icelink.VideoConfig): boolean;
-        /**
-        @internal
-
-        */
-        private setFrameRate(value);
-        /**
-        @internal
-
-        */
-        private setHeight(value);
-        /**
-        @internal
-
-        */
-        private setWidth(value);
         /**<span id='method-fm.icelink.VideoConfig-toString'>&nbsp;</span>**/
         /**
          <div>
@@ -39167,6 +36060,8 @@ declare namespace fm.icelink.vp9 {
         */
         constructor();
     }
+}
+declare namespace fm.icelink {
 }
 declare namespace fm.icelink {
 }
