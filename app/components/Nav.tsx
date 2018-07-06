@@ -13,6 +13,7 @@ export class Nav extends React.Component<any, {menuClick: string}> {
             menuClick: "hidden"
         }
         this.lock.on("authenticated", (authResult: any) => {
+            console.log("hit")
             this.lock.getUserInfo(authResult.accessToken, (error: any, profile: any) => {
                 if(error) {
                     console.log(error)
@@ -31,6 +32,14 @@ export class Nav extends React.Component<any, {menuClick: string}> {
                 }
             });
         });
+
+        this.lock.on("authorization_error", (error: any) => {
+            console.log(error);
+        })
+
+        this.lock.on("unrecoverable_error", (error: any) => {
+            console.log(error)
+        })
     }
     lock = new (window as any).Auth0Lock('uG6dg5zIBd45mpt3KAk05S6qq5pPPRmu', 'whenhub.auth0.com', {
         auth: {

@@ -87,6 +87,7 @@ export class FindExpert extends React.Component<any, {click: Boolean, value: str
                 <Expert 
                   experts={this.props.experts}
                   handler={this.handler.bind(this)}
+                  history={this.props.history}
                 />
               )
 

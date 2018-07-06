@@ -50,7 +50,7 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
 
   showAmount(wallet: any) {
     if(wallet == null) {
-        return
+        return 
     }else if (wallet != null){
         return wallet.amount
     }
@@ -96,7 +96,7 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
                 <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "293px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit} className="btn">
                     Copy Wallet Address to clipboard
                 </button>
-                <div id={walletStyles.walletAddress}>{this.showAddress(wallet)}</div>
+                {/* <div id={walletStyles.walletAddress}>{this.showAddress(wallet)}</div> */}
             </div>
         </div>
 
@@ -125,6 +125,10 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
                 To view your transaction history on the blockchain, select the Etherscan logo.
             </div>
 
+            <div id={walletStyles.ether}>
+                <a href='https://etherscan.io/'><img className={walletStyles.ether} src='../resources/etherscan-logo-big.png'/></a>
+            </div>
+
         </div>
 
     }
@@ -141,7 +145,7 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
                 <div className={styles.container}>
                     <div>
                         <div id={walletStyles.amount}>
-                            <div style={{ fontSize: "25pt", fontWeight: 100 }}>(W){this.showAmount(this.props.wallet)}</div>
+                            <div style={{ fontSize: "25pt", fontWeight: 100 }}>(&#65510;){this.showAmount(this.props.wallet)}</div>
                             <div>Wallet Amount</div>
                         </div>
                     </div>

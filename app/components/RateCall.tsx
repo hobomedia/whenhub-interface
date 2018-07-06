@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 const rateStyles = require('./RateCall.scss');
-// const Axios = require('axios');
 
 export default class RateCall extends React.Component<any, {rating: any, temp_rating: any}>{
     constructor(props: any) {
@@ -15,6 +14,7 @@ export default class RateCall extends React.Component<any, {rating: any, temp_ra
 
     onSubmit() {
         console.log("Axios call")
+        // Make rate call axios call
         // Axios({
         //   method: 'POST',
         //   url: `https://interface-api.whenhub.com/api/Interfaces/` + this.props.connectionId + `/rating`,
@@ -27,6 +27,8 @@ export default class RateCall extends React.Component<any, {rating: any, temp_ra
         //   console.log(error)
     
         // });
+
+        // this.props.dispatch(rateCall())
 
         // this.props.history.push('/');
     }

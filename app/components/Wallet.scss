@@ -41,6 +41,7 @@
         height: 410px;
         color: white; 
         padding: 10pt;
+        position: relative;
     }
 
     #buttonWell {
@@ -68,6 +69,17 @@
         height: 20px;
         width: 100%;
         text-align: center;
+    }
+
+    #ether {
+        background-color: white; 
+        border-radius: 5px;
+    }
+
+    .ether {
+        width: auto;
+        height: 80px;
+        border-radius: 5px;
     }
 
 }

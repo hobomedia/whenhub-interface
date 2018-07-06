@@ -34,14 +34,26 @@ export class GoOnline extends React.Component<any>{
                     Go Offline
                 </button>
 
-                <div style={{color: "white", paddingLeft: "10px", paddingRight: "10px", paddingTop: "30px"}}>
+                <div style={{color: "white", paddingLeft: "10px", paddingRight: "10px", paddingTop: "30px", paddingBottom: "30px", fontWeight: 100}}>
                     You are currently Online and appearing in searches on the WhenHub Interface Network
                 </div>
-                <div style={{color: "white", paddingLeft: "10px", paddingTop: "10px", fontWeight: 100}}>
-                    Topic
+                <div>
+                    <div style={{color: "white", paddingLeft: "10px", paddingTop: "10px", fontWeight: 100, display: "inline"}}>
+                        Topic
+                    </div>
+                    <div style={{color: "white", paddingRight: "10px", fontWeight: 100, display: "inline", float: "right"}}>
+                        Hourly Rate
+                    </div>
                 </div>
-                <div style={{color: "white", paddingLeft: "10px", fontWeight: 100}}>
-                    Hourly Rate
+
+                <div>
+                    <div style={{color: "white", paddingLeft: "10px", paddingTop: "10px", fontWeight: 100, display: "inline"}}>
+                        Business
+                    </div>
+                    
+                    <div style={{color: "white", paddingRight: "10px", fontWeight: 100, display: "inline", float: "right"}}>
+                        (&#65510;)20.00
+                    </div>
                 </div>
             </div>
         </div>       

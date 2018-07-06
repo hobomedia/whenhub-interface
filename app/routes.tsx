@@ -15,13 +15,13 @@ import Tour3 from './components/Tour3';
 import Expert from './components/Expert';
 import Call from './components/Call';
 import RateCall from './components/RateCall';
-
-
+import Contract from './components/Contract';
+import Interface from './components/Interface';
 
 export default () => (
   <App>
     <Switch>
-      <Route exact path="/" component={HomePage} />
+      <Route path="/Home" component={HomePage} />
       <Route path="/FindExpert" component={FindExpert} />
       <Route path="/BeExpert" component={BeExpert} />
       <Route path="/GoOnline" component={GoOnline} />
@@ -32,9 +32,11 @@ export default () => (
       <Route path="/Tour" component={Tour} />
       <Route path="/Tour2" component={Tour2} />
       <Route path="/Tour3" component={Tour3} />
-      <Route path="/Expert" component={Expert} />
+      <Route exact path="/" component={Expert} />
       <Route path="/Call" component={Call} />
       <Route path="/RateCall" component={RateCall} />
+      <Route path="/Contract" component={Contract} />
+      <Route path="/Interface" component={Interface} />
 
     </Switch>
   </App>
