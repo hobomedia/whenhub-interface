@@ -1,8 +1,9 @@
 import * as React from 'react';
-
+import { connect } from 'react-redux';
+import { rateInterface } from '../actions/interface';
 const rateStyles = require('./RateCall.scss');
 
-export default class RateCall extends React.Component<any, {rating: any, temp_rating: any}>{
+export class RateCall extends React.Component<any, {rating: any, temp_rating: any}>{
     constructor(props: any) {
         super(props)
 
@@ -13,24 +14,21 @@ export default class RateCall extends React.Component<any, {rating: any, temp_ra
     }
 
     onSubmit() {
-        console.log("Axios call")
-        // Make rate call axios call
-        // Axios({
-        //   method: 'POST',
-        //   url: `https://interface-api.whenhub.com/api/Interfaces/` + this.props.connectionId + `/rating`,
-        //   headers: {
-        //     'Authorization': 'Bearer ' + `${this.props.bearer}`
-        //   }
-        // }).then(function (response: any) {
-        //   console.log(response.data)
-        // }).catch(function (error: any) {
-        //   console.log(error)
-    
-        // });
+        let that = this; 
+        let date = new Date();
+        let args ={
+            bearer: this.props.bearer,
+            data: {
+                rating: this.state.rating, 
+                dateRated: date.toISOString()
+            },
+            connectionId: this.props.interface.connectionId
 
-        // this.props.dispatch(rateCall())
-
-        // this.props.history.push('/');
+        }
+        this.props.dispatch(rateInterface(args)).then(function (response: any) {
+            console.log(response)
+            that.props.history.push('/')
+        })
     }
 
 
@@ -118,3 +116,17 @@ export default class RateCall extends React.Component<any, {rating: any, temp_ra
         );
     }
 }
+
+const mapStateToProps = function (props: any, state: any) {
+    return {
+        profile: props.login.profile,
+        token: props.login.token,
+        bearer: props.login.bearer,
+        wallet: props.getWalletAmount.walletAmount,
+        interface: props.startInterface.start
+    }
+
+}
+
+
+export default connect(mapStateToProps)(RateCall);

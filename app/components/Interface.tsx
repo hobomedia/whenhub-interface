@@ -22,7 +22,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
     }
 
     componentDidMount() {
-        const connectionId = parseInt(this.props.interface.connectionId)
+        // const connectionId = parseInt(this.props.interface.connectionId)
         // console.log(connectionId)
 
         const audio = true;
@@ -60,7 +60,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                 //Join conference
                 let promise = new fm.icelink.Promise();
                 try {
-                    let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + `${connectionId}`);
+                    let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + `262511090`);
                     joinArgs.setOnSuccess((args) => {
                         console.log("success")
                         promise.resolve({});
@@ -185,7 +185,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                     </div>
                     <div className={interfaceStyles.video} id="container">
                     </div>
-                    <div style={{ position: "absolute", zIndex: 1000, padding: "6px", width: "337px", bottom: "59px", color: "white" }}>
+                    {/* <div style={{ position: "absolute", zIndex: 1000, padding: "6px", width: "337px", bottom: "5px", color: "white" }}>
                         <div style={{display: "inline-block"}}>
                             <div>
                                 {this.props.location.state.expertName}
@@ -208,7 +208,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             )
     }
