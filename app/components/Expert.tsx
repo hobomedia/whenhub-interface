@@ -298,9 +298,9 @@ export default class BeExpert extends React.Component<any, { connect: Boolean, l
 
                                         </div>
                                     </div>
-                                    <button style={{ backgroundColor: "#e64b4b", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} className="btn" type="button" onClick={this.onSubmit.bind(this)}>
-                                        Connect With Interface
-                        </button>
+                                    <button style={{ backgroundColor: "white", marginLeft: "10px", width: "320px", marginTop: "10px", fontWeight: 100 }} className="btn" type="button" onClick={this.onSubmit.bind(this)}>
+                                        <img style={{height: "20px", width: "auto"}} src={'../resources/Interface-Logo-btn.png'} alt="Avatar"/>
+                                    </button>
 
                                 </div>
                             </div>

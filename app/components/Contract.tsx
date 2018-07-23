@@ -50,9 +50,13 @@ export class Contract extends React.Component<any, { localMedia: any, layoutMana
         let that = this;
         console.log("check")
         this.props.dispatch(checkInterface(data)).then(function(response:any){
+            console.log(response.data.interface)
             if(response.data.interface.active == true){
                 console.log("active", response.data.interface.active)
-                that.props.history.push('/Interface');
+                that.props.history.push({
+                    pathname: '/Interface',
+                    state: {expertName: that.props.location.state.expert.name}
+                });
             }else {
                 that.check(data)
             }
