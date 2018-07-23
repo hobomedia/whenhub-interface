@@ -21,7 +21,7 @@ import Interface from './components/Interface';
 export default () => (
   <App>
     <Switch>
-      <Route path="/Home" component={HomePage} />
+      <Route exact path="/" component={HomePage} />
       <Route path="/FindExpert" component={FindExpert} />
       <Route path="/BeExpert" component={BeExpert} />
       <Route path="/GoOnline" component={GoOnline} />
@@ -32,7 +32,7 @@ export default () => (
       <Route path="/Tour" component={Tour} />
       <Route path="/Tour2" component={Tour2} />
       <Route path="/Tour3" component={Tour3} />
-      <Route exact path="/" component={Expert} />
+      <Route path="/Expert" component={Expert} />
       <Route path="/Call" component={Call} />
       <Route path="/RateCall" component={RateCall} />
       <Route path="/Contract" component={Contract} />

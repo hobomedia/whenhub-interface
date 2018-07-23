@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import 'rc-slider/assets/index.css';
 import { startInterface } from '../actions/interface';
 import { checkInterface } from '../actions/interface';
-// import { joinInterface } from '../actions/interface';
 
 // const Axios = require('axios');
 const Slider = require('rc-slider/lib/Slider');
@@ -43,18 +42,16 @@ export class Contract extends React.Component<any, { localMedia: any, layoutMana
 
     contractAmount() {
         let fraction = this.state.duration / 60;
-        return this.props.location.state.expertInfo.expertise.hourlyRate * fraction
+        return this.props.location.state.expert.expertise.hourlyRate * fraction
     }
 
 
     check(data:any){
         let that = this;
+        console.log("check")
         this.props.dispatch(checkInterface(data)).then(function(response:any){
             if(response.data.interface.active == true){
-                // that.props.dispatch(joinInterface(response.data.interface)).then(function(){
-                //     console.log("after join")
-                //     that.props.history.push('/Interface')
-                // })
+                console.log("active", response.data.interface.active)
                 that.props.history.push('/Interface');
             }else {
                 that.check(data)
@@ -63,122 +60,27 @@ export class Contract extends React.Component<any, { localMedia: any, layoutMana
     }
 
     onSubmit() {
-        console.log(this.state)
-        console.log(this.props)
-        console.log(this.contractAmount())
+        // this.props.history.push('/Interface');
 
-        let args = {
-            bearer: this.props.bearer,
-            data: {
-                expertId: '5a44083472d2a50700bcf791',
-                callerId: '5acbba9ca6a3c60600000001',
-                estimatedInitialMaxDuration: 0,
-                purposeOfInterface: this.state.value
+        // console.log(this.state)
+        // console.log(this.props.interface)
+        // console.log(this.contractAmount())
+            let args = {
+                bearer: this.props.bearer,
+                data: {
+                    expertId: '5a44083472d2a50700bcf791',
+                    callerId: '5acbba9ca6a3c60600000001',
+                    estimatedInitialMaxDuration: 0,
+                    purposeOfInterface: this.state.value
+                }
             }
-        }
-
-
-        let that = this;
-        this.props.dispatch(startInterface(args)).then(function (response: any) {
-            console.log(response)
-            that.check(response)
-        })
-
-
-        // const audio = true;
-        // const video = true;
-        // const that = this;
-
-        // // start local media
-        // const localMedia = new (window as any).fm.icelink.LocalMedia(audio, video);
-
-        // localMedia.start().then(function (lm: any) {
-        //     console.log("media capture started");
-        //     const container: HTMLElement = document.getElementById("container")!;
-        //     const layoutManager = new fm.icelink.DomLayoutManager(container);
-        //     layoutManager.applyPreset(fm.icelink.LayoutPreset.getFacetime())
-
-        //     //set local media to layout manager
-        //     layoutManager.setLocalView(localMedia.getView());
-
-        //     that.setState({ localMedia: localMedia, layoutManager: layoutManager })
-        // })
-        //     .then(function () {
-        //         //connect to websync
-        //         const client = new (window as any).fm.websync.client("https://v4.websync.fm/websync.ashx");
-        //         client.setDomainKey(new fm.icelink.Guid('b0e15424-ba55-489d-b62a-1d6e1aa5927d'));
-        //         client.connect({
-        //             onSuccess: function (e: any) {
-        //                 console.log("connected to websync");
-        //             },
-        //             onFailure: function (e: any) {
-        //                 console.log("failed to connect to websync");
-        //             }
-        //         });
-
-
-        //         //Join conference
-        //         let promise = new fm.icelink.Promise();
-        //         try {
-        //             let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + '444555');
-        //             joinArgs.setOnSuccess((args) => {
-        //                 console.log("success")
-        //                 promise.resolve({});
-        //             })
-        //             joinArgs.setOnFailure((args) => {
-        //                 console.log("fail")
-
-        //                 console.log(args.getException())
-        //                 promise.reject(args.getException());
-        //             })
-        //             joinArgs.setOnRemoteClient((remoteClient) => {
-
-        //                 //add remote media to layout manager
-        //                 let remoteMedia = new fm.icelink.RemoteMedia();
-        //                 let remoteView = remoteMedia.getView();
-        //                 if (remoteView != null) {
-        //                     remoteMedia.getViewSink().setViewScale(fm.icelink.LayoutScale.Contain);
-        //                     that.state.layoutManager.addRemoteView(remoteMedia.getId(), remoteView);
-        //                 }
-        //                 //create connection to remote client
-        //                 const audioStream = new fm.icelink.AudioStream(that.state.localMedia, remoteMedia);
-        //                 const videoStream = new fm.icelink.VideoStream(that.state.localMedia, remoteMedia);
-        //                 const connection = new fm.icelink.Connection([audioStream, videoStream]);
-
-        //                 connection.setIceServers([
-        //                     new fm.icelink.IceServer("stun:turn.icelink.fm:3478"),
-        //                     new fm.icelink.IceServer("turn:turn.icelink.fm:443", "test", "pa55w0rd!")
-        //                 ]);
-
-        //                 connection.addOnStateChange(function (c: fm.icelink.Connection) {
-        //                     var error = connection.getError();
-
-        //                     if (c.getState() == fm.icelink.ConnectionState.Connected) {
-        //                         that.state.layoutManager.addRemoteView(remoteMedia.getId(), remoteMedia.getView());
-
-        //                         that.setState({ remoteMedia: remoteMedia.getId() })
-        //                     } else if (c.getState() == fm.icelink.ConnectionState.Failing || c.getState() == fm.icelink.ConnectionState.Closing) {
-        //                         that.state.layoutManager.removeRemoteView(remoteMedia.getId());
-        //                         remoteMedia.destroy();
-        //                         console.log(error)
-        //                     }
-        //                 });
-        //                 return connection
-        //             })
-        //             fm.icelink.websync4.ClientExtensions.joinConference(client, joinArgs);
-        //         }
-        //         catch (error) {
-        //             console.log("new error", error)
-        //             promise.reject(error);
-        //         }
-        //         that.setState({ client: client })
-        //         // return promise;
-        //     }).fail(function (error: any) {
-        //         console.log(error.message)
-        //     })
-
-
-
+    
+            console.log("invite to interface click")
+            let that = this;
+            this.props.dispatch(startInterface(args)).then(function (response: any) {
+                console.log(response)
+                that.check(response)
+            })
     }
 
     onStopSubmit() {
@@ -230,9 +132,9 @@ export class Contract extends React.Component<any, { localMedia: any, layoutMana
 
 
     render() {
-        let expert = this.props.location.state.expertInfo;
+        let expert = this.props.location.state.expert;
         console.log(this.props)
-        // if (this.state.connect == false) {
+        console.log(this.state)
             return (
                 <div>
                     <Nav
@@ -297,33 +199,15 @@ export class Contract extends React.Component<any, { localMedia: any, layoutMana
                                 <textarea value={this.state.value} onChange={this.handleChange.bind(this)} className="form-control" name="title"></textarea>
                             </form>
 
-                            <button className='btn' style={{ backgroundColor: "rgb(55, 211, 180)", color: "white", width: "300px", marginTop: "30px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)}>
+                            <button className='btn' disabled={(this.state.value.length >= 25 || this.state.value.split(" ").length >= 3) ? false : true} style={{ backgroundColor: "rgb(55, 211, 180)", color: "white", width: "300px", marginTop: "30px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)}>
                                 Invite to Interface
-                        </button>
+                            </button>
 
 
                         </div>
                     </div>
                 </div>
             )
-        // } else {
-        //     return (
-        //         <div className={contractStyles.container}>
-        //             <div style={{ position: "absolute", zIndex: 1000, width: "337px", paddingTop: "8px" }}>
-        //                 {this.muteButton()}
-        //             </div>
-        //             <div className={contractStyles.video} id="container">
-
-        //             </div>
-        //             <div style={{ position: "absolute", zIndex: 1000, bottom: "54px" }}>
-        //                 <button className={contractStyles.end + ` btn`} type="button" onClick={this.onStopSubmit.bind(this)}>
-        //                     End Interface
-        //                 </button>
-
-        //             </div>
-        //         </div>
-        //     )
-        // }
     }
 }
 const mapStateToProps = function (props: any, state: any) {

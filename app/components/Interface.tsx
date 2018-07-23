@@ -4,9 +4,9 @@ import 'rc-slider/assets/index.css';
 // import { startInterface } from '../actions/interface';
 
 // const Axios = require('axios');
-let interfaceStyles = require('./Contract.scss');
+let interfaceStyles = require('./Interface.scss');
 
-export class Interface extends React.Component<any, { localMedia: any, layoutManager: any, remoteMedia: any, client: any, muteButtonClick: any}>{
+export class Interface extends React.Component<any, { interval: any, min: any, localMedia: any, layoutManager: any, remoteMedia: any, client: any, muteButtonClick: any}>{
     constructor(props: any) {
         super(props)
         this.state = {
@@ -14,13 +14,16 @@ export class Interface extends React.Component<any, { localMedia: any, layoutMan
             layoutManager: null,
             remoteMedia: null,
             client: null,
-            muteButtonClick: false
+            muteButtonClick: false,
+            min: 0, 
+            interval: setInterval(() => this.setState({min: this.state.min + 1}), 60000)
         }
         console.log(this.props)
     }
 
     componentDidMount() {
-        console.log(this.props.interface.connectionId)
+        const connectionId = parseInt(this.props.interface.connectionId)
+        // console.log(connectionId)
 
         const audio = true;
         const video = true;
@@ -57,7 +60,7 @@ export class Interface extends React.Component<any, { localMedia: any, layoutMan
                 //Join conference
                 let promise = new fm.icelink.Promise();
                 try {
-                    let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + `${that.props.interface.connectionId}`);
+                    let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + `${connectionId}`);
                     joinArgs.setOnSuccess((args) => {
                         console.log("success")
                         promise.resolve({});
@@ -87,12 +90,15 @@ export class Interface extends React.Component<any, { localMedia: any, layoutMan
                             new fm.icelink.IceServer("turn:turn.icelink.fm:443", "test", "pa55w0rd!")
                         ]);
 
+                        fm.icelink.Log.setLogLevel(fm.icelink.LogLevel.Debug);
+                        fm.icelink.Log.registerProvider(new fm.icelink.ConsoleLogProvider(fm.icelink.LogLevel.Debug));
+
                         connection.addOnStateChange(function (c: fm.icelink.Connection) {
                             var error = connection.getError();
-
+                            console.log(c.getState())
                             if (c.getState() == fm.icelink.ConnectionState.Connected) {
                                 that.state.layoutManager.addRemoteView(remoteMedia.getId(), remoteMedia.getView());
-
+                                console.log("connected")
                                 that.setState({ remoteMedia: remoteMedia.getId() })
                             } else if (c.getState() == fm.icelink.ConnectionState.Failing || c.getState() == fm.icelink.ConnectionState.Closing) {
                                 that.state.layoutManager.removeRemoteView(remoteMedia.getId());
@@ -116,6 +122,10 @@ export class Interface extends React.Component<any, { localMedia: any, layoutMan
 
     
 
+    }
+
+    componentWillUnmount(){
+        clearInterval(this.state.interval)
     }
 
     onStopSubmit() {
@@ -169,15 +179,32 @@ export class Interface extends React.Component<any, { localMedia: any, layoutMan
                 <div className={interfaceStyles.container}>
                     <div style={{ position: "absolute", zIndex: 1000, width: "337px", paddingTop: "8px" }}>
                         {this.muteButton()}
+                        <button className={interfaceStyles.end + ` btn`} type="button" onClick={this.onStopSubmit.bind(this)}>
+                            <i className="fa fa-phone"></i>
+                        </button>
                     </div>
                     <div className={interfaceStyles.video} id="container">
-
                     </div>
-                    <div style={{ position: "absolute", zIndex: 1000, bottom: "54px" }}>
-                        <button className={interfaceStyles.end + ` btn`} type="button" onClick={this.onStopSubmit.bind(this)}>
-                            End Interface
-                        </button>
+                    <div style={{ position: "absolute", zIndex: 1000, padding: "6px", width: "337px", bottom: "59px", color: "white" }}>
+                        <div style={{display: "inline-block"}}>
+                            <div>
+                                Rate: (&#65510;){this.props.interface.expertise.hourlyRate}/hour
+                            </div>
+                        </div>
 
+                        <div style={{display: "inline-block", float: "right"}}>
+                            <div>
+                                Elapsed Time: {this.state.min} min.
+                            </div>
+                            <div style={{fontWeight: 100, fontSize: "10pt"}}>
+                                <div style={{display: "inline-block"}}>
+                                    Min: {this.props.interface.expertise.minimumDuration}mins.
+                                </div>
+                                <div style={{display: "inline-block", marginLeft: "10px"}}>
+                                    Max: 0 mins.
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )
