@@ -162,11 +162,11 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
 
     muteButton() {
         if (this.state.muteButtonClick == false) {
-            return <button className={interfaceStyles.Button + ` btn`} type="button" onClick={this.onMute.bind(this)}>
+            return <button className={interfaceStyles.Button + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onMute.bind(this)}>
                 <i className="fa fa-microphone-slash"></i>
             </button>
         } else if (this.state.muteButtonClick == true) {
-            return <button className={interfaceStyles.Button + ` btn`} type="button" onClick={this.onUnMute.bind(this)}>
+            return <button className={interfaceStyles.Button + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onUnMute.bind(this)}>
                 <i className="fa fa-microphone"></i>
             </button>
         }
@@ -179,7 +179,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                 <div className={interfaceStyles.container}>
                     <div style={{ position: "absolute", zIndex: 1000, width: "337px", paddingTop: "8px" }}>
                         {this.muteButton()}
-                        <button className={interfaceStyles.end + ` btn`} type="button" onClick={this.onStopSubmit.bind(this)}>
+                        <button className={interfaceStyles.end + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onStopSubmit.bind(this)}>
                             <i className="fa fa-phone"></i>
                         </button>
                     </div>
