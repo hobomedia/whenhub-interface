@@ -1,10 +1,10 @@
 import * as React from 'react';
-import Nav from './Nav';
+// import Nav from './Nav';
 // import { actionCreatorVoid } from '../../app/actions/helpers';
 // / <reference path="'../../libraries/fm.icelink.d.ts" />
 
 const styles = require('../components/Home.scss');
-const beExpertStyles = require('../components/BeExpert.scss')
+// const beExpertStyles = require('../components/BeExpert.scss')
 const expertStyles = require('../components/Expert.scss')
 
 
@@ -22,21 +22,16 @@ export default class BeExpert extends React.Component<any, { connect: Boolean, l
         }
     }
 
-    componentWillMount() {
-
-    }
-
     connection(error: any) {
-        if (error){
+        if (error) {
             return error.getException();
-            
-        }else {
+
+        } else {
             return undefined
         }
-
     }
 
-    onSubmit() {
+    componentDidMount() {
         console.log("connect");
         // actionCreatorVoid("test").test({type: "test"})
         this.setState({ connect: true });
@@ -52,7 +47,7 @@ export default class BeExpert extends React.Component<any, { connect: Boolean, l
             console.log("media capture started");
             const container: HTMLElement = document.getElementById("container")!;
             const layoutManager = new fm.icelink.DomLayoutManager(container);
-            
+
             //set local media to layout manager
             layoutManager.setLocalView(localMedia.getView());
 
@@ -70,12 +65,12 @@ export default class BeExpert extends React.Component<any, { connect: Boolean, l
                         console.log("failed to connect to websync");
                     }
                 });
-                
+
 
                 //Join conference
                 let promise = new fm.icelink.Promise();
                 try {
-                    let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + "685198");
+                    let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + "262511090");
                     joinArgs.setOnSuccess((args) => {
                         console.log("success")
                         promise.resolve({});
@@ -105,12 +100,12 @@ export default class BeExpert extends React.Component<any, { connect: Boolean, l
                             new fm.icelink.IceServer("stun:turn.icelink.fm:3478"),
                             new fm.icelink.IceServer("turn:turn.icelink.fm:443", "test", "pa55w0rd!")
                         ]);
-                        
+
                         connection.addOnStateChange(function (c: fm.icelink.Connection) {
                             console.log("state change")
                             var error = connection.getError();
                             console.log(connection.getState())
-                            
+
                             if (c.getState() == fm.icelink.ConnectionState.Connected) {
                                 that.state.layoutManager.addRemoteView(remoteMedia.getId(), remoteMedia.getView());
                                 console.log("add remote view after state change")
@@ -183,132 +178,21 @@ export default class BeExpert extends React.Component<any, { connect: Boolean, l
     }
 
     createId() {
-        function S4() {  
-            return (((1+Math.random())*0x10000)|0).toString(16).substring(1);  
-         }  
-         return (S4() + S4() + "-" + S4() + "-4" + S4().substr(0,3) + "-" + S4() + "-" + S4() + S4() + S4()).toLowerCase();
+        function S4() {
+            return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+        }
+        return (S4() + S4() + "-" + S4() + "-4" + S4().substr(0, 3) + "-" + S4() + "-" + S4() + S4() + S4()).toLowerCase();
     }
 
 
     render() {
-        if (this.state.connect == false) {
-            let stars = [];
-            if (this.props.experts.length > 0) {
-                for (let i = 0; i < 5; i++) {
-                    if (this.props.experts[this.state.num].expertise.selfRating > 0) {
-                        if (i + 1 <= this.props.experts[this.state.num].expertise.selfRating) {
-                            let klass = `${beExpertStyles.star}` + ` ${beExpertStyles.selected}`;
-                            `${styles.appTab} ${styles.active}`
-                            stars.push(
-                                <label
-                                    key={i}
-                                    className={klass}
-                                >
-                                    ★
-                                </label>
-                            );
-                        } else if (i + 1 > this.props.experts[this.state.num].expertise.selfRating) {
-                            let klass = `${expertStyles.star}`;
-                            `${styles.appTab} ${styles.active}`
+        return (<div className={styles.container}>
+            <div className={expertStyles.video} id="container">
 
-                            stars.push(
-                                <label
-                                    key={i}
-                                    className={klass}
-                                >
-                                    ★
-                                </label>
-                            );
-
-                        }
-
-                    } else {
-                        let klass = `${expertStyles.star}`;
-                        `${styles.appTab} ${styles.active}`
-
-                        stars.push(
-                            <label
-                                key={i}
-                                className={klass}
-                            >
-                                ★
-                            </label>
-                        );
-
-                    }
-                }
-            }
-            return (
-                <div>
-                    <Nav
-                        button={"back"}
-                        page={"Interface"}
-                        back={"Find an Expert"}
-                        current={"Expert"}
-                        handler={this.props.handler}
-                        next={this.next.bind(this)}
-                        expertLength={this.props.experts.length}
-                        expertNum={this.state.num}
-                    />
-                    <div className={styles.container} style={{ position: "relative" }}>
-                        <div id={styles.bebackground} style={{ backgroundImage: 'url(' + this.props.experts[this.state.num].picture + ')', backgroundRepeat: 'no-repeat', backgroundSize: 'auto 560px', backgroundPosition: 'center' }}>
-                            <div id="container" style={{width: "100%", height: "50%", position: "absolute"}}></div>
-                            <div style={{top: 0, position: "relative"}}>
-                                {this.showBack()}
-                                {this.showNext()}
-                            </div>
-                            <div className={expertStyles.info}>
-                                <div id={expertStyles.name}>
-                                    {this.props.experts[this.state.num].name}
-                                </div>
-                                <div style={{ marginTop: "10px" }}>
-                                    <div>
-                                        <div className={expertStyles.fields}>
-                                            Expertise
-                            </div>
-                                    </div>
-
-                                    <div style={{ marginBottom: "10px" }}>
-                                        <div className={expertStyles.fields}>
-                                            {this.props.experts[this.state.num].expertise.expertise.length > 50 ? this.props.experts[this.state.num].expertise.expertise.substring(0, 50) + "..." : this.props.experts[this.state.num].expertise.expertise}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className={expertStyles.fields}>
-                                            W{this.props.experts[this.state.num].expertise.hourlyRate + '.00 '}({'$' + this.props.experts[this.state.num].expertise.hourlyRate * .25 + '.00'}) per hour - Minimum {this.props.experts[this.state.num].expertise.minimumDuration} mins.
-                            </div>
-                                    </div>
-                                    <div className={expertStyles.ratings}>
-                                        <div style={{ fontWeight: 100, marginLeft: "10px", color: "#FFF" }}>
-                                            Self-rating for Topic
-                
-                            <div className="star-rating">
-                                                {stars}
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                    <button style={{ backgroundColor: "#e64b4b", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} className="btn" type="button" onClick={this.onSubmit.bind(this)}>
-                                        Connect With Interface
-                        </button>
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )
-        } else {
-            return (
-                <div className={styles.container}>
-                    <div className={expertStyles.video} id="container">
-
-                        <button className={expertStyles.button + ` btn`} type="button" onClick={this.onStopSubmit.bind(this)}>
-                            End Interface
-                        </button>
-                    </div>
-                </div>
-            )
-        }
+                <button className={expertStyles.button + ` btn`} type="button" onClick={this.onStopSubmit.bind(this)}>
+                    End Interface
+                    </button>
+            </div>
+        </div>);
     }
 }

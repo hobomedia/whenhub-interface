@@ -21,7 +21,7 @@ import RateCall from './components/RateCall';
 export default () => (
   <App>
     <Switch>
-      <Route exact path="/" component={HomePage} />
+      <Route path="/Home" component={HomePage} />
       <Route path="/FindExpert" component={FindExpert} />
       <Route path="/BeExpert" component={BeExpert} />
       <Route path="/GoOnline" component={GoOnline} />
@@ -32,7 +32,7 @@ export default () => (
       <Route path="/Tour" component={Tour} />
       <Route path="/Tour2" component={Tour2} />
       <Route path="/Tour3" component={Tour3} />
-      <Route path="/Expert" component={Expert} />
+      <Route exact path="/" component={Expert} />
       <Route path="/Call" component={Call} />
       <Route path="/RateCall" component={RateCall} />
 
