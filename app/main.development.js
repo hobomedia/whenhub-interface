@@ -1,5 +1,4 @@
 const { app, BrowserWindow, Menu, shell } = require('electron');
-
 let menu;
 let template;
 let mainWindow = null;
@@ -27,7 +26,8 @@ const installExtensions = () => {
 
     const extensions = [
       'REACT_DEVELOPER_TOOLS',
-      'REDUX_DEVTOOLS'
+      'REDUX_DEVTOOLS', 
+      // 'nidjnlpklmpflfmfflalpddmadlgjckn'
     ];
     const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
     return Promise.all(extensions.map(name => installer.default(installer[name], forceDownload)));
@@ -52,6 +52,7 @@ app.on('ready', () =>
     mainWindow.show();
     mainWindow.focus();
   });
+
 
   mainWindow.on('closed', () => {
     mainWindow = null;

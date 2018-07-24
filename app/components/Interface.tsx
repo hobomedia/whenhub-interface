@@ -26,11 +26,14 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
         // console.log(connectionId)
 
         const audio = true;
-        const video = true;
+        // var video = true? new fm.icelink.VideoConfig(window.screen.width, window.screen.height, 3) : new fm.icelink.VideoConfig(640, 480, 30);
+        var video = true;
         const that = this;
 
         // start local media
+        // const localMedia = new (window as any).fm.icelink.LocalMedia(audio, video, true);
         const localMedia = new (window as any).fm.icelink.LocalMedia(audio, video);
+
 
         localMedia.start().then(function (lm: any) {
             console.log("media capture started");
@@ -185,7 +188,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                     </div>
                     <div className={interfaceStyles.video} id="container">
                     </div>
-                    <div style={{ position: "absolute", zIndex: 1000, padding: "6px", width: "337px", bottom: "5px", color: "white" }}>
+                    {/* <div style={{ position: "absolute", zIndex: 1000, padding: "6px", width: "337px", bottom: "5px", color: "white" }}>
                         <div style={{display: "inline-block"}}>
                             <div>
                                 {this.props.location.state.expertInfo.name}
@@ -208,7 +211,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             )
     }
