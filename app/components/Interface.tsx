@@ -188,10 +188,10 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                     <div style={{ position: "absolute", zIndex: 1000, padding: "6px", width: "337px", bottom: "5px", color: "white" }}>
                         <div style={{display: "inline-block"}}>
                             <div>
-                                {this.props.location.state.expertName}
+                                {this.props.location.state.expertInfo.name}
                             </div>
                             <div>
-                                Rate: (&#65510;){this.props.interface.expertise.hourlyRate}/hour
+                                Rate: (&#65510;){this.props.location.state.expertInfo.expertise.hourlyRate}/hour
                             </div>
                         </div>
 

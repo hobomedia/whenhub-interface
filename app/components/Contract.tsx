@@ -56,7 +56,7 @@ export class Contract extends React.Component<any, { loading: Boolean, localMedi
                 console.log("active", response.data.interface.active)
                 that.props.history.push({
                     pathname: '/Interface',
-                    state: { expertName: that.props.location.state.expert.name }
+                    state: { expertInfo: that.props.location.state.expert }
                 });
             } else {
                 that.check(data)
