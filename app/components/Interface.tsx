@@ -185,7 +185,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                     </div>
                     <div className={interfaceStyles.video} id="container">
                     </div>
-                    {/* <div style={{ position: "absolute", zIndex: 1000, padding: "6px", width: "337px", bottom: "5px", color: "white" }}>
+                    <div style={{ position: "absolute", zIndex: 1000, padding: "6px", width: "337px", bottom: "5px", color: "white" }}>
                         <div style={{display: "inline-block"}}>
                             <div>
                                 {this.props.location.state.expertName}
@@ -208,7 +208,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                                 </div>
                             </div>
                         </div>
-                    </div> */}
+                    </div>
                 </div>
             )
     }
