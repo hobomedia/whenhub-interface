@@ -22,7 +22,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
     }
 
     componentDidMount() {
-        // const connectionId = parseInt(this.props.interface.connectionId)
+        const connectionId = parseInt(this.props.interface.connectionId)
         // console.log(connectionId)
 
         const audio = true;
@@ -60,7 +60,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                 //Join conference
                 let promise = new fm.icelink.Promise();
                 try {
-                    let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + `262511090`);
+                    let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + `${connectionId}`);
                     joinArgs.setOnSuccess((args) => {
                         console.log("success")
                         promise.resolve({});

@@ -2,7 +2,7 @@ import * as React from 'react';
 import Nav from './Nav';
 import { connect } from 'react-redux';
 import 'rc-slider/assets/index.css';
-// import { startInterface } from '../actions/interface';
+import { startInterface } from '../actions/interface';
 import { checkInterface } from '../actions/interface';
 
 // const Axios = require('axios');
@@ -65,25 +65,25 @@ export class Contract extends React.Component<any, { loading: Boolean, localMedi
     }
 
     onSubmit() {
-        this.props.history.push('/Interface');
+        // this.props.history.push('/Interface');
 
         this.setState({ loading: true });
 
-        // let args = {
-        //     bearer: this.props.bearer,
-        //     data: {
-        //         expertId: '5a44083472d2a50700bcf791',
-        //         callerId: '5acbba9ca6a3c60600000001',
-        //         estimatedInitialMaxDuration: 0,
-        //         purposeOfInterface: this.state.value
-        //     }
-        // }
+        let args = {
+            bearer: this.props.bearer,
+            data: {
+                expertId: '5a44083472d2a50700bcf791',
+                callerId: '5acbba9ca6a3c60600000001',
+                estimatedInitialMaxDuration: 0,
+                purposeOfInterface: this.state.value
+            }
+        }
 
-        // let that = this;
-        // this.props.dispatch(startInterface(args)).then(function (response: any) {
-        //     console.log(response)
-        //     that.check(response)
-        // })
+        let that = this;
+        this.props.dispatch(startInterface(args)).then(function (response: any) {
+            console.log(response)
+            that.check(response)
+        })
     }
 
     onStopSubmit() {
