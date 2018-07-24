@@ -1,7 +1,5 @@
 import * as React from 'react';
 import Nav from './Nav';
-// import { actionCreatorVoid } from '../../app/actions/helpers';
-// / <reference path="'../../libraries/fm.icelink.d.ts" />
 
 const styles = require('../components/Home.scss');
 const beExpertStyles = require('../components/BeExpert.scss')
@@ -42,97 +40,8 @@ export default class BeExpert extends React.Component<any, { connect: Boolean, l
         this.props.history.push({
             pathname: '/Contract',
             state: { expert: this.props.experts[this.state.num]}
-          })        // this.setState({ connect: true });
+          })     
 
-        // const audio = true;
-        // const video = true;
-        // const that = this;
-
-        // // start local media
-        // const localMedia = new (window as any).fm.icelink.LocalMedia(audio, video);
-
-        // localMedia.start().then(function (lm: any) {
-        //     console.log("media capture started");
-        //     const container: HTMLElement = document.getElementById("container")!;
-        //     const layoutManager = new fm.icelink.DomLayoutManager(container);
-        //     layoutManager.applyPreset(fm.icelink.LayoutPreset.getFacetime())
-
-        //     //set local media to layout manager
-        //     layoutManager.setLocalView(localMedia.getView());
-
-        //     that.setState({ localMedia: localMedia, layoutManager: layoutManager })
-        // })
-        //     .then(function () {
-        //         //connect to websync
-        //         const client = new (window as any).fm.websync.client("https://v4.websync.fm/websync.ashx");
-        //         client.setDomainKey(new fm.icelink.Guid('b0e15424-ba55-489d-b62a-1d6e1aa5927d'));
-        //         client.connect({
-        //             onSuccess: function (e: any) {
-        //                 console.log("connected to websync");
-        //             },
-        //             onFailure: function (e: any) {
-        //                 console.log("failed to connect to websync");
-        //             }
-        //         });
-                
-
-        //         //Join conference
-        //         let promise = new fm.icelink.Promise();
-        //         try {
-        //             let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + "685198");
-        //             joinArgs.setOnSuccess((args) => {
-        //                 console.log("success")
-        //                 promise.resolve({});
-        //             })
-        //             joinArgs.setOnFailure((args) => {
-        //                 console.log("fail")
-
-        //                 console.log(args.getException())
-        //                 promise.reject(args.getException());
-        //             })
-        //             joinArgs.setOnRemoteClient((remoteClient) => {
-
-        //                 //add remote media to layout manager
-        //                 let remoteMedia = new fm.icelink.RemoteMedia();
-        //                 let remoteView = remoteMedia.getView();
-        //                 if (remoteView != null) {
-        //                     remoteMedia.getViewSink().setViewScale(fm.icelink.LayoutScale.Contain);
-        //                     that.state.layoutManager.addRemoteView(remoteMedia.getId(), remoteView);
-        //                 }
-        //                 //create connection to remote client
-        //                 const audioStream = new fm.icelink.AudioStream(that.state.localMedia, remoteMedia);
-        //                 const videoStream = new fm.icelink.VideoStream(that.state.localMedia, remoteMedia);
-        //                 const connection = new fm.icelink.Connection([audioStream, videoStream]);
-
-        //                 connection.setIceServers([
-        //                     new fm.icelink.IceServer("stun:turn.icelink.fm:3478"),
-        //                     new fm.icelink.IceServer("turn:turn.icelink.fm:443", "test", "pa55w0rd!")
-        //                 ]);
-                        
-        //                 connection.addOnStateChange(function (c: fm.icelink.Connection) {
-        //                     var error = connection.getError();
-                            
-        //                     if (c.getState() == fm.icelink.ConnectionState.Connected) {
-        //                         that.state.layoutManager.addRemoteView(remoteMedia.getId(), remoteMedia.getView());
-        //                     } else if (c.getState() == fm.icelink.ConnectionState.Failing || c.getState() == fm.icelink.ConnectionState.Closing) {
-        //                         that.state.layoutManager.removeRemoteView(remoteMedia.getId());
-        //                         remoteMedia.destroy();
-        //                         console.log(error)
-        //                     }
-        //                 });
-        //                 return connection
-        //             })
-        //             fm.icelink.websync4.ClientExtensions.joinConference(client, joinArgs);
-        //         }
-        //         catch (error) {
-        //             console.log("new error", error)
-        //             promise.reject(error);
-        //         }
-        //         that.setState({ client: client })
-        //         // return promise;
-        //     }).fail(function (error: any) {
-        //         console.log(error.message)
-        //     })
     }
 
     showBack() {
@@ -174,12 +83,6 @@ export default class BeExpert extends React.Component<any, { connect: Boolean, l
                 that.setState({ connect: false })
             }
         });
-
-        // this.props.history.push('/RateCall')
-
-        // this.state.layoutManager.removeRemoteView(this.state.remoteMedia.getId())
-
-
     }
 
     onMute() {
