@@ -43,7 +43,7 @@ app.on('ready', () =>
     show: false,
     width: 337,
     height: 707,
-    resizable: false
+    // resizable: false
   });
 
   mainWindow.loadURL(`file://${__dirname}/app.html`);

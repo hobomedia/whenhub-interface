@@ -16,12 +16,24 @@
         width: 338px;
         height: 255px
     }
+    .moreInfo {
+        background-color: #2a3644;
+        width: 338px;
+        height: 255px;
+        bottom: 0;
+        position: absolute;
+        padding-top: 13px;
+        padding-left: 5px;
+        padding-right: 5px;
+        padding-bottom: 5px;
+        overflow: scroll;
+    }
     .star {
         display: inline-block;
         padding: 3px;
         vertical-align: middle;
         line-height: 1;
-        font-size: 1.5em;
+        font-size: 1em;
         color: #ABABAB;
         transition: color .2s ease-out;
     }
@@ -40,7 +52,9 @@
     .ratings {
         margin-top: 10px;
         display: inline-block;
-        margin-bottom: 10px;
+        font-weight: 100;
+        margin-left: 10px;
+        color: #FFF; 
     }
 
     .swipe {
@@ -116,7 +130,29 @@
         font-size: 20pt;
     }
 
-    .fm-video {
-        top: 416px
+    .connectFont {
+        color: white;
+        font-weight: 100;
+        font-size: 7pt;
+        margin-left: 113px;
+    }
+
+    button i {
+        color: white;
+    }
+
+    .Arrow {
+        margin: auto;
+        width: 50%;
+        text-align: center;
+    }
+    
+    .Arrow button{
+        border: none;
+        background-color: transparent;
+    }
+
+    #expertise {
+        margin-bottom: 10px;
     }
 }

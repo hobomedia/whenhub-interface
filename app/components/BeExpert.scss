@@ -4,9 +4,10 @@
         padding: 3px;
         vertical-align: middle;
         line-height: 1;
-        font-size: 1.5em;
+        font-size: 1em;
         color: #ABABAB;
         transition: color .2s ease-out;
+        cursor: default;
 
         &.selected {
             color: #FFD700;
