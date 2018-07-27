@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import Nav from './Nav';
 import {connect} from 'react-redux';
+import { getConversion } from '../actions/conversion';
 
 const styles = require('./Home.scss');
 
@@ -13,6 +14,11 @@ export class Home extends React.Component<any, {experts: any}>{
     this.state = {
       experts: []
     };
+
+    let args = {
+      bearer: this.props.bearer,
+    }
+    this.props.dispatch(getConversion(args))
   }
 
   showLoginMessage() {
@@ -56,7 +62,8 @@ export class Home extends React.Component<any, {experts: any}>{
 const mapStateToProps = function (props: any, state: any) {
   return {
       profile: props.login.profile,
-      token: props.login.token
+      token: props.login.token,
+      bearer: props.login.bearer,
   };
 
 };

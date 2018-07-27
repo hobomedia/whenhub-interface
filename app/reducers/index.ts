@@ -4,13 +4,15 @@ import login, { TState as LoginState } from './login';
 import getExperts, { TState as ExpertState } from './experts';
 import getHistory, { TState as HistoryState } from './account';
 import getWalletAmount, { TState as WalletState } from './wallet';
-import startInterface, { TState as InterfaceState } from './interface';
+import getConversion, { TState as ConversionState } from './conversion';
 
+import startInterface, { TState as InterfaceState } from './interface';
 const rootReducer = combineReducers({
   login,
   getExperts,
   getHistory,
   getWalletAmount,
+  getConversion,
   startInterface,
   routing: routing as Reducer<any>
 });
@@ -20,6 +22,7 @@ export interface IState {
   history: HistoryState,
   amount: WalletState,
   login: LoginState,
+  conversion: ConversionState,
   interface: InterfaceState;
 }
 

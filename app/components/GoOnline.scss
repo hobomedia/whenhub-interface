@@ -3,5 +3,33 @@
         background-color: #1d365c;
         color: white;
         height: 100%;
+        padding: 10px;
+    }
+
+    td {
+        background-color: white;
+        color: black;
+        border: 1px solid black;
+    }
+
+    .term {
+        color: white;
+        padding-left: 10px;
+        padding-top: 10px;
+        font-weight: 100;
+    }
+
+    .term .termHeader{
+        font-weight: bolder;
+        display: inline;
+    }
+
+    .term .termBody {
+        display: inline;
+    }
+
+    .consentText {
+        margin-top: 20px;
+        margin-left: 10px;
     }
 }

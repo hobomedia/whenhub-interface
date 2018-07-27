@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {connect} from 'react-redux';
-
+import { Link } from 'react-router-dom';
 const Axios = require('axios');
 const styles = require('./Home.scss');
 const goOnlineStyles = require('./GoOnline.scss');
@@ -27,34 +27,78 @@ export class GoOnline extends React.Component<any>{
   }
 
     render() {
+        console.log(this.props.location.state)
         return (
         <div className={styles.container} style={{height: "600px"}}>
             <div id={goOnlineStyles.background}>
-                <button style={{ backgroundColor: "#e64b4b", color: "white", marginLeft: "10px", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                <div style={{color: "white",textAlign: "center"}}>
+                    Interface Terms and Conditions
+                </div>
+
+                <table style={{margin: "auto"}}>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tbody>
+                                        <tr>
+                                            <td>Topics</td>
+                                            <td>Blockchain, Aviation</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Currency</td>
+                                            <td>Rate/Hour</td>
+                                            <td>Fee</td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <p>When Tokens</p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <p> US Dollars</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style={{color: "white",textAlign: "center"}}>
+                    Call and Payout Terms
+                </div>
+                <div>
+                    <div className={goOnlineStyles.term}>
+                        <div className={goOnlineStyles.termHeader}>First Minute Free: </div><div className={goOnlineStyles.termbody}>The first minute of all calls is free. The minimum call duration is 15 minutes.</div>
+                    </div>
+
+                    <div className={goOnlineStyles.term}>
+                        <div className={goOnlineStyles.termHeader}>Payouts in 72 hours: </div><div className={goOnlineStyles.termbody}>Payouts are processed automatically within 72 hours after call is completed.</div>
+                    </div>
+
+                    <div className={goOnlineStyles.term}>
+                        <div className={goOnlineStyles.termHeader}>Poor Rating 90-day Hold: </div><div className={goOnlineStyles.termbody}>If a caller gives you a rating below 3 starts, a 90-day hold is placed on payouts.</div>
+                    </div>
+
+
+                </div>
+
+                <div>
+                    <Link to=""><span>Review Terms and Conditions</span></Link>
+                </div>
+
+                <div className={goOnlineStyles.consentText}>
+                    By going Online, you agree to the terms and conset to your profile appearing in searches on the WhenHub Interface network
+                </div>
+
+                <button style={{ backgroundColor: "#e64b4b", color: "white", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">
                     Go Offline
                 </button>
 
-                <div style={{color: "white", paddingLeft: "10px", paddingRight: "10px", paddingTop: "30px", paddingBottom: "30px", fontWeight: 100}}>
-                    You are currently Online and appearing in searches on the WhenHub Interface Network
-                </div>
-                <div>
-                    <div style={{color: "white", paddingLeft: "10px", paddingTop: "10px", fontWeight: 100, display: "inline"}}>
-                        Topic
-                    </div>
-                    <div style={{color: "white", paddingRight: "10px", fontWeight: 100, display: "inline", float: "right"}}>
-                        Hourly Rate
-                    </div>
-                </div>
 
-                <div>
-                    <div style={{color: "white", paddingLeft: "10px", paddingTop: "10px", fontWeight: 100, display: "inline"}}>
-                        Business
-                    </div>
-                    
-                    <div style={{color: "white", paddingRight: "10px", fontWeight: 100, display: "inline", float: "right"}}>
-                        (&#65510;)20.00
-                    </div>
-                </div>
             </div>
         </div>       
         );
