@@ -86,8 +86,8 @@ export class GoOnline extends React.Component<any>{
 
                 </div>
 
-                <div>
-                    <Link to=""><span>Review Terms and Conditions</span></Link>
+                <div className={goOnlineStyles.termsLink}>
+                    <Link to=""><span><i className="fa fa-external-link"></i> Review Terms and Conditions</span></Link>
                 </div>
 
                 <div className={goOnlineStyles.consentText}>
