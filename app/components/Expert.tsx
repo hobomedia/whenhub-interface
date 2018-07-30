@@ -6,10 +6,18 @@ import * as React from 'react';
 const styles = require('../components/Home.scss');
 // const beExpertStyles = require('../components/BeExpert.scss')
 const expertStyles = require('../components/Expert.scss')
+// const iceLinkApp = require('./IceLinkApp');
 
+import IceLinkApp from './IceLinkApp';
 
 // interface ExpertState {rating: any, temp_rating: any}
-export default class BeExpert extends React.Component<any, { connect: Boolean, localMedia: any, layoutManager: any, remoteMedia: any, client: any, num: number }>{
+export default class Expert extends React.Component<any, { connect: Boolean, localMedia: any, layoutManager: any, remoteMedia: any, client: any, num: number }>{
+
+
+
+
+    app = new IceLinkApp();
+
     constructor(props: any) {
         super(props)
         this.state = {
@@ -22,112 +30,35 @@ export default class BeExpert extends React.Component<any, { connect: Boolean, l
         }
     }
 
-    connection(error: any) {
-        if (error) {
-            return error.getException();
 
-        } else {
-            return undefined
-        }
-    }
+
 
     componentDidMount() {
         console.log("connect");
-        // actionCreatorVoid("test").test({type: "test"})
         this.setState({ connect: true });
 
-        const audio = true;
-        const video = true;
-        const that = this;
-
-        // start local media
-        const localMedia = new (window as any).fm.icelink.LocalMedia(audio, video);
-
-        localMedia.start().then(function (lm: any) {
-            console.log("media capture started");
-            const container: HTMLElement = document.getElementById("container")!;
-            const layoutManager = new fm.icelink.DomLayoutManager(container);
-
-            //set local media to layout manager
-            layoutManager.setLocalView(localMedia.getView());
-
-            that.setState({ localMedia: localMedia, layoutManager: layoutManager })
-        })
-            .then(function () {
-                //connect to websync
-                const client = new (window as any).fm.websync.client("https://v4.websync.fm/websync.ashx");
-                client.setDomainKey(new fm.icelink.Guid('b0e15424-ba55-489d-b62a-1d6e1aa5927d'));
-                client.connect({
-                    onSuccess: function (e: any) {
-                        console.log("connected to websync");
-                    },
-                    onFailure: function (e: any) {
-                        console.log("failed to connect to websync");
-                    }
-                });
+        this.app.sessionId = '617585670';
+        this.app.name = 'Jonathan';
 
 
-                //Join conference
-                let promise = new fm.icelink.Promise();
-                try {
-                    let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + "262511090");
-                    joinArgs.setOnSuccess((args) => {
-                        console.log("success")
-                        promise.resolve({});
-                    })
-                    joinArgs.setOnFailure((args) => {
-                        console.log("fail")
+        this.app.startLocalMedia(this.refs.container as HTMLElement, false).then((localMedia: fm.icelink.LocalMedia) => {
+            // Update the UI context.
 
-                        console.log(args.getException())
-                        promise.reject(args.getException());
-                    })
-                    joinArgs.setOnRemoteClient((remoteClient) => {
-                        console.log("callback")
 
-                        //add remote media to layout manager
-                        let remoteMedia = new fm.icelink.RemoteMedia();
-                        let remoteView = remoteMedia.getView();
-                        if (remoteView != null) {
-                            remoteMedia.getViewSink().setViewScale(fm.icelink.LayoutScale.Contain);
-                            that.state.layoutManager.addRemoteView(remoteMedia.getId(), remoteView);
-                        }
-                        //create connection to remote client
-                        const audioStream = new fm.icelink.AudioStream(that.state.localMedia, remoteMedia);
-                        const videoStream = new fm.icelink.VideoStream(that.state.localMedia, remoteMedia);
-                        const connection = new fm.icelink.Connection([audioStream, videoStream]);
 
-                        connection.setIceServers([
-                            new fm.icelink.IceServer("stun:turn.icelink.fm:3478"),
-                            new fm.icelink.IceServer("turn:turn.icelink.fm:443", "test", "pa55w0rd!")
-                        ]);
+            // Join the session.
+            return this.app.joinAsync();
+        }, (ex: any) => {
+            console.error('Could not start local media.', ex);
+            alert('Could not start local media.\n' + ex.message);
+            stop();
+        }).then((o: any) => {
+            // Enable the leave button.
+            console.log('I joined');
+        }, (ex: any) => {
+            console.error('Could not join session.', ex);
+        });
 
-                        connection.addOnStateChange(function (c: fm.icelink.Connection) {
-                            console.log("state change")
-                            var error = connection.getError();
-                            console.log(connection.getState())
-
-                            if (c.getState() == fm.icelink.ConnectionState.Connected) {
-                                that.state.layoutManager.addRemoteView(remoteMedia.getId(), remoteMedia.getView());
-                                console.log("add remote view after state change")
-                            } else if (c.getState() == fm.icelink.ConnectionState.Failing || c.getState() == fm.icelink.ConnectionState.Closing) {
-                                console.log("removed remote view because connection failed")
-                                that.state.layoutManager.removeRemoteView(remoteMedia.getId());
-                                remoteMedia.destroy();
-                                console.log(error)
-                            }
-                        });
-                        return connection
-                    })
-                    fm.icelink.websync4.ClientExtensions.joinConference(client, joinArgs);
-                }
-                catch (error) {
-                    promise.reject(error);
-                }
-                // that.setState({ client: client })
-                return promise;
-            }).fail(function (error: any) {
-                console.log(error.message)
-            })
     }
 
     showBack() {
@@ -187,7 +118,7 @@ export default class BeExpert extends React.Component<any, { connect: Boolean, l
 
     render() {
         return (<div className={styles.container}>
-            <div className={expertStyles.video} id="container">
+            <div className={expertStyles.video} id="container" ref="container">
 
                 <button className={expertStyles.button + ` btn`} type="button" onClick={this.onStopSubmit.bind(this)}>
                     End Interface
