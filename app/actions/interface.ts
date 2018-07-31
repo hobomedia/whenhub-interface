@@ -13,7 +13,6 @@ export const end = actionCreatorVoid('END_INTERFACE');
 
 export function startInterface(args: any = null) {
     return (dispatch: Function, getState: Function) => {
-            //start infterface
             return Axios({
                 method: 'POST',
                 url: `https://interface-api.whenhub.com/api/Interfaces`,

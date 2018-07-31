@@ -27,7 +27,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
     componentDidMount() {
         console.log(this.props.interface)
         this.app.sessionId = `${this.props.interface.connectionId}`;
-        this.app.name = 'Jonathan';
+        this.app.name = 'Interface';
 
         this.app.startLocalMedia(this.refs.container as HTMLElement, false).then((localMedia: fm.icelink.LocalMedia) => {
             // Update the UI context.
@@ -57,7 +57,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
             connectionId: this.props.interface.connectionId
         }
         this.app.leaveAsync().fail((ex) => {
-            console.log("couldn't leave the call")
+            console.log("failed to leave the call")
         });
 
         this.app.stopLocalMedia().then((o) => {
@@ -66,16 +66,13 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                 ref.props.history.push('/RateCall')
             })
         }).fail((ex) => {
-            console.log("couldn't stop local media")
+            console.log("failed to stop local media")
         })
     }
 
 
     onMute() {
-        console.log("tried to mute")
-        console.log(this.app.toggleAudioMute());
-        // let Audio = this.state.localMedia.getAudioTrack();
-        // Audio.setMuted(!Audio.getMuted());
+        this.app.toggleAudioMute();
 
         if(this.state.muteButtonClick == true){
         this.setState({ muteButtonClick: false })
@@ -84,13 +81,6 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
             this.setState({ muteButtonClick: true })
         }
     }
-
-    // onUnMute() {
-    //     let Audio = this.state.localMedia.getAudioTrack();
-    //     Audio.setMuted(!Audio.getMuted());
-    //     this.setState({ muteButtonClick: false })
-
-    // }
 
     muteButton() {
         if (this.state.muteButtonClick == false) {
