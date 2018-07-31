@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import 'rc-slider/assets/index.css';
-// import { startInterface } from '../actions/interface';
+import { endInterface } from '../actions/interface';
 import IceLinkApp from './IceLinkApp';
 
 // const Axios = require('axios');
@@ -52,14 +52,19 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
     }
 
     onStopSubmit() {
-
+        const ref = this;
+        const args = {
+            connectionId: this.props.interface.connectionId
+        }
         this.app.leaveAsync().fail((ex) => {
             console.log("couldn't leave the call")
         });
 
         this.app.stopLocalMedia().then((o) => {
             console.log("media capture stopped")
-            this.props.history.push('/RateCall')
+            this.props.dispatch(endInterface(args)).then(function(response: any){
+                ref.props.history.push('/RateCall')
+            })
         }).fail((ex) => {
             console.log("couldn't stop local media")
         })
