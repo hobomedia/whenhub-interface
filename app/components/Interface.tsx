@@ -2,11 +2,14 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import 'rc-slider/assets/index.css';
 // import { startInterface } from '../actions/interface';
+import IceLinkApp from './IceLinkApp';
 
 // const Axios = require('axios');
 let interfaceStyles = require('./Interface.scss');
 
 export class Interface extends React.Component<any, { interval: any, min: any, localMedia: any, layoutManager: any, remoteMedia: any, client: any, muteButtonClick: any}>{
+    app = new IceLinkApp();
+
     constructor(props: any) {
         super(props)
         this.state = {
@@ -22,104 +25,26 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
     }
 
     componentDidMount() {
-        const connectionId = parseInt(this.props.interface.connectionId)
-        // console.log(connectionId)
+        console.log(this.props.interface)
+        this.app.sessionId = `${this.props.interface.connectionId}`;
+        this.app.name = 'Jonathan';
 
-        const audio = true;
-        // var video = true? new fm.icelink.VideoConfig(window.screen.width, window.screen.height, 3) : new fm.icelink.VideoConfig(640, 480, 30);
-        var video = true;
-        const that = this;
+        this.app.startLocalMedia(this.refs.container as HTMLElement, false).then((localMedia: fm.icelink.LocalMedia) => {
+            // Update the UI context.
+            // Join the session.
+            return this.app.joinAsync();
+        }, (ex: any) => {
+            console.error('Could not start local media.', ex);
+            alert('Could not start local media.\n' + ex.message);
+            stop();
+        }).then((o: any) => {
+            // Enable the leave button.
+            console.log('I joined');
+        }, (ex: any) => {
+            console.error('Could not join session.', ex);
+        });
 
-        // start local media
-        // const localMedia = new (window as any).fm.icelink.LocalMedia(audio, video, true);
-        const localMedia = new (window as any).fm.icelink.LocalMedia(audio, video);
 
-
-        localMedia.start().then(function (lm: any) {
-            console.log("media capture started");
-            const container: HTMLElement = document.getElementById("container")!;
-            const layoutManager = new fm.icelink.DomLayoutManager(container);
-            layoutManager.applyPreset(fm.icelink.LayoutPreset.getFacetime())
-
-            //set local media to layout manager
-            layoutManager.setLocalView(localMedia.getView());
-            that.setState({ localMedia: localMedia, layoutManager: layoutManager })
-        })
-        .then(function () {
-            //connect to websync
-            const client = new (window as any).fm.websync.client("https://v4.websync.fm/websync.ashx");
-            client.setDomainKey(new fm.icelink.Guid('b0e15424-ba55-489d-b62a-1d6e1aa5927d'));
-            client.connect({
-                onSuccess: function (e: any) {
-                    console.log("connected to websync");
-                },
-                onFailure: function (e: any) {
-                    console.log("failed to connect to websync");
-                }
-            });
-
-            //Join conference
-            let promise = new fm.icelink.Promise();
-            try {
-                let joinArgs = new fm.icelink.websync4.JoinConferenceArgs("/auto-signalling/" + `${connectionId}`);
-                joinArgs.setOnSuccess((args) => {
-                    console.log("success")
-                    promise.resolve({});
-                })
-                joinArgs.setOnFailure((args) => {
-                    console.log("fail")
-
-                    console.log(args.getException())
-                    promise.reject(args.getException());
-                })
-                joinArgs.setOnRemoteClient((remoteClient) => {
-
-                    //add remote media to layout manager
-                    let remoteMedia = new fm.icelink.RemoteMedia();
-                    let remoteView = remoteMedia.getView();
-                    if (remoteView != null) {
-                        remoteMedia.getViewSink().setViewScale(fm.icelink.LayoutScale.Contain);
-                        that.state.layoutManager.addRemoteView(remoteMedia.getId(), remoteView);
-                    }
-                    //create connection to remote client
-                    const audioStream = new fm.icelink.AudioStream(that.state.localMedia, remoteMedia);
-                    const videoStream = new fm.icelink.VideoStream(that.state.localMedia, remoteMedia);
-                    const connection = new fm.icelink.Connection([audioStream, videoStream]);
-
-                    connection.setIceServers([
-                        new fm.icelink.IceServer("stun:turn.icelink.fm:3478"),
-                        new fm.icelink.IceServer("turn:turn.icelink.fm:443", "test", "pa55w0rd!")
-                    ]);
-
-                    fm.icelink.Log.setLogLevel(fm.icelink.LogLevel.Debug);
-                    fm.icelink.Log.registerProvider(new fm.icelink.ConsoleLogProvider(fm.icelink.LogLevel.Debug));
-
-                    connection.addOnStateChange(function (c: fm.icelink.Connection) {
-                        var error = connection.getError();
-                        console.log(c.getState())
-                        if (c.getState() == fm.icelink.ConnectionState.Connected) {
-                            that.state.layoutManager.addRemoteView(remoteMedia.getId(), remoteMedia.getView());
-                            console.log("connected")
-                            that.setState({ remoteMedia: remoteMedia.getId() })
-                        } else if (c.getState() == fm.icelink.ConnectionState.Failing || c.getState() == fm.icelink.ConnectionState.Closing) {
-                            that.state.layoutManager.removeRemoteView(remoteMedia.getId());
-                            remoteMedia.destroy();
-                            console.log(error)
-                        }
-                    });
-                    return connection
-                })
-                fm.icelink.websync4.ClientExtensions.joinConference(client, joinArgs);
-            }
-            catch (error) {
-                console.log("new error", error)
-                promise.reject(error);
-            }
-            that.setState({ client: client })
-            // return promise;
-        }).fail(function (error: any) {
-            console.log(error.message)
-        })
     }
 
     componentWillUnmount(){
@@ -127,34 +52,40 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
     }
 
     onStopSubmit() {
-        this.state.localMedia.stop().then(function (lm: any) {
-            console.log("media capture stopped");
-        })
 
-        this.state.client.disconnect({
-            onComplete: function (e: any) {
-                console.log("disconnected");
-            }
+        this.app.leaveAsync().fail((ex) => {
+            console.log("couldn't leave the call")
         });
 
-        this.props.history.push('/RateCall')
-
-        this.state.layoutManager.removeRemoteView(this.state.remoteMedia)
+        this.app.stopLocalMedia().then((o) => {
+            console.log("media capture stopped")
+            this.props.history.push('/RateCall')
+        }).fail((ex) => {
+            console.log("couldn't stop local media")
+        })
     }
 
 
     onMute() {
-        let Audio = this.state.localMedia.getAudioTrack();
-        Audio.setMuted(!Audio.getMuted());
-        this.setState({ muteButtonClick: true })
-    }
+        console.log("tried to mute")
+        console.log(this.app.toggleAudioMute());
+        // let Audio = this.state.localMedia.getAudioTrack();
+        // Audio.setMuted(!Audio.getMuted());
 
-    onUnMute() {
-        let Audio = this.state.localMedia.getAudioTrack();
-        Audio.setMuted(!Audio.getMuted());
+        if(this.state.muteButtonClick == true){
         this.setState({ muteButtonClick: false })
 
+        }else {
+            this.setState({ muteButtonClick: true })
+        }
     }
+
+    // onUnMute() {
+    //     let Audio = this.state.localMedia.getAudioTrack();
+    //     Audio.setMuted(!Audio.getMuted());
+    //     this.setState({ muteButtonClick: false })
+
+    // }
 
     muteButton() {
         if (this.state.muteButtonClick == false) {
@@ -162,7 +93,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                 <i className="fa fa-microphone-slash"></i>
             </button>
         } else if (this.state.muteButtonClick == true) {
-            return <button className={interfaceStyles.Button + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onUnMute.bind(this)}>
+            return <button className={interfaceStyles.Button + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onMute.bind(this)}>
                 <i className="fa fa-microphone"></i>
             </button>
         }
@@ -179,9 +110,9 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                             <i className="fa fa-phone"></i>
                         </button>
                     </div>
-                    <div className={interfaceStyles.video} id="container">
+                    <div className={interfaceStyles.video} id="container" ref="container">
                     </div>
-                    {/* <div style={{ position: "absolute", zIndex: 1000, padding: "6px", width: "337px", bottom: "5px", color: "white" }}>
+                    <div style={{ position: "absolute", zIndex: 1000, padding: "6px", width: "337px", bottom: "5px", color: "white" }}>
                         <div style={{display: "inline-block"}}>
                             <div>
                                 {this.props.location.state.expertInfo.name}
@@ -204,7 +135,7 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                                 </div>
                             </div>
                         </div>
-                    </div> */}
+                    </div>
                 </div>
             )
     }
