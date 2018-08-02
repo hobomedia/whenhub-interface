@@ -1,0 +1,33 @@
+:local {
+    #background {
+        background-color: #1d365c;
+        color: white;
+        height: 100%;
+        padding: 10px;
+    }
+
+    #accept {
+        background-color: #37d3b4;
+        color: white;
+        border-radius: 50%;
+        font-weight: 100 
+
+    }
+
+    #decline {
+        background-color: #e64b4b;
+        color: white;
+        margin-left: 70px;
+        border-radius: 50%;
+        font-weight: 100 
+
+    }
+
+    .buttonWell{
+        margin: auto;
+        width: 50%;
+        text-align: center;
+        padding-top: 450px;
+    }
+
+}
