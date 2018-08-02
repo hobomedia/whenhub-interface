@@ -4,10 +4,9 @@ import 'rc-slider/assets/index.css';
 import { endInterface } from '../actions/interface';
 import IceLinkApp from './IceLinkApp';
 
-// const Axios = require('axios');
 let interfaceStyles = require('./Interface.scss');
 
-export class Interface extends React.Component<any, { interval: any, min: any, localMedia: any, layoutManager: any, remoteMedia: any, client: any, muteButtonClick: any}>{
+export class Interface extends React.Component<any, { screenShare: boolean, interval: any, min: any, localMedia: any, layoutManager: any, remoteMedia: any, client: any, muteButtonClick: any}>{
     app = new IceLinkApp();
 
     constructor(props: any) {
@@ -19,17 +18,18 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
             client: null,
             muteButtonClick: false,
             min: 0, 
-            interval: setInterval(() => this.setState({min: this.state.min + 1}), 60000)
+            interval: setInterval(() => this.setState({min: this.state.min + 1}), 60000),
+            screenShare: true
         }
         console.log(this.props)
     }
 
     componentDidMount() {
-        console.log(this.props.interface)
+        console.log(this.props.interface, this.state.screenShare)
         this.app.sessionId = `${this.props.interface.connectionId}`;
         this.app.name = 'Interface';
 
-        this.app.startLocalMedia(this.refs.container as HTMLElement, false).then((localMedia: fm.icelink.LocalMedia) => {
+        this.app.startLocalMedia(this.refs.container as HTMLElement, this.state.screenShare).then((localMedia: fm.icelink.LocalMedia) => {
             // Update the UI context.
             // Join the session.
             return this.app.joinAsync();
@@ -47,6 +47,28 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
 
     }
 
+    startScreenShare(){
+        console.log(this.state.screenShare)
+        this.app.sessionId = `${this.props.interface.connectionId}`;
+        this.app.name = 'Interface';
+
+        this.app.startLocalMedia(this.refs.container as HTMLElement, this.state.screenShare).then((localMedia: fm.icelink.LocalMedia) => {
+            // Update the UI context.
+            // Join the session.
+            // return this.app.joinAsync();
+        }, (ex: any) => {
+            console.error('Could not start local media.', ex);
+            alert('Could not start local media.\n' + ex.message);
+            stop();
+        }).then((o: any) => {
+            // Enable the leave button.
+            console.log('I joined');
+        }, (ex: any) => {
+            console.error('Could not join session.', ex);
+        });
+
+
+    }
     componentWillUnmount(){
         clearInterval(this.state.interval)
     }
@@ -56,16 +78,16 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
         const args = {
             connectionId: this.props.interface.connectionId
         }
-        this.app.leaveAsync().fail((ex) => {
+        this.app.leaveAsync().fail((ex: any) => {
             console.log("failed to leave the call")
         });
 
-        this.app.stopLocalMedia().then((o) => {
+        this.app.stopLocalMedia().then((o: any) => {
             console.log("media capture stopped")
             this.props.dispatch(endInterface(args)).then(function(response: any){
                 ref.props.history.push('/RateCall')
             })
-        }).fail((ex) => {
+        }).fail((ex: any) => {
             console.log("failed to stop local media")
         })
     }
@@ -79,6 +101,23 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
 
         }else {
             this.setState({ muteButtonClick: true })
+        }
+    }
+
+    screenShare() {
+        console.log("share click")
+        if(this.state.screenShare == false){
+            this.app.stopLocalMedia().then((o) => {
+                console.log("media capture stopped")
+                this.setState({screenShare: true});
+                // this.startScreenShare();
+            }).fail((ex) => {
+                console.log("failed to stop local media")
+            })
+    
+        }else {
+
+            this.setState({screenShare: false});
         }
     }
 
@@ -103,6 +142,9 @@ export class Interface extends React.Component<any, { interval: any, min: any, l
                         {this.muteButton()}
                         <button className={interfaceStyles.end + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onStopSubmit.bind(this)}>
                             <i className="fa fa-phone"></i>
+                        </button>
+                        <button className={interfaceStyles.end + ` btn`} id="chromeExtensionInstallButton" style={{borderRadius: "20px"}} type="button" onClick={this.screenShare.bind(this)}>
+                            stop
                         </button>
                     </div>
                     <div className={interfaceStyles.video} id="container" ref="container">

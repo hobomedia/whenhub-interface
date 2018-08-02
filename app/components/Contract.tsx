@@ -65,13 +65,11 @@ export class Contract extends React.Component<any, { loading: Boolean, localMedi
     }
 
     onSubmit() {
-        // this.props.history.push('/Interface');
         console.log(this.props.location.state.expert.id)
         this.setState({ loading: true });
         let args = {
             bearer: this.props.bearer,
             data: {
-                // expertId: '5a44083472d2a50700bcf791',
                 expertId: `${this.props.location.state.expert.id}`,
                 callerId: '5acbba9ca6a3c60600000001',
                 estimatedInitialMaxDuration: 0,

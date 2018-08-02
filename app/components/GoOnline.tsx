@@ -1,7 +1,8 @@
 import * as React from 'react';
 import {connect} from 'react-redux';
 import { Link } from 'react-router-dom';
-const Axios = require('axios');
+import { goOffline } from '../actions/experts';
+
 const styles = require('./Home.scss');
 const goOnlineStyles = require('./GoOnline.scss');
 
@@ -11,19 +12,17 @@ export class GoOnline extends React.Component<any>{
   }
 
   onSubmit() {
-    Axios({
-        method: 'PUT',
-        url: `https://interface-api.whenhub.com/api/Experts/`+ `${this.props.profile['https://interface.whenhub.com/winid']}` + `/offline`,
-        headers: {
-          'Authorization': 'Bearer ' + `${this.props.bearer}`
-        }
-      }).then(function (response: any) {
-        console.log(response.data)
-        history.back();
+    let args = {
+        bearer: this.props.bearer,
+        profile: this.props.profile
+      }
+
+      this.props.dispatch(goOffline(args)).then(function(response: any) {
+          console.log(response.data)
+          history.back();
       }).catch(function (error: any) {
-        console.log(error)
+          console.log(error)
       })
-  
   }
 
     render() {
