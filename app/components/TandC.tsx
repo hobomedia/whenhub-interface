@@ -27,7 +27,7 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
         return (
         <div className={styles.container} style={{height: "600px"}}>
             <div id={tandcStyles.background}>
-                <div style={{color: "white",textAlign: "center"}}>
+                <div style={{color: "white",textAlign: "center", fontSize: "15px", marginBottom: "10px"}}>
                     Interface Terms and Conditions
                 </div>
 
@@ -47,11 +47,11 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
                     </tbody>
                 </table>
 
-                <div style={{color: "white",textAlign: "center", fontWeight: 100}}>
+                <div style={{color: "white",textAlign: "center", fontWeight: 100, fontSize: "11px", marginTop: "10px", paddingLeft: "10px", paddingRight: "10px"}}>
                     * Final amount charged may be less based on the duration of the call. The first minute of all calls is free. The minimum call duration is 15 minutes.
                 </div>
 
-                <div className={tandcStyles.termsHeader}>
+                <div className={tandcStyles.paymentHeader}>
                     Call and Payment Terms
                 </div>
                 <div>
