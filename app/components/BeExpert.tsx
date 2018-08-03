@@ -159,17 +159,18 @@ export class BeExpert extends React.Component<any, ExpertState>{
 
                   <Checkbox
                     color="primary"
-                    checked={this.state.tokenCheck}
-                    onChange={(e: any, checked: any) => this.handleTokenChange(e, checked)}
+                    checked={true}
+                    // onChange={(e: any, checked: any) => this.handleTokenChange(e, checked)}
                   />
                   WHEN tokens (&#65510;)
 
-                  <Checkbox
+                  {/* <Checkbox
                     color="primary"
                     checked={this.state.dollarCheck}
                     onChange={(e: any, checked: any) => this.handleDollarsChange(e, checked)}
+                    disabled={true}
                   />
-                  US Dollars ($)
+                  US Dollars ($) */}
 
                     <div className={beExpertStyles.fields}>
                     Hourly Rate
