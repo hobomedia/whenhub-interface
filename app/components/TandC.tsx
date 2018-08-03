@@ -85,7 +85,7 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
                     I understand the risk, agree with the terms, and wish to proceed with the call.
                 </div>
 
-                <div>
+                <div className={tandcStyles.option}>
                     Choose a payment option: 
                 </div>
 
