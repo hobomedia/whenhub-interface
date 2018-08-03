@@ -38,7 +38,7 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
                                 <table>
                                     <tbody>
                                         <tr>
-                                            <td>Maximum Amount: </td>
+                                            <td id={tandcStyles.amount}>Maximum Amount: </td>
                                         </tr>
                                     </tbody>
                                 </table>
