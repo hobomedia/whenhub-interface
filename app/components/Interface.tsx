@@ -107,11 +107,11 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
     screenShare() {
         console.log("share click")
         if(this.state.screenShare == false){
-            this.app.stopLocalMedia().then((o) => {
+            this.app.stopLocalMedia().then((o: any) => {
                 console.log("media capture stopped")
                 this.setState({screenShare: true});
                 // this.startScreenShare();
-            }).fail((ex) => {
+            }).fail((ex: any) => {
                 console.log("failed to stop local media")
             })
     
