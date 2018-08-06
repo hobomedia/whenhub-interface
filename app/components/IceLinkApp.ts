@@ -28,16 +28,15 @@ export default class IceLinkApp {
 
     // private chromeExtensionInstallButton = document.getElementById('chromeExtensionInstallButton') as HTMLButtonElement;
 
-    // public constructor(logContainer: HTMLElement) {
-    //     // Chrome screen-sharing extension registration.
-    //     fm.icelink.Plugin.setChromeExtensionId('nidjnlpklmpflfmfflalpddmadlgjckn');
+    public constructor() {
+        // Chrome screen-sharing extension registration.
+        fm.icelink.Plugin.setChromeExtensionId('nidjnlpklmpflfmfflalpddmadlgjckn');
 
-
-    //     // Log to console and the DOM.
-    //     fm.icelink.Log.setLogLevel(fm.icelink.LogLevel.Debug);
-    //     fm.icelink.Log.registerProvider(new fm.icelink.ConsoleLogProvider(fm.icelink.LogLevel.Debug));
-    //     fm.icelink.Log.registerProvider(new fm.icelink.DomLogProvider(logContainer, fm.icelink.LogLevel.Debug));
-    // }
+        // // Log to console and the DOM.
+        // fm.icelink.Log.setLogLevel(fm.icelink.LogLevel.Debug);
+        // fm.icelink.Log.registerProvider(new fm.icelink.ConsoleLogProvider(fm.icelink.LogLevel.Debug));
+        // fm.icelink.Log.registerProvider(new fm.icelink.DomLogProvider(logContainer, fm.icelink.LogLevel.Debug));
+    }
 
     public startLocalMedia(videoContainer: HTMLElement, captureScreen: boolean): fm.icelink.Future<fm.icelink.LocalMedia> {
         var promise = new fm.icelink.Promise<fm.icelink.LocalMedia>();
@@ -52,6 +51,8 @@ export default class IceLinkApp {
 
             // Set up the layout manager.
             this.layoutManager = new fm.icelink.DomLayoutManager(videoContainer);
+            this.layoutManager.setFloatMarginY(100)
+            this.layoutManager.setFloatMarginX(160)
 
             // Start the local media.
             this.localMedia.start().then((localMedia) => {
@@ -71,6 +72,7 @@ export default class IceLinkApp {
                 if (localView != null) {
                     localView.id = 'localView';
                     if (this.layoutManager != null) {
+
                         this.layoutManager.setLocalView(localView);
                     }
                 }
