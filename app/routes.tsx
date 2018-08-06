@@ -17,6 +17,8 @@ import Call from './components/Call';
 import RateCall from './components/RateCall';
 import Contract from './components/Contract';
 import Interface from './components/Interface';
+import IncomingCall from './components/IncomingCall';
+import TandC from './components/TandC';
 
 export default () => (
   <App>
@@ -37,6 +39,8 @@ export default () => (
       <Route path="/RateCall" component={RateCall} />
       <Route path="/Contract" component={Contract} />
       <Route path="/Interface" component={Interface} />
+      <Route path="/IncomingCall" component={IncomingCall} />
+      <Route path="/TandC" component={TandC} />
 
     </Switch>
   </App>
