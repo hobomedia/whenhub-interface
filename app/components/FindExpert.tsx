@@ -71,7 +71,7 @@ export class FindExpert extends React.Component<any, {click: Boolean, value: str
                       <div id={FindExpertStyles.topic}>
                         Topic
                         </div>
-                      <input id={FindExpertStyles.input} value={this.state.value} onChange={this.handleChange.bind(this)} type="text" placeholder="All" className="form-control" name="title" />
+                      <input id={FindExpertStyles.input} value={this.state.value} onChange={this.handleChange.bind(this)} type="text" placeholder="Search for Expert" className="form-control" name="title" />
                     </form>
                     <button className='btn' style={{backgroundColor: "rgb(55, 211, 180)", color: "white",marginLeft: "10px",width: "318px", marginTop: "10px",borderRadius: "20px", fontWeight: 100}}type="button" onClick={this.onSubmit.bind(this)}>
                       {this.state.loading? <i className="fa fa-spinner fa-spin" id={FindExpertStyles.spinner}/>: "View Experts"}
