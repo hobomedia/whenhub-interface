@@ -16,7 +16,7 @@ export class Contract extends React.Component<any, { loading: Boolean, localMedi
         this.state = {
             section: "deposit",
             value: "",
-            duration: 0,
+            duration: 15,
             contractAmount: 0,
             connect: false,
             localMedia: null,
@@ -65,14 +65,14 @@ export class Contract extends React.Component<any, { loading: Boolean, localMedi
     }
 
     onSubmit() {
-        console.log(this.props.location.state.expert.id)
+        console.log(this.props.location.state.expert.id, this.state.duration)
         this.setState({ loading: true });
         let args = {
             bearer: this.props.bearer,
             data: {
                 expertId: `${this.props.location.state.expert.id}`,
                 callerId: '5acbba9ca6a3c60600000001',
-                estimatedInitialMaxDuration: 0,
+                estimatedInitialMaxDuration: this.state.duration,
                 purposeOfInterface: this.state.value
             }
         }
@@ -150,7 +150,7 @@ export class Contract extends React.Component<any, { loading: Boolean, localMedi
                         </div>
 
                         <div>
-                            Contract for (&#65510;){this.contractAmount()}
+                            Contract for (&#65510;) {this.contractAmount()}
                         </div>
                     </div>
                     <div className={contractStyles.body}>
@@ -171,7 +171,7 @@ export class Contract extends React.Component<any, { loading: Boolean, localMedi
                                         75: "75"
                                     }
                                 }
-                                defaultValue={0}
+                                defaultValue={15}
                                 onChange={this.slider.bind(this)}
                                 TrackStyle={{ backgroundColor: '#37d3b4' }}
                                 dotStyle={{
