@@ -9,7 +9,7 @@
 }
 
 .video {
-    width: 100%;
+    width: 145%;
     height: 100%;
 
 }
@@ -17,27 +17,59 @@
 .end {
     background-color: #e64b4b;
     color: white;
-    margin-left: 10px;
-    width: 153px;
-    margin-top: 10px;
-    margin-bottom: 100px;
+    width: 80px;
     border-radius: 20px;
     font-weight: 100;
+    display: inline-block;
+}
 
+.share {
+    background-color: #736cff;
+    color: white;
+    width: 80px;
+    border-radius: 20px;
+    font-weight: 100;
+    display: inline-block;
 }
 
 .Button {
     background-color: #37d3b4;
     color: white;
-    margin-left: 10px;
-    width: 155px;
-    margin-top: 10px;
-    margin-bottom: 100px;
+    width: 80px;
     border-radius: 20px;
     font-weight: 100;
+    display: inline-block;
 
 }
 
-.fm-video-local {
-    top: 405px;
+.progressSection {
+    text-align: center;
+    font-size: 8pt;
+    display: inline-block;
+    height: 100%;
+    width: 25%;
+    border: solid 1px black;
+}
+
+.ButtonWell {
+    text-align: center;
+    padding-bottom: 5px;
+    padding-top: 10px;
+    background: linear-gradient(
+                     rgba(20,20,20, .5), 
+                     rgba(20,20,20, .5))
+}
+
+.infoWell {
+    padding: 7px;
+    background: linear-gradient(
+                     rgba(20,20,20, .9), 
+                     rgba(20,20,20, .9))
+}
+
+.callerName {
+    display: inline-block;
+    margin-left: 6px;
+    width: 50%;
+    border-right: solid 1px white;
 }

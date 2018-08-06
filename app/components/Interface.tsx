@@ -19,7 +19,7 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
             muteButtonClick: false,
             min: 0, 
             interval: setInterval(() => this.setState({min: this.state.min + 1}), 60000),
-            screenShare: true
+            screenShare: false
         }
         console.log(this.props)
     }
@@ -47,7 +47,7 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
 
     }
 
-    startScreenShare(){
+    onScreenShare(){
         console.log(this.state.screenShare)
         this.app.sessionId = `${this.props.interface.connectionId}`;
         this.app.name = 'Interface';
@@ -92,7 +92,6 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
         })
     }
 
-
     onMute() {
         this.app.toggleAudioMute();
 
@@ -101,23 +100,6 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
 
         }else {
             this.setState({ muteButtonClick: true })
-        }
-    }
-
-    screenShare() {
-        console.log("share click")
-        if(this.state.screenShare == false){
-            this.app.stopLocalMedia().then((o: any) => {
-                console.log("media capture stopped")
-                this.setState({screenShare: true});
-                // this.startScreenShare();
-            }).fail((ex: any) => {
-                console.log("failed to stop local media")
-            })
-    
-        }else {
-
-            this.setState({screenShare: false});
         }
     }
 
@@ -138,40 +120,54 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
     render() {
             return (
                 <div className={interfaceStyles.container}>
-                    <div style={{ position: "absolute", zIndex: 1000, width: "337px", paddingTop: "8px" }}>
-                        {this.muteButton()}
-                        <button className={interfaceStyles.end + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onStopSubmit.bind(this)}>
-                            <i className="fa fa-phone"></i>
-                        </button>
-                        <button className={interfaceStyles.end + ` btn`} id="chromeExtensionInstallButton" style={{borderRadius: "20px"}} type="button" onClick={this.screenShare.bind(this)}>
-                            stop
-                        </button>
-                    </div>
                     <div className={interfaceStyles.video} id="container" ref="container">
-                    </div>
-                    <div style={{ position: "absolute", zIndex: 1000, padding: "6px", width: "337px", bottom: "5px", color: "white" }}>
-                        <div style={{display: "inline-block"}}>
-                            <div>
-                                {this.props.location.state.expertInfo.name}
+                    <div style={{ position: "absolute", zIndex: 1000, width: "337px", bottom: "0px", color: "white" }}>
+                        
+                        <div style={{height: "45px", width: "100%"}}>
+                            <div className={interfaceStyles.progressSection} style={{backgroundColor: this.state.min < 1? "green": "red"}}>
+                                Free<div>(1 min)</div>
                             </div>
-                            <div>
-                                Rate: (&#65510;){this.props.location.state.expertInfo.expertise.hourlyRate}/hour
+
+                            <div className={interfaceStyles.progressSection} style={{backgroundColor: this.state.min > 1? "green": "red"}}>
+                                0.00 <div>15 mins</div>
                             </div>
+
+                            <div className={interfaceStyles.progressSection}>
+                                Pay/Minute <div>(Up to {this.props.interface.estimatedInitialMaxDuration} min)</div>
+                            </div>
+
+                            <div className={interfaceStyles.progressSection} style={{backgroundColor: this.state.min > this.props.interface.estimatedInitialMaxDuration? "green": "red"}}>
+                                Free <div>(unlimited)</div>
+                            </div>
+
+                        </div>
+                        
+                        <div className={interfaceStyles.ButtonWell}>
+                            <button className={interfaceStyles.share + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onScreenShare.bind(this)}>
+                            <i className="fa fa-desktop"></i>
+                            </button>
+
+                            <button className={interfaceStyles.end + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onStopSubmit.bind(this)}>
+                                <i className="fa fa-phone"></i>
+                            </button>
+
+                            {this.muteButton()}
                         </div>
 
-                        <div style={{display: "inline-block", float: "right"}}>
-                            <div>
-                                Elapsed Time: {this.state.min} min.
-                            </div>
-                            <div style={{fontWeight: 100, fontSize: "10pt"}}>
-                                <div style={{display: "inline-block"}}>
-                                    Min: {this.props.interface.expertise.minimumDuration}mins.
+                        <div className={interfaceStyles.infoWell}>
+                            <div className={interfaceStyles.callerName}>
+                                <div>
+                                    {this.props.location.state.expertInfo.name}
                                 </div>
-                                <div style={{display: "inline-block", marginLeft: "10px"}}>
-                                    Max: 0 mins.
+                            </div>
+
+                            <div style={{display: "inline-block", float: "right", marginRight: "6px"}}>
+                                <div>
+                                    Elapsed Time: {this.state.min} min.
                                 </div>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
             )
