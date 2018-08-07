@@ -128,11 +128,11 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
                                 Free<div>(1 min)</div>
                             </div>
 
-                            <div className={interfaceStyles.progressSection} style={{backgroundColor: this.state.min > 1? "green": "red"}}>
-                                0.00 <div>15 mins</div>
+                            <div className={interfaceStyles.progressSection} style={{backgroundColor: (this.state.min >= 1) && (this.state.min <= 15)? "green": "red"}}>
+                                ${(this.props.interface.expertise.hourlyRate/this.props.interface.expertise.minimumDuration).toFixed(2)} <div>15 mins</div>
                             </div>
 
-                            <div className={interfaceStyles.progressSection}>
+                            <div className={interfaceStyles.progressSection} style ={{backgroundColor: (this.state.min >= this.props.interface.expertise.minimumDuration) && (this.state.min <= this.props.interface.estimatedInitialMaxDuration)? "green": "red"}}>
                                 Pay/Minute <div>(Up to {this.props.interface.estimatedInitialMaxDuration} min)</div>
                             </div>
 
