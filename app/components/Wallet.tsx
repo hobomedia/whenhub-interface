@@ -2,17 +2,18 @@ import * as React from 'react';
 import Nav from './Nav';
 import {connect} from 'react-redux';
 import { getWalletAmount } from '../actions/wallet';
+import {Clipboard} from 'ts-clipboard';
 
-// const Axios = require('axios');
 let styles = require('./Home.scss');
 let walletStyles = require('./Wallet.scss');
 
-export class Wallet extends React.Component<any, {sidebarOpen: boolean, section: string}>{ 
+export class Wallet extends React.Component<any, {copied: boolean, sidebarOpen: boolean, section: string}>{ 
   constructor(props:any){
     super(props)
     this.state = {
       sidebarOpen: true,
       section: "deposit",
+      copied: false
     }
   }
 
@@ -26,25 +27,28 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
     }
   }
 
-  onSubmit() {
-      console.log("hit")
+  onSubmit(wallet: any) {
+      console.log("copy hit");
+    //   this.showAddress(wallet).execCommand("copy");
+    //   alert("Copied wallet address to clipboard");
+    Clipboard.copy(this.showAddress(wallet));
   }
 
   onGuideSubmit() {
-      console.log("click")
+      console.log("click");
   }
 
   depositClick() {
-      this.setState({section: "deposit"})
+      this.setState({section: "deposit"});
   }
 
   transferClick() {
-      this.setState({section: "transfer"})
+      this.setState({section: "transfer"});
 
   }
 
   transactionClick(){
-      this.setState({section: "transaction"})
+      this.setState({section: "transaction"});
 
   }
 
@@ -53,7 +57,7 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
         return 
     }else if (wallet != null){
         return wallet.amount
-    }
+    };
   }
 
   showAddress(wallet: any) {
@@ -61,12 +65,10 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
         return
     }else if (wallet != null){
         return wallet.address
-    }
-
+    };
   }
 
   border() {
-
     const style = {borderBottomWidth: 'initial',borderBottomStyle: 'solid',borderBottomColor: '#37d3b4'}
       if (this.state.section == "deposit") {
         return style; 
@@ -93,7 +95,13 @@ export class Wallet extends React.Component<any, {sidebarOpen: boolean, section:
                 WHEN Wallet Adress
             </div>
             <div>
-                <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "293px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit} className="btn">
+            {/* <CopyToClipboard 
+                text={this.showAddress(wallet)}
+                onCopy={() => this.setState({copied: true})}
+            >
+                <button>Copy to clipboard with button</button>
+            </CopyToClipboard> */}
+                <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "293px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(wallet, this)} className="btn">
                     Copy Wallet Address to clipboard
                 </button>
                 {/* <div id={walletStyles.walletAddress}>{this.showAddress(wallet)}</div> */}
