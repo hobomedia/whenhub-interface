@@ -2,6 +2,7 @@ import * as React from 'react';
 import Nav from './Nav';
 import { connect } from 'react-redux';
 import Checkbox from 'material-ui/Checkbox';
+import { Link } from 'react-router-dom';
 import { goOnline } from '../actions/experts';
 
 const styles = require('../components/Home.scss');
@@ -131,6 +132,10 @@ export class BeExpert extends React.Component<any, ExpertState>{
         <div className={styles.container}>
           <div id={styles.bebackground} style={{ backgroundImage: 'url(' + (this.props.profile != null ? this.props.profile.picture : '') + ')', backgroundRepeat: 'no-repeat', backgroundSize: 'auto 560px', backgroundPosition: 'center' }}>
             <div style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", marginTop: "228px", paddingTop: "5px", position: "absolute", width: '338px', height: "332px" }}>
+              <div className={beExpertStyles.updateLink}>
+                <i className="fa fa-user"></i> <Link to="https://interface.whenhub.com/" className={beExpertStyles.link}> Update Profile</Link>
+              </div>
+
               <div style={{ color: "white", marginLeft: "10px", fontSize: "25px", fontWeight: 200 }}>
                 {this.props.profile != null ? this.props.profile.name : "Name"}
               </div>
