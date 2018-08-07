@@ -15,7 +15,7 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
     }
   }
 
-  handleTermsChange(e: any, checked: any) {
+  handleTermsChange() {
       if (this.state.termsCheck == false) {
           this.setState({termsCheck: true})
       }else {
@@ -77,7 +77,7 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
                 <Checkbox
                     color="default"
                     checked={this.state.termsCheck}
-                    onChange={(e: any, checked: any) => this.handleTermsChange(e, checked)}
+                    onChange={() => this.handleTermsChange()}
                 />
 
 
