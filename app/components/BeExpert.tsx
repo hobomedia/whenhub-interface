@@ -3,7 +3,7 @@ import Nav from './Nav';
 import { connect } from 'react-redux';
 import Checkbox from 'material-ui/Checkbox';
 import { Link } from 'react-router-dom';
-import { goOnline } from '../actions/experts';
+// import { goOnline } from '../actions/experts';
 
 const styles = require('../components/Home.scss');
 const beExpertStyles = require('../components/BeExpert.scss')
@@ -26,30 +26,45 @@ export class BeExpert extends React.Component<any, ExpertState>{
   onSubmit() {
     const that = this;
     this.setState({ loading: true })
-    let args = {
-      data: {
-        'expertise': this.state.topicValue,
-        'selfRating': this.state.rating,
-        'hourlyRate': this.state.rateValue,
-        'minimumDuration': 15
-      },
-      bearer: this.props.bearer,
-      profile: this.props.profile
-    }
 
-    this.props.dispatch(goOnline(args)).then(function(response: any){
-      that.props.history.push({
-        pathname: 'GoOnline',
-        state: {
-          acceptedCurrencies: {
-            token: that.state.tokenCheck,
-            dollar: that.state.dollarCheck
-          }
-        }
-      })
-    }).catch(function (error: any) {
-      console.log(error)
+    this.props.history.push({
+      pathname: '/GoOnline',
+      state: {
+        acceptedCurrencies: {
+          token: that.state.tokenCheck,
+          dollar: that.state.dollarCheck
+        },
+        topics: that.state.topicValue,
+        expertise: this.state.topicValue,
+        selfRating: this.state.rating,
+        hourlyRate: this.state.rateValue,
+      }
     })
+    // let args = {
+    //   data: {
+    //     'expertise': this.state.topicValue,
+    //     'selfRating': this.state.rating,
+    //     'hourlyRate': this.state.rateValue,
+    //     'minimumDuration': 15
+    //   },
+    //   bearer: this.props.bearer,
+    //   profile: this.props.profile
+    // }
+
+    // this.props.dispatch(goOnline(args)).then(function(response: any){
+    //   that.props.history.push({
+    //     pathname: 'GoOnline',
+    //     state: {
+    //       acceptedCurrencies: {
+    //         token: that.state.tokenCheck,
+    //         dollar: that.state.dollarCheck
+    //       }, 
+    //       topics: that.state.topicValue
+    //     }
+    //   })
+    // }).catch(function (error: any) {
+    //   console.log(error)
+    // })
   }
 
   handleTokenChange(e: any, checked: any) {
