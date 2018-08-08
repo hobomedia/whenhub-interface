@@ -1,7 +1,9 @@
 import * as React from 'react';
 import Nav from './Nav';
 import Switch from 'material-ui/Switch';
+import {connect} from 'react-redux';
 import 'rc-slider/assets/index.css';
+import { updateLanguages } from '../actions/account';
 
 const styles = require('./Home.scss');
 const settingsStyles = require('./Settings.scss');
@@ -27,6 +29,16 @@ export class Settings extends React.Component<any, {lang: Array<String>}>{
       };
       this.setState({lang: languages});
     };
+  }
+
+  onSubmit() {
+    console.log("update languages click");
+    let args = {
+      bearer: this.props.bearer, 
+      profile: this.props.profile,
+      languages: this.state.lang
+    }
+    this.props.dispatch(updateLanguages(args));
   }
 
   render() {
@@ -83,7 +95,7 @@ export class Settings extends React.Component<any, {lang: Array<String>}>{
                 <div className={settingsStyles.font} style={{marginTop: '20px'}}><i className="fa fa-comment"></i> Subscriptions</div>
                   <div>No subscriptions</div>
 
-                <button style={{ backgroundColor: "#37d3b4", color: "white", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" className="btn">
+                <button style={{ backgroundColor: "#37d3b4", color: "white", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" className="btn" onClick={this.onSubmit.bind(this)}>
                   Update Profile
                 </button>
 
@@ -94,4 +106,11 @@ export class Settings extends React.Component<any, {lang: Array<String>}>{
     );
   }
 }
-export default Settings;
+const mapStateToProps = function (props: any, state: any) {
+  return {
+      bearer: props.login.bearer,
+      profile: props.login.profile,
+  }
+
+}
+export default connect(mapStateToProps)(Settings);
