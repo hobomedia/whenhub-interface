@@ -3,7 +3,6 @@
         background-color: #1d365c;
         color: white;
         height: 100%;
-        padding: 10px;
     }
 
     td {
@@ -36,5 +35,32 @@
     .termsLink {
         text-align: center;
         margin-top: 10px;
+    }
+
+    .tableRow {
+        background-color: white;
+        color: black;
+        padding: 5px;
+        margin-right: 10px;
+        margin-left: 10px;
+    }
+
+    .tableHeaders {
+        display: inline-block;
+        font-weight: bold;
+    }
+
+    .tableResults {
+        display: inline-block;
+    }
+
+    .buttonBackground {
+        text-align: center;
+        height: 100px;
+        background: linear-gradient(
+            rgba(20,20,20, .7), 
+            rgba(20,20,20, .7));
+        position: absolute;
+        bottom: 0;
     }
 }

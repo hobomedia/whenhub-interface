@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {connect} from 'react-redux';
 import { Link } from 'react-router-dom';
-import { goOffline } from '../actions/experts';
+import { goOnline } from '../actions/experts';
 
 const styles = require('./Home.scss');
 const goOnlineStyles = require('./GoOnline.scss');
@@ -12,17 +12,34 @@ export class GoOnline extends React.Component<any>{
   }
 
   onSubmit() {
+      console.log("go online click")
+    // let that = this;
     let args = {
+        data: {
+          'expertise': this.props.location.state.topicValue,
+          'selfRating': this.props.location.state.rating,
+          'hourlyRate': this.props.location.state.rateValue,
+          'minimumDuration': 15
+        },
         bearer: this.props.bearer,
         profile: this.props.profile
       }
-
-      this.props.dispatch(goOffline(args)).then(function(response: any) {
-          console.log(response.data)
-          history.back();
+        this.props.dispatch(goOnline(args)).then(function(response: any){
+            console.log("expert is online")
+        // that.props.history.push({
+        //   pathname: 'GoOnline',
+        //   state: {
+        //     acceptedCurrencies: {
+        //       token: that.state.tokenCheck,
+        //       dollar: that.state.dollarCheck
+        //     }, 
+        //     topics: that.state.topicValue
+        //   }
+        // })
       }).catch(function (error: any) {
-          console.log(error)
+        console.log(error)
       })
+  
   }
 
     render() {
@@ -34,37 +51,21 @@ export class GoOnline extends React.Component<any>{
                     Interface Terms and Conditions
                 </div>
 
-                <table style={{margin: "auto"}}>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                            <td>Topics</td>
-                                            <td>Blockchain, Aviation</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Currency</td>
-                                            <td>Rate/Hour</td>
-                                            <td>Fee</td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <p>When Tokens</p>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <p> US Dollars</p>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div className={goOnlineStyles.tableRow} style={{borderBottom: "solid 1px black"}}>
+                    Topics: {this.props.location.state.topics}
+                </div>
+
+                <div className={goOnlineStyles.tableRow} style={{borderBottom: "solid 1px black"}}>
+                    <div className={goOnlineStyles.tableHeaders} style={{width: "50%", borderRight: "solid 1px black"}}>Currency</div>
+                    <div className={goOnlineStyles.tableHeaders} style={{width: "30%", borderRight: "solid 1px black", paddingLeft: "8px"}}>Rate/Hour</div>
+                    <div className={goOnlineStyles.tableHeaders} style={{width: "20%", paddingLeft: "10px"}}>Fee</div>
+                </div>
+
+                <div className={goOnlineStyles.tableRow}>
+                    <div className={goOnlineStyles.tableResults} style={{width: "50%", borderRight: "solid 1px black"}}>WHEN tokens (&#65510;)</div>
+                    <div className={goOnlineStyles.tableResults} style={{width: "30%", borderRight: "solid 1px black", paddingLeft: "8px"}}>0.00</div>
+                    <div className={goOnlineStyles.tableResults} style={{width: "20%", paddingLeft: "10px"}}>0%</div>
+                </div>
 
                 <div style={{color: "white",textAlign: "center"}}>
                     Call and Payout Terms
@@ -93,10 +94,13 @@ export class GoOnline extends React.Component<any>{
                     By going Online, you agree to the terms and conset to your profile appearing in searches on the WhenHub Interface network
                 </div>
 
-                <button style={{ backgroundColor: "#e64b4b", color: "white", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">
-                    Go Offline
-                </button>
+                <div className={goOnlineStyles.buttonBackground}>
+                    <button style={{ backgroundColor: "#37d3b4", color: "white", width: "320px", marginBottom: "20px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                        Go Online
+                    </button>
 
+                    <Link style={{color: "white"}} to="/BeExpert">Cancel</Link>
+                </div>
 
             </div>
         </div>       
