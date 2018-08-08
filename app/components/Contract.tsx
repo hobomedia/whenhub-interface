@@ -2,7 +2,7 @@ import * as React from 'react';
 import Nav from './Nav';
 import { connect } from 'react-redux';
 import 'rc-slider/assets/index.css';
-import { startInterface } from '../actions/interface';
+// import { startInterface } from '../actions/interface';
 import { checkInterface } from '../actions/interface';
 
 // const Axios = require('axios');
@@ -10,7 +10,7 @@ const Slider = require('rc-slider/lib/Slider');
 let styles = require('./Home.scss');
 let contractStyles = require('./Contract.scss');
 
-export class Contract extends React.Component<any, { loading: Boolean, localMedia: any, layoutManager: any, remoteMedia: any, client: any, muteButtonClick: any, value: string, section: string, duration: number, contractAmount: number, connect: Boolean }>{
+export class Contract extends React.Component<any, { loading: Boolean, client: any, value: string, section: string, duration: number, contractAmount: number, connect: Boolean }>{
     constructor(props: any) {
         super(props)
         this.state = {
@@ -19,17 +19,10 @@ export class Contract extends React.Component<any, { loading: Boolean, localMedi
             duration: 15,
             contractAmount: 0,
             connect: false,
-            localMedia: null,
-            layoutManager: null,
-            remoteMedia: null,
             client: null,
-            muteButtonClick: false,
             loading: false
         }
         console.log(this.props.location.state)
-    }
-
-    componentWillMount() {
     }
 
     slider(value: any) {
@@ -65,72 +58,31 @@ export class Contract extends React.Component<any, { loading: Boolean, localMedi
     }
 
     onSubmit() {
-        console.log(this.props.location.state.expert.id, this.state.duration)
-        this.setState({ loading: true });
-        let args = {
-            bearer: this.props.bearer,
-            data: {
-                expertId: `${this.props.location.state.expert.id}`,
-                callerId: '5acbba9ca6a3c60600000001',
-                estimatedInitialMaxDuration: this.state.duration,
-                purposeOfInterface: this.state.value
+        this.props.history.push({
+            pathname: '/TandC',
+            state: {
+                expertInfo: this.props.location.state.expert,
+                estimatedDuration: this.state.duration
             }
-        }
-
-        let that = this;
-        this.props.dispatch(startInterface(args)).then(function (response: any) {
-            console.log(response)
-            that.check(response)
         })
+        // console.log(this.props.location.state.expert.id, this.state.duration)
+        // this.setState({ loading: true });
+        // let args = {
+        //     bearer: this.props.bearer,
+        //     data: {
+        //         expertId: `${this.props.location.state.expert.id}`,
+        //         callerId: '5acbba9ca6a3c60600000001',
+        //         estimatedInitialMaxDuration: this.state.duration,
+        //         purposeOfInterface: this.state.value
+        //     }
+        // }
+
+        // let that = this;
+        // this.props.dispatch(startInterface(args)).then(function (response: any) {
+        //     console.log(response)
+        //     that.check(response)
+        // })
     }
-
-    onStopSubmit() {
-        const that = this;
-        this.state.localMedia.stop().then(function (lm: any) {
-            console.log("media capture stopped");
-        })
-
-        this.state.client.disconnect({
-            onComplete: function (e: any) {
-                console.log("disconnected");
-                that.setState({ connect: false })
-            }
-        });
-
-        this.props.history.push('/RateCall')
-
-        this.state.layoutManager.removeRemoteView(this.state.remoteMedia)
-
-
-    }
-
-
-    onMute() {
-        let Audio = this.state.localMedia.getAudioTrack();
-        Audio.setMuted(!Audio.getMuted());
-        this.setState({ muteButtonClick: true })
-    }
-
-    onUnMute() {
-        let Audio = this.state.localMedia.getAudioTrack();
-        Audio.setMuted(!Audio.getMuted());
-        this.setState({ muteButtonClick: false })
-
-    }
-
-    muteButton() {
-        if (this.state.muteButtonClick == false) {
-            return <button className={contractStyles.Button + ` btn`} type="button" onClick={this.onMute.bind(this)}>
-                <i className="fa fa-microphone-slash"></i>
-            </button>
-        } else if (this.state.muteButtonClick == true) {
-            return <button className={contractStyles.Button + ` btn`} type="button" onClick={this.onUnMute.bind(this)}>
-                <i className="fa fa-microphone"></i>
-            </button>
-        }
-        return
-    }
-
 
     render() {
         let expert = this.props.location.state.expert;
@@ -193,14 +145,14 @@ export class Contract extends React.Component<any, { loading: Boolean, localMedi
                             Purpose of Interface
                         </div>
                         <div style={{ display: "inline", fontSize: "8pt" }}>
-                            {" "}(minimum three words, 25 characters)
+                            {" "}(minimum 5 characters)
                         </div>
 
                         <form className="form-horizontal">
                             <textarea value={this.state.value} onChange={this.handleChange.bind(this)} className="form-control" name="title"></textarea>
                         </form>
 
-                        <button className='btn' disabled={(this.state.value.length >= 25 || this.state.value.split(" ").length >= 3) ? false : true} style={{ backgroundColor: "rgb(55, 211, 180)", color: "white", width: "300px", marginTop: "30px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)}>
+                        <button className='btn' disabled={(this.state.value.length >= 5) ? false : true} style={{ backgroundColor: "rgb(55, 211, 180)", color: "white", width: "300px", marginTop: "30px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)}>
                             {this.state.loading? <i className="fa fa-spinner fa-spin" id={contractStyles.spinner}/>: "Invite to Interface"}
                         </button>
 
