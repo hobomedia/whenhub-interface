@@ -13,6 +13,7 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
     this.state = {
         termsCheck: false
     }
+    console.log(this.props.location.state.expertInfo)
   }
 
   handleTermsChange() {
@@ -38,7 +39,7 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
                                 <table>
                                     <tbody>
                                         <tr>
-                                            <td id={tandcStyles.amount}>Maximum Amount: </td>
+                                            <td id={tandcStyles.amount}>Maximum Amount: {(this.props.location.state.expertInfo.expertise.hourlyRate * this.props.location.state.estimatedDuration.toFixed(2))}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -89,7 +90,7 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
                     Choose a payment option: 
                 </div>
 
-                <button style={{ backgroundColor: "#FFF", color: "black", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" className="btn">
+                <button disabled={this.state.termsCheck? false: true} style={{ backgroundColor: "#FFF", color: "black", width: "320px", marginTop: "10px", borderRadius: "20px", fontWeight: 100}} type="button" className="btn">
                     When Pay
                 </button>
 
