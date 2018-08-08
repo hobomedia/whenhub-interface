@@ -78,7 +78,9 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
         const args = {
             connectionId: this.props.interface.connectionId
         }
-        this.app.leaveAsync().fail((ex: any) => {
+        this.app.leaveAsync().then((o: any) => {
+            console.log("left call")
+        }).fail((ex: any) => {
             console.log("failed to leave the call")
         });
 
@@ -106,14 +108,53 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
     muteButton() {
         if (this.state.muteButtonClick == false) {
             return <button className={interfaceStyles.Button + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onMute.bind(this)}>
-                <i className="fa fa-microphone-slash"></i>
+                <i className="fa fa-microphone"></i>
             </button>
         } else if (this.state.muteButtonClick == true) {
             return <button className={interfaceStyles.Button + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onMute.bind(this)}>
-                <i className="fa fa-microphone"></i>
+                <i className="fa fa-microphone-slash"></i>
             </button>
         }
         return
+    }
+
+    progressBar() {
+        if(this.props.interface.estimatedInitialMaxDuration > 15){
+            return <div style={{height: "48px", width: "100%"}}>
+                <div className={this.props.interface.estimatedInitialMaxDuration != 15? interfaceStyles.progressSection: interfaceStyles.progressSection15} style={{backgroundColor: this.state.min < 1? "green": "red"}}>
+                   <div>Free</div>
+                   <div>(1 min)</div>
+                </div>
+
+                <div className={this.props.interface.estimatedInitialMaxDuration != 15? interfaceStyles.progressSection: interfaceStyles.progressSection15} style={{backgroundColor: (this.state.min >= 1) && (this.state.min <= 15)? "green": "red"}}>
+                    <div>${(this.props.interface.expertise.hourlyRate/4).toFixed(2)}</div> 
+                    <div>15 mins</div>
+                </div>
+
+                <div className={interfaceStyles.progressSection} style ={{
+                        backgroundColor: (this.state.min >= this.props.interface.expertise.minimumDuration) && (this.state.min <= this.props.interface.estimatedInitialMaxDuration)? "green": "red",
+                        display: this.props.interface.estimatedInitialMaxDuration == 15? "none": "inline-block"
+                    }}>
+                    <div>${this.props.interface.expertise.hourlyRate/60}</div>
+                    <div>Pay/Minute</div>
+                    <div>(Up to {this.props.interface.estimatedInitialMaxDuration} min)</div>
+                </div>
+
+                <div className={this.props.interface.estimatedInitialMaxDuration != 15? interfaceStyles.progressSection: interfaceStyles.progressSection15} style={{backgroundColor: this.state.min > this.props.interface.estimatedInitialMaxDuration? "green": "red"}}>
+                    <div>Free</div> 
+                    <div>(unlimited)</div>
+                </div>
+            </div>
+
+        }else {
+            return <div style={{height: "45px", width: "100%"}}>
+                <div className={interfaceStyles.progressSectionFree} style={{backgroundColor: "green"}}>
+                    <div>Free</div> 
+                    <div>(unlimited)</div>
+                </div>
+
+            </div>
+        }
     }
 
 
@@ -122,8 +163,8 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
                 <div className={interfaceStyles.container}>
                     <div className={interfaceStyles.video} id="container" ref="container">
                     <div style={{ position: "absolute", zIndex: 1000, width: "337px", bottom: "0px", color: "white" }}>
-                        
-                        <div style={{height: "45px", width: "100%"}}>
+                        {this.progressBar()}
+                        {/* <div style={{height: "45px", width: "100%"}}>
                             <div className={interfaceStyles.progressSection} style={{backgroundColor: this.state.min < 1? "green": "red"}}>
                                 Free<div>(1 min)</div>
                             </div>
@@ -140,7 +181,7 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
                                 Free <div>(unlimited)</div>
                             </div>
 
-                        </div>
+                        </div> */}
                         
                         <div className={interfaceStyles.ButtonWell}>
                             <button className={interfaceStyles.share + ` btn`} style={{borderRadius: "20px"}} type="button" onClick={this.onScreenShare.bind(this)}>
