@@ -51,7 +51,7 @@ export default class IceLinkApp {
 
             // Set up the layout manager.
             this.layoutManager = new fm.icelink.DomLayoutManager(videoContainer);
-            this.layoutManager.setFloatMarginY(100)
+            this.layoutManager.setFloatMarginY(140)
             this.layoutManager.setFloatMarginX(160)
 
             // Start the local media.
