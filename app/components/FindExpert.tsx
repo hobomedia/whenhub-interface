@@ -3,22 +3,36 @@ import Nav from './Nav';
 import {connect} from 'react-redux';
 import { getExperts } from '../actions/experts';
 import Expert from './Expert';
+import { getExpertCount } from '../actions/experts';
 
 
 let styles = require('../components/Home.scss');
 let FindExpertStyles = require('../components/FindExpert.scss');
 
-export class FindExpert extends React.Component<any, {click: Boolean, value: string, loading: Boolean, page: number}>{ 
+export class FindExpert extends React.Component<any, {expertCount: number, click: Boolean, value: string, loading: Boolean, page: number}>{ 
     constructor(props:any){
       super(props)
       this.state = {
         click: false,
         value: "",
         loading: false,
-        page: 1
+        page: 1,
+        expertCount: 0
       }
+  
     }
 
+    componentWillMount() {
+      let ref = this;
+      let args = {
+        bearer: this.props.bearer,
+      }
+      this.props.dispatch(getExpertCount(args)).then(function(response:any){
+        console.log(response)
+        ref.setState({expertCount: response.data})
+      })
+
+    }
 
     handleChange(event: any) {
       this.setState({value: event.target.value});
@@ -85,7 +99,7 @@ export class FindExpert extends React.Component<any, {click: Boolean, value: str
                 <div id={FindExpertStyles.background}>
                   <div id={FindExpertStyles.enrolled}>
                     <div id={FindExpertStyles.number}>
-                      10264
+                      {this.state.expertCount}
                     </div>
                     <div id={FindExpertStyles.enrolledText}>
                       Experts Enrolled

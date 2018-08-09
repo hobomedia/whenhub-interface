@@ -59,3 +59,19 @@ export function goOffline(args: any = null) {
 }
 
 
+export function getExpertCount(args: any = null) {
+    return (dispatch: Function, getState: Function) => {
+        return Axios({
+            method: 'GET',
+            baseURL: `https://whenhub-interface-api-staging.azurewebsites.net/api/Experts/count`,
+            headers: {
+              'Authorization': 'Bearer ' + `${args.bearer}`
+            }
+          }).then(function (response: any) {
+              console.log(response)
+              return response
+        }).catch(function (error: any) {
+            console.log(error)
+          })
+    };
+}
