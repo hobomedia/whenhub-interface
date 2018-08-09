@@ -7,16 +7,12 @@ const expertStyles = require('../components/Expert.scss')
 
 
 // interface ExpertState {rating: any, temp_rating: any}
-export default class BeExpert extends React.Component<any, { show: Boolean, localMedia: any, layoutManager: any, remoteMedia: any, client: any, num: number }>{
+export default class BeExpert extends React.Component<any, { show: Boolean, num: number}>{
     constructor(props: any) {
         super(props)
         this.state = {
-            localMedia: null,
-            layoutManager: null,
-            remoteMedia: null,
-            client: null,
             num: 0,
-            show: false
+            show: false,
         }
 
     }
@@ -32,6 +28,17 @@ export default class BeExpert extends React.Component<any, { show: Boolean, loca
         }else {
             return 
         }
+    }
+
+    expertise() {
+        if (this.props.experts[this.state.num].expertise.expertise == null){
+            return ""
+        }else if (this.props.experts[this.state.num].expertise.expertise.length < 50){
+            return this.props.experts[this.state.num].expertise.expertise
+        }else if (this.props.experts[this.state.num].expertise.expertise.length > 50){
+            return this.props.experts[this.state.num].expertise.expertise.substring(0, 50) + "..."
+        }
+        
     }
 
     onSubmit() {
@@ -61,6 +68,19 @@ export default class BeExpert extends React.Component<any, { show: Boolean, loca
         return
     }
 
+    next() {
+        if(this.props.experts.length - this.state.num == 10){
+            this.props.pagingHandler()
+        }
+
+        this.setState({ num: this.state.num + 1 })
+    }
+
+    back() {
+        this.setState({ num: this.state.num - 1 })
+
+    }
+
     showProfile(){
         console.log("show profile click")
         if (this.state.show == false){
@@ -72,9 +92,8 @@ export default class BeExpert extends React.Component<any, { show: Boolean, loca
 
     showMoreInfo(stars: any) {
         console.log(this.props.experts[this.state.num])
-        let expert  =this.props.experts[this.state.num];
+        let expert = this.props.experts[this.state.num];
         if (this.state.show){
-            console.log("show more info")
             return <div className={expertStyles.moreInfo}>
                 <div className={expertStyles.Arrow}>
                     <button onClick={this.showProfile.bind(this)}><i className="fa fa-chevron-up"></i></button>
@@ -103,7 +122,6 @@ export default class BeExpert extends React.Component<any, { show: Boolean, loca
 
             </div>
         }else {
-            console.log("show less info")
             return  <div className={expertStyles.info}>
                 <div id={expertStyles.name}>
                     {this.props.experts[this.state.num].name}
@@ -114,7 +132,8 @@ export default class BeExpert extends React.Component<any, { show: Boolean, loca
                     </div>
 
                     <div className={expertStyles.fields} id={expertStyles.expertise}>
-                        {this.props.experts[this.state.num].expertise.expertise.length > 50 ? this.props.experts[this.state.num].expertise.expertise.substring(0, 50) + "..." : this.props.experts[this.state.num].expertise.expertise}
+                        {this.expertise()}
+                        {/* {this.props.experts[this.state.num].expertise.expertise.length > 50 ? this.props.experts[this.state.num].expertise.expertise.substring(0, 50) + "..." : this.props.experts[this.state.num].expertise.expertise} */}
                     </div>
 
                     <div className={expertStyles.fields}>
@@ -143,15 +162,6 @@ export default class BeExpert extends React.Component<any, { show: Boolean, loca
         }
     }
 
-
-    next() {
-        this.setState({ num: this.state.num + 1 })
-    }
-
-    back() {
-        this.setState({ num: this.state.num - 1 })
-
-    }
 
     render() {
         let stars = [];

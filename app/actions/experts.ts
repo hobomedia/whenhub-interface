@@ -9,10 +9,11 @@ export const offline = actionCreatorVoid('GO_OFFLINE');
 
 
 export function getExperts(args: any = null) {
-    return (dispatch: Function, getState: Function ) => {
+    return (dispatch: Function, getState: Function) => {
         Axios({
             method: 'GET',
-            url: `https://interface-api.whenhub.com/api/Experts/online?query.expertise=` + `${args.search}`,
+            baseURL: `https://whenhub-interface-api-staging.azurewebsites.net/api/Experts?query`,
+            url : args.query,
             headers: {
               'Authorization': 'Bearer ' + `${args.bearer}`
             }
@@ -29,7 +30,7 @@ export function goOnline(args: any = null) {
     return (dispatch: Function, getState: Function) => {
         return Axios({
             method: 'PUT',
-            url: 'https://interface-api.whenhub.com/api/Experts/' + args.profile['https://interface.whenhub.com/winid'] + '/online',
+            url: 'https://whenhub-interface-api-staging.azurewebsites.net/api/Experts/' + args.profile['https://interface.whenhub.com/winid'] + '/online',
             headers: {
                 'Authorization': 'Bearer ' + `${args.bearer}`,
             },
@@ -45,7 +46,7 @@ export function goOffline(args: any = null) {
     return (dispatch: Function, getState: Function) => {
         return Axios({
             method: 'PUT',
-            url: 'https://interface-api.whenhub.com/api/Experts/' + args.profile['https://interface.whenhub.com/winid'] + '/offline',
+            url: 'https://whenhub-interface-api-staging.azurewebsites.net/api/Experts/' + args.profile['https://interface.whenhub.com/winid'] + '/offline',
             headers: {
                 'Authorization': 'Bearer ' + `${args.bearer}`,
             },

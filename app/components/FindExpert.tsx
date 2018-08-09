@@ -8,13 +8,14 @@ import Expert from './Expert';
 let styles = require('../components/Home.scss');
 let FindExpertStyles = require('../components/FindExpert.scss');
 
-export class FindExpert extends React.Component<any, {click: Boolean, value: string, loading: Boolean}>{ 
+export class FindExpert extends React.Component<any, {click: Boolean, value: string, loading: Boolean, page: number}>{ 
     constructor(props:any){
       super(props)
       this.state = {
         click: false,
         value: "",
-        loading: false
+        loading: false,
+        page: 1
       }
     }
 
@@ -24,14 +25,39 @@ export class FindExpert extends React.Component<any, {click: Boolean, value: str
     }
 
     onSubmit(){
+      let queryString = "";
       this.setState({loading: true})
+      if(this.state.value == "" && this.state.page > 1){
+          queryString = '.pageNumber=' + `${this.state.page}`
+      }else if(this.state.value != "" && this.state.page == 1) {
+          queryString = '.expertise=' + `${this.state.value}`
+      }else if (this.state.value != "" && this.state.page > 1){
+          queryString = '.expertise=' + `${this.state.value}`+ `.pageNumber=` + `${this.state.page}`
+      }else if (this.state.value == "" && this.state.page == 1) {
+          queryString= '.expertise=ALL'
+      }
+      console.log(queryString)
       let args = {
         bearer: this.props.bearer,
-        search: this.state.value
+        search: this.state.value,
+        page: this.state.page,
+        query: queryString
       }
+
+
       this.props.dispatch(getExperts(args))
 
-      this.setState({click: true, value: ""})
+      this.setState({click: true, value: "", page: this.state.page + 1})
+    }
+
+    paging(){
+      let args = {
+        bearer: this.props.bearer,
+        search: this.state.value,
+        page: this.state.page + 1
+      }
+      this.props.dispatch(getExperts(args))
+      this.setState({page: this.state.page + 1})
     }
 
     handler(e: any){
@@ -82,12 +108,14 @@ export class FindExpert extends React.Component<any, {click: Boolean, value: str
             </div>
           );
         }else {
+            console.log(this.props.experts)
             if(this.props.experts.length > 0){
               return (
                 <Expert 
                   experts={this.props.experts}
                   handler={this.handler.bind(this)}
                   history={this.props.history}
+                  pagingHandler={this.paging.bind(this)}
                 />
               )
 
