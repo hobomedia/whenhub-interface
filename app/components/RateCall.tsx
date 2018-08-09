@@ -95,7 +95,7 @@ export class RateCall extends React.Component<any, {rating: any, temp_rating: an
                         </div>
 
                         <div>
-                            <div className={rateStyles.categoryLeft}>Total Coast</div>
+                            <div className={rateStyles.categoryLeft}>Total Cost</div>
                             <div className={rateStyles.categoryRight}>USD Value</div>
                         </div>
                     </div>
