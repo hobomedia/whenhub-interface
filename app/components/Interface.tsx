@@ -119,7 +119,7 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
     }
 
     progressBar() {
-        if(this.props.interface.estimatedInitialMaxDuration > 15){
+        if(this.props.interface.contractTotal > 0){
             return <div style={{height: "48px", width: "100%"}}>
                 <div className={this.props.interface.estimatedInitialMaxDuration != 15? interfaceStyles.progressSection: interfaceStyles.progressSection15} style={{backgroundColor: this.state.min < 1? "green": "red"}}>
                    <div>Free</div>
