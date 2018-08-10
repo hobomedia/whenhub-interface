@@ -2,7 +2,7 @@ import * as React from 'react';
 import Nav from './Nav';
 import { connect } from 'react-redux';
 import 'rc-slider/assets/index.css';
-// import { startInterface } from '../actions/interface';
+import { startInterface } from '../actions/interface';
 import { checkInterface } from '../actions/interface';
 
 // const Axios = require('axios');
@@ -42,7 +42,6 @@ export class Contract extends React.Component<any, { loading: Boolean, client: a
 
     check(data: any) {
         let that = this;
-        console.log("check")
         this.props.dispatch(checkInterface(data)).then(function (response: any) {
             console.log(response.data.interface)
             if (response.data.interface.active == true) {
@@ -58,30 +57,31 @@ export class Contract extends React.Component<any, { loading: Boolean, client: a
     }
 
     onSubmit() {
-        this.props.history.push({
-            pathname: '/TandC',
-            state: {
-                expertInfo: this.props.location.state.expert,
-                estimatedDuration: this.state.duration
-            }
-        })
-        // console.log(this.props.location.state.expert.id, this.state.duration)
-        // this.setState({ loading: true });
-        // let args = {
-        //     bearer: this.props.bearer,
-        //     data: {
-        //         expertId: `${this.props.location.state.expert.id}`,
-        //         callerId: '5acbba9ca6a3c60600000001',
-        //         estimatedInitialMaxDuration: this.state.duration,
-        //         purposeOfInterface: this.state.value
+        // this.props.history.push({
+        //     pathname: '/TandC',
+        //     state: {
+        //         expertInfo: this.props.location.state.expert,
+        //         estimatedDuration: this.state.duration
         //     }
-        // }
-
-        // let that = this;
-        // this.props.dispatch(startInterface(args)).then(function (response: any) {
-        //     console.log(response)
-        //     that.check(response)
         // })
+        console.log(this.props.location.state.expert.id, this.state.duration)
+        this.setState({ loading: true });
+        let args = {
+            bearer: this.props.bearer,
+            data: {
+                expertId: `${this.props.location.state.expert.id}`,
+                callerId: '5acbba9ca6a3c60600000001',
+                estimatedInitialMaxDuration: this.state.duration,
+                purposeOfInterface: this.state.value,
+                version: 14
+            }
+        }
+
+        let that = this;
+        this.props.dispatch(startInterface(args)).then(function (response: any) {
+            console.log(response)
+            that.check(response)
+        })
     }
 
     render() {
