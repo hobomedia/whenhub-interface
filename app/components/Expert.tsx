@@ -100,15 +100,15 @@ export default class BeExpert extends React.Component<any, { show: Boolean, num:
                 </div>
 
                 <div className={expertStyles.fields}>
-                    <i className="fa fa-map-marker"></i> {expert.profile.location.name}
+                    <i className="fa fa-map-marker"></i> {expert.profile.location != null? expert.profile.location.name : ""}
                 </div>
 
                 <div className={expertStyles.fields}>
-                    <i className="fa fa-area-chart"></i> {expert.profile.industry}
+                    <i className="fa fa-area-chart"></i> {expert.profile.industry != null? expert.profile.industry : ""}
                 </div>
 
                 <div className={expertStyles.fields}>
-                    {expert.profile.summary}
+                    {expert.profile.summary != null? expert.profile.summary : ""}
                 </div>
 
                 <div className={expertStyles.fields}>
@@ -117,7 +117,6 @@ export default class BeExpert extends React.Component<any, { show: Boolean, num:
 
                 <div className={expertStyles.fields}>
                     {this.positions()}
-                    {/* {expert.profile.posiitons.value[i].title} at {expert.profile.positions.value[i].company.name} */}
                 </div>
 
             </div>
@@ -133,7 +132,6 @@ export default class BeExpert extends React.Component<any, { show: Boolean, num:
 
                     <div className={expertStyles.fields} id={expertStyles.expertise}>
                         {this.expertise()}
-                        {/* {this.props.experts[this.state.num].expertise.expertise.length > 50 ? this.props.experts[this.state.num].expertise.expertise.substring(0, 50) + "..." : this.props.experts[this.state.num].expertise.expertise} */}
                     </div>
 
                     <div className={expertStyles.fields}>
