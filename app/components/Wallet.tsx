@@ -27,11 +27,10 @@ export class Wallet extends React.Component<any, {copied: boolean, sidebarOpen: 
     }
   }
 
-  onSubmit(wallet: any) {
-      console.log("copy hit");
-    //   this.showAddress(wallet).execCommand("copy");
-    //   alert("Copied wallet address to clipboard");
-    Clipboard.copy(this.showAddress(wallet));
+  onSubmit() {
+      this.setState({copied: true})
+      let address = this.showAddress(this.props.wallet)
+      Clipboard.copy(address);
   }
 
   onGuideSubmit() {
@@ -95,16 +94,11 @@ export class Wallet extends React.Component<any, {copied: boolean, sidebarOpen: 
                 WHEN Wallet Adress
             </div>
             <div>
-            {/* <CopyToClipboard 
-                text={this.showAddress(wallet)}
-                onCopy={() => this.setState({copied: true})}
-            >
-                <button>Copy to clipboard with button</button>
-            </CopyToClipboard> */}
-                <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "293px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(wallet, this)} className="btn">
-                    Copy Wallet Address to clipboard
+                <button style={{ backgroundColor: "#37d3b4", color: "white", marginLeft: "10px", width: "293px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)} className="btn">
+                    {this.state.copied? <i className="fa fa-check" id={walletStyles.spinner}/>: "Copy Wallet Address to clipboard "}
+
                 </button>
-                {/* <div id={walletStyles.walletAddress}>{this.showAddress(wallet)}</div> */}
+                <div id={walletStyles.walletAddress}>{this.showAddress(wallet)}</div>
             </div>
         </div>
 
@@ -117,7 +111,7 @@ export class Wallet extends React.Component<any, {copied: boolean, sidebarOpen: 
                 To transfer WHEN tokens from your Account, use a wallet such as MetaMask or My EtherWallet. Free signup tokens are included in your balance, but cannot be transferred. They can only be used for payig Experts for Interface transactions.
             </div>
             <div>
-                <button style={{ backgroundColor: "#776cf0", color: "white", marginLeft: "10px", width: "293px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 , position: "absolute", bottom: "63px"}} type="button" onClick={this.onSubmit} className="btn">
+                <button style={{ backgroundColor: "#776cf0", color: "white", marginLeft: "10px", width: "293px", marginTop: "10px", borderRadius: "20px", fontWeight: 100 , position: "absolute", bottom: "63px"}} type="button" className="btn">
                     WhenWallet Guide
                 </button>
             </div>
