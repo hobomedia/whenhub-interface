@@ -119,7 +119,7 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
     }
 
     progressBar() {
-        if(this.props.interface.contractTotal > 0){
+        if(this.props.interface.contractMaxInUSD > 0){
             return <div style={{height: "48px", width: "100%"}}>
                 <div className={this.props.interface.estimatedInitialMaxDuration != 15? interfaceStyles.progressSection: interfaceStyles.progressSection15} style={{backgroundColor: this.state.min < 1? "green": "red"}}>
                    <div>Free</div>
@@ -127,7 +127,7 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
                 </div>
 
                 <div className={this.props.interface.estimatedInitialMaxDuration != 15? interfaceStyles.progressSection: interfaceStyles.progressSection15} style={{backgroundColor: (this.state.min >= 1) && (this.state.min <= 15)? "green": "red"}}>
-                    <div>${(this.props.interface.expertise.hourlyRate/4).toFixed(2)}</div> 
+                    <div>${(this.props.interface.expertise.hourlyRateUSD/4).toFixed(2)}</div> 
                     <div>15 mins</div>
                 </div>
 
@@ -135,7 +135,7 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
                         backgroundColor: (this.state.min >= this.props.interface.expertise.minimumDuration) && (this.state.min <= this.props.interface.estimatedInitialMaxDuration)? "green": "red",
                         display: this.props.interface.estimatedInitialMaxDuration == 15? "none": "inline-block"
                     }}>
-                    <div>${this.props.interface.expertise.hourlyRate/60}</div>
+                    <div>${(this.props.interface.expertise.hourlyRateUSD/60).toFixed(2)}</div>
                     <div>Pay/Minute</div>
                     <div>(Up to {this.props.interface.estimatedInitialMaxDuration} min)</div>
                 </div>
