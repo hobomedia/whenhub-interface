@@ -54,7 +54,7 @@ export class History extends React.Component<any, {sidebarOpen: boolean, loading
           <div className={historyStyles.info}>
             <div className={historyStyles.name}>{call.caller.name}</div>
             <div >{call.interface.expertise.expertise}</div>
-            <div className={historyStyles.total}>W{call.interface.contractTotal}</div>
+            <div className={historyStyles.total}>(&#65510;) {call.interface.contractTotal}</div>
             <div className={historyStyles.time}>{this.convertDate(call.interface.created)}</div>
           </div>
         </div>
