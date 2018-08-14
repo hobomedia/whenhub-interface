@@ -13,7 +13,7 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
     this.state = {
         termsCheck: false
     }
-    console.log(this.props.location.state.expertInfo)
+    // console.log(this.props.location.state.expertInfo)
   }
 
   handleTermsChange() {
@@ -23,6 +23,11 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
           this.setState({termsCheck: false})
       }
   }
+
+  termsAndConditionsOpen(e: any){
+    e.preventDefault()
+    require('electron').shell.openExternal("https://interface.whenhub.com/pages/caller-terms.html");  
+}
 
     render() {
         return (
@@ -72,7 +77,7 @@ export class TandC extends React.Component<any, {termsCheck: boolean}>{
                 </div>
 
                 <div className={tandcStyles.termsLink}>
-                    <Link to=""><span><i className="fa fa-external-link"></i> Review Terms and Conditions</span></Link>
+                    <Link to="https://interface.whenhub.com/pages/caller-terms.html" onClick={this.termsAndConditionsOpen.bind(this)}><span><i className="fa fa-external-link"></i> Review Terms and Conditions</span></Link>
                 </div>
 
                 <Checkbox
