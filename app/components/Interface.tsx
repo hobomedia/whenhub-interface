@@ -2,6 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import 'rc-slider/assets/index.css';
 import { endInterface } from '../actions/interface';
+import { checkInterface } from '../actions/interface';
 import IceLinkApp from './IceLinkApp';
 
 let interfaceStyles = require('./Interface.scss');
@@ -76,6 +77,7 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
     onStopSubmit() {
         const ref = this;
         const args = {
+            bearer: this.props.bearer,
             connectionId: this.props.interface.connectionId
         }
         this.app.leaveAsync().then((o: any) => {
@@ -87,12 +89,33 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
         this.app.stopLocalMedia().then((o: any) => {
             console.log("media capture stopped")
             this.props.dispatch(endInterface(args)).then(function(response: any){
-                ref.props.history.push('/RateCall')
+                ref.check()        
             })
         }).fail((ex: any) => {
             console.log("failed to stop local media")
         })
     }
+
+    check() {
+        let data = {
+            bearer: this.props.bearer,
+            connectionId: this.props.interface.connectionId
+        }
+        let that = this;
+        this.props.dispatch(checkInterface(data)).then(function (response: any) {
+            console.log(response.data.interface)
+            if (response.data.interface.active == false) {
+                console.log("inactive", response.data.interface.active)
+                that.props.history.push({
+                    pathname: '/RateCall',
+                    state: { interface: response.data }
+                });
+            } else {
+                that.check()
+            }
+        })
+    }
+
 
     onMute() {
         this.app.toggleAudioMute();
