@@ -12,15 +12,18 @@ export class Settings extends React.Component<any, {lang: Array<String>}>{
   constructor(props:any){
     super(props)
     this.state = {
-      lang: []
+      lang: [
+        "English"
+      ]
     }
   }
 
-  onSwitch(event: any, switched: Boolean) {
-    if(switched == true){
+  onSwitch(event: any, checked: Boolean) {
+    console.log(checked)
+    if(checked == true){
 
       this.setState({lang: this.state.lang.concat(event.target.value)})
-    }else if (switched == false ){
+    }else if (checked == false ){
       let languages = this.state.lang;
       for (let i=languages.length-1; i>=0; i--) {
         if (languages[i] === event.target.value) {
@@ -32,13 +35,18 @@ export class Settings extends React.Component<any, {lang: Array<String>}>{
   }
 
   onSubmit() {
-    console.log("update languages click");
     let args = {
       bearer: this.props.bearer, 
       profile: this.props.profile,
       languages: this.state.lang
     }
-    this.props.dispatch(updateLanguages(args));
+    this.props.dispatch(updateLanguages(args)).then(function(response: any) {
+      console.log(response)
+    });
+
+    
+    // require('electron').shell.openExternal("https://whenhub-interface-staging.azurewebsites.net/my-account/profile?token=" + `${userIdTokenfromAuth0}`);  
+
   }
 
   render() {
@@ -57,6 +65,7 @@ export class Settings extends React.Component<any, {lang: Array<String>}>{
                     <Switch
                       onChange={this.onSwitch.bind(this)}
                       value={"English"}
+                      defaultChecked={true}
                     />
                     </div>
                 </div>

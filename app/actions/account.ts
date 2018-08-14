@@ -31,7 +31,9 @@ export function updateLanguages(args: any = null) {
             headers: {
                 'Authorization': 'Bearer ' + `${args.bearer}`,
             },
-            data: args.data
+            data: {
+                languagesSpoken: args.languages
+            }
         }).then(function(response: any) {
             dispatch(language())
             return response
