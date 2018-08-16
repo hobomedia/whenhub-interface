@@ -105,7 +105,10 @@ module.exports = merge(baseConfig, {
 
     // NODE_ENV should be production so that modules do not perform certain development checks
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('production')
+      'process.env.NODE_ENV': JSON.stringify('production'),
+      'whenhub': JSON.stringify({
+        signalrUrl: 'https://interface-api.whenhub.com/signalr'
+      })
     }),
 
     new ExtractTextPlugin('style.css'),

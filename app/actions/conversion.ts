@@ -13,7 +13,7 @@ export function getConversion(args: any = null) {
                 'Authorization': 'Bearer ' + `${args.bearer}`,
             }
         }).then(function (response: any) {
-            console.log(response)
+            // console.log(response)
             dispatch(conversion(response.data))
         }).catch(function (error: any) {
             console.log(error);

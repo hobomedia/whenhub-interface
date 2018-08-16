@@ -12,7 +12,6 @@ const { spawn } = require('child_process');
 const config = require('./webpack.config.development');
 
 const argv = require('minimist')(process.argv.slice(2));
-
 const app = express();
 const compiler = webpack(config);
 const PORT = process.env.PORT || 3000;
