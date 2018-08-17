@@ -2,8 +2,8 @@ import * as React from 'react';
 import Nav from './Nav';
 import { connect } from 'react-redux';
 import 'rc-slider/assets/index.css';
-import { startInterface } from '../actions/interface';
-import { checkInterface } from '../actions/interface';
+// import { startInterface } from '../actions/interface';
+// import { checkInterface } from '../actions/interface';
 
 // const Axios = require('axios');
 const Slider = require('rc-slider/lib/Slider');
@@ -40,47 +40,59 @@ export class Contract extends React.Component<any, { loading: Boolean, client: a
     }
 
 
-    check(data: any) {
-        let that = this;
-        this.props.dispatch(checkInterface(data)).then(function (response: any) {
-            console.log(response.data.interface)
-            if (response.data.interface.active == true) {
-                console.log("active", response.data.interface.active)
-                that.props.history.push({
-                    pathname: '/Interface',
-                    state: { expertInfo: that.props.location.state.expert }
-                });
-            } else {
-                that.check(data)
-            }
-        })
-    }
+    // check(data: any) {
+    //     let that = this;
+    //     this.props.dispatch(checkInterface(data)).then(function (response: any) {
+    //         console.log(response.data.interface)
+    //         if (response.data.interface.active == true) {
+    //             console.log("active", response.data.interface.active)
+    //             that.props.history.push({
+    //                 pathname: '/Interface',
+    //                 state: { expertInfo: that.props.location.state.expert }
+    //             });
+    //         } else {
+    //             that.check(data)
+    //         }
+    //     })
+    // }
 
     onSubmit() {
         // this.props.history.push({
         //     pathname: '/TandC',
         //     state: {
         //         expertInfo: this.props.location.state.expert,
-        //         estimatedDuration: this.state.duration
+        //         estimatedDuration: this.state.duration,
+        //         purposeOfInterface: this.state.value,
+        //         version: 14
         //     }
         // })
-        console.log(this.props.location.state.expert.id, this.state.duration)
-        this.setState({ loading: true });
-        let args = {
-            bearer: this.props.bearer,
-            data: {
-                expertId: `${this.props.location.state.expert.id}`,
-                callerId: '5acbba9ca6a3c60600000001',
-                estimatedInitialMaxDuration: this.state.duration,
+        // console.log(this.props.location.state.expert.id, this.state.duration)
+        // this.setState({ loading: true });
+        // let args = {
+        //     bearer: this.props.bearer,
+        //     data: {
+        //         expertId: `${this.props.location.state.expert.id}`,
+        //         callerId: '5acbba9ca6a3c60600000001',
+        //         estimatedInitialMaxDuration: this.state.duration,
+        //         purposeOfInterface: this.state.value,
+        //         version: 14
+        //     }
+        // }
+
+        // let that = this;
+        // this.props.dispatch(startInterface(args)).then(function (response: any) {
+        //     console.log(response)
+        //     that.check(response)
+        // })
+
+        this.props.history.push({
+            pathname: '/PendingCall',
+            state: {
+                expertInfo: this.props.location.state.expert,
+                estimatedDuration: this.state.duration,
                 purposeOfInterface: this.state.value,
                 version: 14
             }
-        }
-
-        let that = this;
-        this.props.dispatch(startInterface(args)).then(function (response: any) {
-            console.log(response)
-            that.check(response)
         })
     }
 
@@ -153,7 +165,7 @@ export class Contract extends React.Component<any, { loading: Boolean, client: a
                         </form>
 
                         <button className='btn' disabled={(this.state.value.length >= 5) ? false : true} style={{ backgroundColor: "rgb(55, 211, 180)", color: "white", width: "300px", marginTop: "30px", borderRadius: "20px", fontWeight: 100 }} type="button" onClick={this.onSubmit.bind(this)}>
-                            {this.state.loading? <i className="fa fa-spinner fa-spin" id={contractStyles.spinner}/>: "Invite to Interface"}
+                            Invite to Interface
                         </button>
 
 

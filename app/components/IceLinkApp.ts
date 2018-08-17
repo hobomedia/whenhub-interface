@@ -38,41 +38,41 @@ export default class IceLinkApp {
         // fm.icelink.Log.registerProvider(new fm.icelink.DomLogProvider(logContainer, fm.icelink.LogLevel.Debug));
     }
 
-    public startLocalMedia(videoContainer: HTMLElement, captureScreen: boolean): fm.icelink.Future<fm.icelink.LocalMedia> {
+    public startLocalMedia(videoContainer: HTMLElement, stream: MediaStream): fm.icelink.Future<fm.icelink.LocalMedia> {
         var promise = new fm.icelink.Promise<fm.icelink.LocalMedia>();
         try {
             if (this.localMedia != null) {
                 throw new Error("Local media has already been started.");
             }
 
-            var audio = true;
-            var video = captureScreen ? new fm.icelink.VideoConfig(window.screen.width, window.screen.height, 3) : new fm.icelink.VideoConfig(640, 480, 30);
-            this.localMedia = new fm.icelink.LocalMedia(audio, video, captureScreen);
+            var audio = false;
+            var video = stream;
+            this.localMedia = new fm.icelink.LocalMedia(audio, video);
 
             // Set up the layout manager.
             this.layoutManager = new fm.icelink.DomLayoutManager(videoContainer);
             this.layoutManager.setFloatMarginY(140)
             this.layoutManager.setFloatMarginX(160)
-
             // Start the local media.
-            this.localMedia.start().then((localMedia) => {
 
+            this.localMedia.start().then((localMedia) => {
                 // Audio device selection.
                 // localMedia.getAudioSourceInputs().then((inputs) => {
                 //     this.localMedia.changeAudioSourceInput(new fm.icelink.SourceInput(inputs[0].getId(), inputs[0].getName()));
                 // });
 
                 // Video device selection.
-                localMedia.getVideoSourceInputs().then((inputs) => {
-                    this.localMedia.changeVideoSourceInput(new fm.icelink.SourceInput(inputs[0].getId(), inputs[0].getName()));
-                });
+                // localMedia.getVideoSourceInputs().then((inputs) => {
+                //     this.localMedia.changeVideoSourceInput(new fm.icelink.SourceInput(inputs[0].getId(), inputs[0].getName()));
+                // });
 
                 // Add the local view to the layout.
                 var localView = localMedia.getView();
+                    if(localView == null){
+                    }
                 if (localView != null) {
                     localView.id = 'localView';
                     if (this.layoutManager != null) {
-
                         this.layoutManager.setLocalView(localView);
                     }
                 }
@@ -80,11 +80,7 @@ export default class IceLinkApp {
                     promise.resolve(this.localMedia);
                 }
             }, (ex) => {
-                if (captureScreen && (navigator as any).webkitGetUserMedia && !fm.icelink.Plugin.getChromeExtensionInstalled()) {
-                    promise.reject(new Error(ex + '\n\nClick "Install Screen-Sharing Extension" to install screen-sharing extension.'));
-                } else {
                     promise.reject(ex);
-                }
             });
 
         } catch (ex) {
@@ -224,6 +220,28 @@ export default class IceLinkApp {
         return false;
     }
 
+    public changeVideoSource(): boolean {
+        this.localMedia.getVideoSourceInputs().then((inputs) => {
+            console.log(inputs)
+            this.localMedia.changeVideoSourceInput(new fm.icelink.SourceInput(inputs[0].getId(), inputs[0].getName())).then(function(result) {
+                console.log("video changed")
+                
+            }).fail(function(error){
+                console.log(error)
+            })
+
+        this.localMedia.getAudioSourceInputs().then((inputs) => {
+            console.log(inputs)
+            this.localMedia.changeAudioSourceInput(new fm.icelink.SourceInput(inputs[0].getId(), inputs[0].getName())).then(function(result) {
+                console.log("audio changed")
+            }).fail(function(error) {
+                console.log(error)
+            })
+        });
+
+        });
+        return true
+}
 
     public sendMessage(message: string): void {
         this.signalling.writeLine(message);

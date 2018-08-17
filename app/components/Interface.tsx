@@ -4,12 +4,14 @@ import 'rc-slider/assets/index.css';
 import { endInterface } from '../actions/interface';
 import { checkInterface } from '../actions/interface';
 import IceLinkApp from './IceLinkApp';
+import ScreenPicker from './ScreenPicker';
+
+const {desktopCapturer} = require('electron')
 
 let interfaceStyles = require('./Interface.scss');
 
-export class Interface extends React.Component<any, { screenShare: boolean, interval: any, min: any, localMedia: any, layoutManager: any, remoteMedia: any, client: any, muteButtonClick: any}>{
+export class Interface extends React.Component<any, { screens: any, showScreensClick: boolean, screenShare: boolean, interval: any, min: any, localMedia: any, layoutManager: any, remoteMedia: any, client: any, muteButtonClick: any}>{
     app = new IceLinkApp();
-
     constructor(props: any) {
         super(props)
         this.state = {
@@ -20,17 +22,75 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
             muteButtonClick: false,
             min: 0, 
             interval: setInterval(() => this.setState({min: this.state.min + 1}), 60000),
-            screenShare: false
+            screenShare: false,
+            showScreensClick: false,
+            screens: [],
         }
         console.log(this.props)
     }
 
     componentDidMount() {
-        console.log(this.props.interface, this.state.screenShare)
+        let handleStream = this.handleStream.bind(this);
+        let getUserMediaError = this.getUserMediaError;
+
+
+        desktopCapturer.getSources({types: ['screen']}, function(error, sources) {
+            if (error) throw error;
+            for (var i = 0; i < sources.length; ++i) {
+                if (sources[i].name == "Screen 1") {
+                        (navigator as any).webkitGetUserMedia({
+                        audio: false,
+                        video: {
+                            mandatory: {
+                                chromeMediaSource: 'desktop',
+                                chromeMediaSourceId: sources[i].id,
+                                minWidth: 1280,
+                                maxWidth: 1280,
+                                minHeight: 720,
+                                maxHeight: 720
+                            }
+                        }
+                    }, handleStream, getUserMediaError);
+                    return;
+                }
+            }
+        });
+
+
+
+
+
+
+        // console.log(this.props.interface, this.state.screenShare)
+        // this.app.sessionId = `${this.props.interface.connectionId}`;
+        // this.app.name = 'Interface';
+
+        // this.app.startLocalMedia(this.refs.container as HTMLElement, this.state.screenShare).then((localMedia: fm.icelink.LocalMedia) => {
+        //     // Update the UI context.
+        //     // Join the session.
+        //     return this.app.joinAsync();
+        // }, (ex: any) => {
+        //     console.error('Could not start local media.', ex);
+        //     alert('Could not start local media.\n' + ex.message);
+        //     stop();
+        // }).then((o: any) => {
+        //     // Enable the leave button.
+        //     console.log('I joined');
+        // }, (ex: any) => {
+        //     console.error('Could not join session.', ex);
+        // });
+
+
+    }
+
+    handleStream (stream: MediaStream) {
+        // (document.querySelector('video') as HTMLVideoElement).src = URL.createObjectURL(stream);
+
+        console.log(this.props.interface)
         this.app.sessionId = `${this.props.interface.connectionId}`;
         this.app.name = 'Interface';
 
-        this.app.startLocalMedia(this.refs.container as HTMLElement, this.state.screenShare).then((localMedia: fm.icelink.LocalMedia) => {
+        this.app.startLocalMedia(this.refs.container as HTMLElement, stream).then((localMedia: fm.icelink.LocalMedia) => {
             // Update the UI context.
             // Join the session.
             return this.app.joinAsync();
@@ -45,28 +105,89 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
             console.error('Could not join session.', ex);
         });
 
-
     }
 
-    onScreenShare(){
-        console.log(this.state.screenShare)
-        this.app.sessionId = `${this.props.interface.connectionId}`;
-        this.app.name = 'Interface';
+    handleScreen( stream: any){
+        console.log(stream)
+        let newScreens = this.state.screens.concat(stream)
+        console.log(newScreens)
+        this.setState({screens: newScreens, showScreensClick: true})
+    }
 
-        this.app.startLocalMedia(this.refs.container as HTMLElement, this.state.screenShare).then((localMedia: fm.icelink.LocalMedia) => {
-            // Update the UI context.
-            // Join the session.
-            // return this.app.joinAsync();
-        }, (ex: any) => {
-            console.error('Could not start local media.', ex);
-            alert('Could not start local media.\n' + ex.message);
-            stop();
-        }).then((o: any) => {
-            // Enable the leave button.
-            console.log('I joined');
-        }, (ex: any) => {
-            console.error('Could not join session.', ex);
-        });
+    getUserMediaError(error: any){
+        console.log(error)
+    }
+
+    goToInterface(){
+        this.setState({showScreensClick: false})
+    }
+
+    getScreenFromPicker(screen: MediaStream){
+        console.log(screen)
+        this.handleStream(screen)
+    }
+
+
+
+    onScreenShare(){
+        // this.app.toggleVideoMute();
+        this.app.changeVideoSource();
+        // this.showSources()
+        // let handleScreen = this.handleScreen.bind(this);
+        // let getUserMediaError= this.getUserMediaError;
+        // desktopCapturer.getSources({types: ['screen']}, function(error, sources) {
+        //     if (error) throw error;
+        //     for (let source of sources) {
+        //         console.log(source.name)
+        //         if (source.name.includes('Screen')) {
+        //             (navigator as any).webkitGetUserMedia({
+        //                 audio: false,
+        //                 video: {
+        //                     mandatory: {
+        //                         chromeMediaSource: 'desktop',
+        //                         chromeMediaSourceId: source.id,
+        //                         minWidth: 1280,
+        //                         maxWidth: 1280,
+        //                         minHeight: 720,
+        //                         maxHeight: 720
+        //                     }
+        //                 }
+        //             }, handleScreen, getUserMediaError)
+        //             return
+        //         }
+        //     }
+        // });
+
+        // let handleStream = this.handleStream;
+        // let getUserMediaError = this.getUserMediaError;
+
+        // this.app.stopLocalMedia().then((o: any) => {
+        //     console.log("media capture stopped")
+        //     // this.showSources();
+        //     desktopCapturer.getSources({types: ['screen']}, function(error, sources) {
+        //         if (error) throw error;
+        //         for (var i = 0; i < sources.length; ++i) {
+        //             if (sources[i].name == "Screen 1") {
+        //                     (navigator as any).webkitGetUserMedia({
+        //                     audio: false,
+        //                     video: {
+        //                         mandatory: {
+        //                             chromeMediaSource: 'desktop',
+        //                             chromeMediaSourceId: sources[i].id,
+        //                             minWidth: 1280,
+        //                             maxWidth: 1280,
+        //                             minHeight: 720,
+        //                             maxHeight: 720
+        //                         }
+        //                     }
+        //                 }, handleStream, getUserMediaError);
+        //                 return;
+        //             }
+        //         }
+        //     });
+        // }).fail((ex: any) => {
+        //     console.log("failed to stop local media")
+        // })
 
 
     }
@@ -115,7 +236,6 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
             }
         })
     }
-
 
     onMute() {
         this.app.toggleAudioMute();
@@ -182,10 +302,13 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
 
 
     render() {
+        if(this.state.showScreensClick == false){
             return (
                 <div className={interfaceStyles.container}>
                     <div className={interfaceStyles.video} id="container" ref="container">
                     <div style={{ position: "absolute", zIndex: 1000, width: "337px", bottom: "0px", color: "white" }}>
+                        <video style={{width: "190px", height: "auto"}}>
+                        </video>
                         {this.progressBar()}
                         {/* <div style={{height: "45px", width: "100%"}}>
                             <div className={interfaceStyles.progressSection} style={{backgroundColor: this.state.min < 1? "green": "red"}}>
@@ -235,6 +358,15 @@ export class Interface extends React.Component<any, { screenShare: boolean, inte
                     </div>
                 </div>
             )
+        }else {
+            return (
+                <ScreenPicker
+                    handler={this.goToInterface.bind(this)}
+                    getScreen={this.getScreenFromPicker.bind(this)}
+                    screens={this.state.screens}
+                />
+            )
+        }
     }
 }
 const mapStateToProps = function (props: any, state: any) {
