@@ -10,6 +10,7 @@ export const check = actionCreatorVoid('CHECK_INTERFACE')
 export const rate = actionCreatorVoid('RATE_INTERFACE');
 export const end = actionCreatorVoid('END_INTERFACE');
 export const message = actionCreator('MESSAGE_RECEIVED');
+export const incomingInterface = actionCreator('INCOMING_INTERFACE');
 
 
 

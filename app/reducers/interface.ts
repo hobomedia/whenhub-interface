@@ -1,5 +1,5 @@
 import { IAction } from '../actions/helpers';
-import { call, message } from '../actions/interface';
+import { call, message, incomingInterface } from '../actions/interface';
 
 export type TState = Object;
 
@@ -15,6 +15,12 @@ export default function startInterface(state: Object = { start: null }, action: 
         return {
             ...state,
             message: action.payload
+        }
+    }
+    if (incomingInterface.test(action)) {
+        return {
+            ...state,
+            incomingInterface: action.payload
         }
     }
     return state;

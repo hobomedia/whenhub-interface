@@ -1,4 +1,4 @@
-import { message } from '../actions/interface';
+import { message, incomingInterface } from '../actions/interface';
 declare var WHENHUB: any;
 declare var $: any;
 export default class SignalR {
@@ -14,6 +14,11 @@ export default class SignalR {
                 console.log('Received a message');
                 store.dispatch(message(data));
             });
+
+            this.hub.client.interfaceNotification = (data: any) => {
+                store.dispatch(incomingInterface({ interface: data }));
+            }
+
         } else {
             console.log('[SignalR] Failure to load signalR interface');
         }
