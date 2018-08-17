@@ -5,6 +5,9 @@ import Root from './containers/Root';
 import SignalR from './utils/signalr';
 import './app.global.scss';
 
+declare var WHENHUB: any;
+(window as any)['WHENHUB'] = WHENHUB;
+
 const { configureStore, history } = require('./store/configureStore');
 const store = configureStore();
 new SignalR(store);

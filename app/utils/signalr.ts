@@ -1,12 +1,12 @@
 import { message } from '../actions/interface';
-
+declare var WHENHUB: any;
 declare var $: any;
 export default class SignalR {
 
     hub: any;
     authToken: string | null = null;
     constructor(store: any) {
-        $.connection.hub.url = 'https://localhost:44368/signalr'; //(window as any)['whenhub']['signalrUrl'];
+        $.connection.hub.url = (window as any)['WHENHUB']['SIGNALR_URL'];
         this.hub = $.connection.expertHub;
         (<any>window)['expertHubProxy'] = this.hub; // Debug stuff
         if (this.hub != null) {

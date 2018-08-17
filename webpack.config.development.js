@@ -149,11 +149,11 @@ module.exports = merge(baseConfig, {
 
     // NODE_ENV should be production so that modules do not perform certain development checks
     new webpack.DefinePlugin({
-      whenhub: JSON.stringify({
-        signalrUrl: 'https://localhost:44368/signalr'
+      'process.env.NODE_ENV': JSON.stringify('development'),
+      WHENHUB: JSON.stringify({
+        SIGNALR_URL: 'https://localhost:44368/signalr'
       })
     }),
-
     new webpack.LoaderOptionsPlugin({
       debug: true
     }),
