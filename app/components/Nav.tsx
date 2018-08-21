@@ -1,32 +1,32 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import { saveLogin, saveLogout } from '../actions/login';
 // import Store from '../store/configureStore.development';
 // const styles = require('./Home.scss');
 const navStyles = require('./Nav.scss');
 
-export class Nav extends React.Component<any, {menuClick: string}> {
-    constructor(props:any){
+export class Nav extends React.Component<any, { menuClick: string }> {
+    constructor(props: any) {
         super(props)
         this.state = {
             menuClick: "hidden"
         }
         this.lock.on("authenticated", (authResult: any) => {
-            console.log("hit")
+            console.log("hit", authResult);
             this.lock.getUserInfo(authResult.accessToken, (error: any, profile: any) => {
-                if(error) {
+                if (error) {
                     console.log(error)
                 }
-                if(!error){
-                    localStorage.setItem('accessToken', authResult.accessToken);
+                if (!error) {
+                    localStorage.setItem('accessToken', authResult.idToken);
                     localStorage.setItem('profile', JSON.stringify(profile));
                     //save profile to redux
                     let args = {
-                        profile: profile, 
-                        token: authResult.accessToken,
-                        bearer: authResult.idToken
+                        profile: profile,
+                        token: authResult.idToken,
                     }
+                    setTimeout(() => this.lock.hide(), 2500);
                     this.props.dispatch(saveLogin(args))
 
                 }
@@ -45,6 +45,7 @@ export class Nav extends React.Component<any, {menuClick: string}> {
         auth: {
             responseType: 'id_token token',
             redirect: false,
+            sso: false,
             params: {
                 scope: 'openid roles email profile https://interface.whenhub.com/winid',
                 audience: 'https://whenhub.auth0.com/userinfo'
@@ -54,36 +55,35 @@ export class Nav extends React.Component<any, {menuClick: string}> {
         languageDictionary: {
             title: 'WhenHub Interface'
         },
-        popup: true,
+        // popup: true,
         allowLogin: true,
         theme: {
             logo: 'https://interface.whenhub.com/img/favicon/Interface-Logo-Mark-150.png',
             primaryColor: '#0096A9'
-        },
-        sso: false
+        }
     });
 
     showLogin(e: any) {
         e.preventDefault();
         this.lock.show();
-        if(this.state.menuClick == "hidden"){
-            this.setState({menuClick: "shown"})
-        }else if (this.state.menuClick == "shown") {
-            this.setState({menuClick: "hidden"})
+        if (this.state.menuClick == "hidden") {
+            this.setState({ menuClick: "shown" })
+        } else if (this.state.menuClick == "shown") {
+            this.setState({ menuClick: "hidden" })
         };
 
     }
 
-    showLogout(){
+    showLogout() {
         localStorage.removeItem('profile');
         localStorage.removeItem('accessToken');
         this.props.dispatch(saveLogout());
     }
 
     handleClick(e: any) {
-        if(this.props.current == "Expert"){
+        if (this.props.current == "Expert") {
             this.props.handler(e)
-        }else {
+        } else {
             history.back();
         };
     }
@@ -94,61 +94,61 @@ export class Nav extends React.Component<any, {menuClick: string}> {
     }
 
     handleMenuClick() {
-        if(this.state.menuClick == "hidden"){
-            this.setState({menuClick: "shown"})
-        }else if (this.state.menuClick == "shown") {
-            this.setState({menuClick: "hidden"})
+        if (this.state.menuClick == "hidden") {
+            this.setState({ menuClick: "shown" })
+        } else if (this.state.menuClick == "shown") {
+            this.setState({ menuClick: "hidden" })
         };
     }
 
     display() {
-        if(this.state.menuClick == "hidden"){
-            return {display: "none"}
-        }else if (this.state.menuClick == "shown") {
-            return {display: "inline"}
+        if (this.state.menuClick == "hidden") {
+            return { display: "none" }
+        } else if (this.state.menuClick == "shown") {
+            return { display: "inline" }
         };
-        return 
+        return
     }
 
-    buttonDisplay(){
-        if(this.props.button == "menu"){
+    buttonDisplay() {
+        if (this.props.button == "menu") {
             return <button id={navStyles.menuBtn} data-tclass="btn" onClick={this.handleMenuClick.bind(this)}><a href="#">
-            <i className="fa fa-bars"></i></a>
-        </button>
+                <i className="fa fa-bars"></i></a>
+            </button>
 
-        }else if (this.props.button == "back"){
+        } else if (this.props.button == "back") {
             return <button id={navStyles.backBtn} data-tclass="btn" onClick={this.handleClick.bind(this)}><a href="#">
-            <i className="fa fa-angle-left"></i></a>
-        </button>
+                <i className="fa fa-angle-left"></i></a>
+            </button>
         };
         return
     }
 
     loginDisplay() {
-        if (this.props.profile == null){
+        if (this.props.profile == null) {
             return <li><a href="#" onClick={this.showLogin.bind(this)}><i className="fa fa-lock" id="btn-login"></i><span>Log In</span></a></li>
 
-        }else if(this.props.profile != null){
+        } else if (this.props.profile != null) {
             return <li><a href="#" onClick={this.showLogout.bind(this)}><i className="fa fa-lock" id="btn-login"></i><span>Log Out</span></a></li>
 
         };
         return
     }
-    
+
 
     render() {
         return (
             <div>
                 <div id={navStyles.topBar}>
                     {this.buttonDisplay()}
-                        <div style={{display: "inline", fontWeight: 100}}>
-                            {this.props.back? this.props.back : "Interface"}
-                        </div>
-                        <div id={navStyles.page}>
-                            {this.props.page}
-                        </div>
+                    <div style={{ display: "inline", fontWeight: 100 }}>
+                        {this.props.back ? this.props.back : "Interface"}
+                    </div>
+                    <div id={navStyles.page}>
+                        {this.props.page}
+                    </div>
                 </div>
-                <div className="navbar navbar-inverse navbar-fixed-left" id={navStyles.menu}style={this.display()}>
+                <div className="navbar navbar-inverse navbar-fixed-left" id={navStyles.menu} style={this.display()}>
                     <ul className="nav navbar-nav" id={navStyles.navigation}>
                         <li><Link to="/Settings"><i className="fa fa-cog"></i><span>Settings</span></Link></li>
                         <li><Link to="/Wallet"><i className="fa fa-usd"></i><span>WhenWallet</span></Link></li>
@@ -164,11 +164,11 @@ export class Nav extends React.Component<any, {menuClick: string}> {
         );
     }
 }
-    const mapStateToProps = function (props: any, state: any) {
-        return {
-            profile: props.login.profile,
-            token: props.login.token
-        }
-
+const mapStateToProps = function (props: any, state: any) {
+    return {
+        profile: props.login.profile,
+        token: props.login.token
     }
-    export default connect(mapStateToProps)(Nav);
+
+}
+export default connect(mapStateToProps)(Nav);
