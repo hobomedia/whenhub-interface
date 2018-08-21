@@ -20,7 +20,7 @@ export class Accept extends React.Component<any, {}>{
 
     render() {
         return (
-            <div className={acceptStyles.lower}>
+            this.props.incomingInterface!=null ? <div className={acceptStyles.lower}>
                 <div>
                     <img className={acceptStyles.picture} src={"../resources/expert_2.jpg"} alt="Avatar" />
                     <div style={{display: "inline-block", verticalAlign: "top", width: "212px", height: "126px", paddingTop: "16px"}}>
@@ -58,7 +58,7 @@ export class Accept extends React.Component<any, {}>{
 
                 </div>
 
-            </div>
+            </div> : null
         );
     }
 }
@@ -69,7 +69,7 @@ const mapStateToProps = function (props: any, state: any) {
         token: props.login.token,
         bearer: props.login.bearer,
         wallet: props.getWalletAmount.walletAmount,
-        interface: props.startInterface.start
+        incomingInterface: props.startInterface.interface
     }
 
 }

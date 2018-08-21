@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Nav from './Nav';
 import {connect} from 'react-redux';
 import { getConversion } from '../actions/conversion';
+import { Accept } from './Accept';
 
 const styles = require('./Home.scss');
 
@@ -53,7 +54,8 @@ export class Home extends React.Component<any, {experts: any}>{
               {this.showLoginMessage()}
             </div>
           </div>
-        </div>   
+        </div>
+        <Accept />
       </div>    
     );
   };
@@ -63,7 +65,7 @@ const mapStateToProps = function (props: any, state: any) {
   return {
       profile: props.login.profile,
       token: props.login.token,
-      bearer: props.login.bearer,
+      bearer: props.login.bearer
   };
 
 };

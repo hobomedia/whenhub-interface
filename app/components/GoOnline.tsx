@@ -2,6 +2,7 @@ import * as React from 'react';
 import {connect} from 'react-redux';
 import { Link } from 'react-router-dom';
 import { goOnline } from '../actions/experts';
+import { Accept } from './Accept';
 
 const styles = require('./Home.scss');
 const goOnlineStyles = require('./GoOnline.scss');
@@ -103,7 +104,7 @@ export class GoOnline extends React.Component<any>{
                 </div>
 
             </div>
-        </div>       
+        </div>   
         );
     }
 }

@@ -15,9 +15,10 @@ export default class SignalR {
                 store.dispatch(message(data));
             });
 
-            this.hub.client.interfaceNotification = (data: any) => {
+            this.hub.client.interfaceNotification = ((data: any) => {
+                console.log('Received a incoming interface notification');
                 store.dispatch(incomingInterface({ interface: data }));
-            }
+            });
 
         } else {
             console.log('[SignalR] Failure to load signalR interface');
